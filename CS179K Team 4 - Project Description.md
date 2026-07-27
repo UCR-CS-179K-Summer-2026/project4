@@ -9,18 +9,6 @@
     
 
 Given an input file (source code) read through to find code smells, execute to find current runtime then output version with no code smells and new runtime to the user. C++ will be the target language to analyze because of the wider opportunity for smelly code detection:
-
-Smelly code to check: 
-
-*   Poor variable names
-    
-*   Redundant code
-    
-*   memory leaks
-    
-*   commenting
-    
-*   Repeated code (turn into function)
     
 
 *   **What language(s) will you use?**
