@@ -75,11 +75,11 @@ Example outputs:
 **Input:**
 
 ```cpp
-Int main(){
+int main(){
 
-Int t = 0;
+int t = 0;
 
-For (int i = 0; i<5 ; i++){
+for (int i = 0; i<5 ; i++){
 
 t++;
 
@@ -103,9 +103,9 @@ Warning: The allocated variable ‘int t’ has an ambiguous identifier.
 Input:
 
 ```cpp
-Int main() {
+int main() {
 
-Int* number = new int;
+int* number = new int;
 
 number = 5;
 
@@ -299,7 +299,4 @@ Warning: Repeated code
 ```
 
 ```text
-\
-Output:
-Warning: Repeated code
 ```
