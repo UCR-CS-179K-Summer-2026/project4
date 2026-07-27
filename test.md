@@ -297,6 +297,3 @@ Output:
 ```text
 Warning: Repeated code
 ```
-
-```text
-```
