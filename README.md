@@ -4,10 +4,10 @@ Smelly code detector written in C++. The program takes a C++ source code file as
 
 ## Team Members:
 
-Stuart Arief
-Rebecca Jennings
-Jimmy Munoz
-Aelynn Xu
+- Stuart Arief
+- Rebecca Jennings
+- Jimmy Munoz
+- Aelynn Xu
 
 ## Initial Features & Examples:
 
