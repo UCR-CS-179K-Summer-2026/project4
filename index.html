@@ -62,6 +62,10 @@
         <h2>Algorithms and Optimizations</h2>
         <ul>
           <li>Parallelism - Once the source code is read, run each detector in parallel to improve speed instead of running the detectors sequentially.</li>
+          <li>Hashmaps - instead of using pairwise comparison, we use a hashmap to check for cases such as repetitions.</li>
+          <li>Single compilation for regex - Any regex objects used are declared as static. This enables it to be compiled just once during the first call.</li>
+          <li>Memorization - Lines of code are stored into a data structure to prevent re-reading.</li>
+          <li>Single-read files - An entire input file is converted into one string and read once using rdBuf().</li>
         </ul>
       </div>
     </div>
