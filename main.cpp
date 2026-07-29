@@ -17,9 +17,14 @@ int main() {
         return 1;
     }
 
-    else if (smellyCount == 0){
+    else if (smellyCount > 0){
         std::cout << smellyCount << " smelly code found in the file." << std::endl;
+        return 1;
     }
+
+    std::cout << "No smelly code found in the file." << std::endl;
+
+
 
     inputFile.close();
 
