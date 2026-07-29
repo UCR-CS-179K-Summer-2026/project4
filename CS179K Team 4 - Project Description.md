@@ -1,76 +1,54 @@
 # PLAN.md:
 
-* **What option did you choose?**
+## Option Choice & Reasoning
 
 **Option 3**: Develop a “smelly code” detector and refactor tool.
 
-* **What exactly will your software do? (For example, if you chose Option 3, what language will you analyze? Which smells will you detect?)**
+**What exactly will your software do? (For example, if you chose Option 3, what language will you analyze? Which smells will you detect?)**
 
 Given an input file (source code) read through to find code smells, execute to find current runtime then output version with no code smells and new runtime to the user. C++ will be the target language to analyze because of the wider opportunity for smelly code detection:
 
-* **What language(s) will you use?**
+**What language(s) will you use?**
 
 We have our eyes set on writing the project in C++. We have chosen C++ because of its high performance and our familiarity with it.
 
-* **What do you hope to accomplish in the remaining 2 hours?**
+**What do you hope to accomplish in the remaining 2 hours?**
 
 We aim to have a general idea on what we want our project to be. This includes the tools we want to use, visuals for the detector, goals for each sprint, and prioritizing features to implement.
 
 This is just a tentative plan. You can change your mind later, regarding the feature set and tech stack. Commit to the repository by 3:00.
 
-Smelly code to check:
-
+## Criteria
+Smelly Code Checks:
 * Poor variable names
-
-* Redundant code
-
-* memory leaks: check destructor is working, check that it gets called for every allocated pointer
-
-* commenting: check that each function has a comment (hopefully explaining what the function does)
-
+* Redundant code: conditional statements, dead/unused code, initialization, boolean
+* Memory leaks: check destructor is working, check that it gets called for every allocated pointer
+* Commenting: check that each function has a comment (hopefully explaining what the function does)
 * Repeated code: note any repeated code sections 3 lines that could be changed into a function
 
 Input:
-
 * C++ source code
 
 Output:
-
 * Line(s) of code to be refactored
-
-* Reasoning for refactoring
-
+* Reasoning for efactoring
 * Comparison between old and new code (runtime, etc)
 
-Sprint 1 Plan:
+## Sprint 1
 
-* Read an input file
+* Read an input file C++
 
-* check for commenting (Aelynn)
+* Checking for commenting base case (Aelynn)
 
-* check for frequently repeated code (Stuart)
+* Checking for frequently repeated code base case (Stuart)
 
-* Checking for redundant code (Rebecca)
+* Checking for redundant code base case (Rebecca)
 
-* Check for poor variable names (Jimmy)
+* Check for poor variable names base casee (Jimmy)
 
-Feedback:
+## Examples:
 
-* Convert C++ file into an intermediate representation to be analyzed to detect and refactor code smells
-
-* Look into existing tools or libraries, but not one that covers all our material → use to parse the code and convert to IR
-
-* Update to specify features our checker will support
-
-* GOAL by 4:00pm: examples of code input (C++) and the output (error message or report to the user specifying) → concrete/tangible examples
-
-* Decide if we are analyzing all of C++ or subset of C++
-
-* Come with multiple examples and what we will report
-
-Example outputs:
-
-1. **Bad variable names**
+1. **Bad Variable Names**
 
 **Input:**
 
@@ -97,8 +75,7 @@ return 0;
 ```text
 Warning: The allocated variable ‘int t’ has an ambiguous identifier.
 ```
-
-1. **Memory leak example**
+2. **Memory Leaks**
 
 Input:
 
@@ -122,7 +99,7 @@ Output:
 Warning: The allocated variable ‘number’ has not been deleted. Please add in the line ‘delete number;’ to de-allocate.
 ```
 
-1. **Commenting**
+3. **Commenting**
 
 Input:
 
@@ -146,7 +123,7 @@ Output:
 Warning: Uncommented function exFunction
 ```
 
-1. **Redundant Code**
+4. **Redundant Code**
 
 **Conditional Statements**
 
@@ -264,7 +241,7 @@ Output:
 Warning: Redundant boolean logic. Modify the statement to “if (isGameOver)”.
 ```
 
-1. **Repeated code**
+5. **Repeated code**
 
 Input:
 
