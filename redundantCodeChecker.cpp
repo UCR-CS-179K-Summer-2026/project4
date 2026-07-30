@@ -75,4 +75,14 @@ namespace {
         }
         return declarations;
     }
+
+    // counts amount of times a given variable name appears as a whole word within a function body
+    // determines whether a declared variable is referenced again
+    int countUsages(const std::string& source, const std::string& name) {
+        std::regex wordRegex("\\b" + name + "\\b");
+        auto begin = std::sregex_iterator(source.begin(), source.end(), wordRegex);
+        auto end = std::sregex_iterator();
+        return static_cast<int>(std::distance(begin, end));
+    }
+
 }
