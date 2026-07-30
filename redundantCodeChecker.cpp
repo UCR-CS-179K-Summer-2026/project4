@@ -85,4 +85,37 @@ namespace {
         return static_cast<int>(std::distance(begin, end));
     }
 
-}
+    std::vector<std::pair<std::string, int>> splitIntoFunctionBodies(const std::string& source) {
+        std::vector<std::pair<std::string, int>> bodies;
+        
+        static const std::regex funcStartRegex(
+            R"([a-zA-Z_][a-zA-Z0-9_:<>]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^;{}]*\)\s*\{)"
+        );
+
+        auto begin = std::sregex_iterator(source.begin(), source.end(), funcStartRegex);
+        auto end = std::sregex_iterator();
+
+        for (auto it = begin; it != end; ++it) {
+            size_t openBracePos = it->position() + it->length() - 1;
+            int depth = 1;
+            size_t pos = openBracePos + 1;
+            size_t bodyStart = pos;
+    
+            while (pos < source.size() && depth > 0) {
+                if (source[pos] == '{') depth++;
+                else if (source[pos] == '}') depth--;
+                pos++;
+            }
+
+            if (depth == 0) {
+                std::string body = source.substr(bodyStart, pos - bodyStart - 1);
+                int startLine = static_cast<int>(
+                    std::count(source.begin(), source.begin() + bodyStart, '\n')) + 1;
+                bodies.push_back({body, startLine});
+            }
+        }
+
+        return bodies;
+    }
+
+} // end of namespace
