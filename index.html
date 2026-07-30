@@ -3,9 +3,71 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hello, world!</title>
+    <title>CS179K Code Smell Project</title>
   </head>
   <body>
-    <h1>Hello, world!</h1>
+    <h1>CS179K Code Smell Project</h1>
+    <div>
+      <div>
+        <h2>System Architecture</h2>
+        <img src="CS179K_System_Architecture.jpeg" alt="System Architecture">
+      </div>
+      <div>
+        <h2>Inferences of Modules</h2>
+        <div>
+          <p>repeated.cpp</p>
+          <ul>
+            <li>stripBlockComment() - detects and removes blocked comments</li>
+            <li>stripLineComment() - detects and removes single line comments </li>
+            <li>normalizeWhiteSpace() - deletes whitespace to prevent false negatives</li>
+            <li>extractCodeLines() - using the cleaned code regex, return the vector containing the lines of code</li>
+            <li>reportRepeatedBlock() - from the extracted code lines, check for repeated blocks. If found, emit the warning message.</li>
+          </ul>
+        </div>
+        <div>
+          <p>commentChecker.cpp</p>
+          <ul>
+            <li>functionFinder() - finds functions in the source code file</li>
+            <li>commentFinder() - finds comments in a section of the source code file (use case will be within the function)</li>
+          </ul>
+        </div>
+        <div>
+          <p>redundantCode.cpp</p>
+          <ul>
+            <li>splitIntoFunctionBodies() - finds functions in the source code file and isolates each function's body (so variables in different functions aren't mixed up with each other)</li>
+            <li>stripComments() - removes // and /* */ comments before analysis, so commented-out code doesn't produce false declarations or false usages</li>
+            <li>findDeclarations() - finds variable declaration statements within a function body (e.g. int x;, int x = 5;, int a, b;) and extracts each declared variable's name and line number</li>
+            <li>countUsages() - counts how many times a given variable name appears as a whole word within a function body, used to determine whether a declared variable is ever referenced again</li>
+            <li>buildTypePattern() - builds the regex pattern used by findDeclarations() to recognize supported type keywords (int, float, bool, etc.) at the start of a declaration</li>
+          </ul>
+        </div>
+        <div>
+          <p>poorNaming.cpp</p>
+          <ul>
+            <li>searchVariableNames() - searches for all variable names found in the source code. Returns all of the found variables</li>
+            <li>isPoor() - Accepts a string and determines whether the string is poor or not. It will return an empty list if not poor, or a list of recommendations if it is poor.</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <h2>API's and Their Usage</h2>
+        <ul>
+          <li>Regex - used to identify relevant structures in the source file</li>
+          <li>Fstream - enables our input to be a C++ source file</li>
+          <li>Vector - data structure to store lines of code that are candidates for smelly code detection</li>
+          <li>String - used to store the actual regex</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Algorithms and Optimizations</h2>
+        <ul>
+          <li>Parallelism - Once the source code is read, run each detector in parallel to improve speed instead of running the detectors sequentially.</li>
+          <li>Hashmaps - instead of using pairwise comparison, we use a hashmap to check for cases such as repetitions.</li>
+          <li>Single compilation for regex - Any regex objects used are declared as static. This enables it to be compiled just once during the first call.</li>
+          <li>Memorization - Lines of code are stored into a data structure to prevent re-reading.</li>
+          <li>Single-read files - An entire input file is converted into one string and read once using rdBuf().</li>
+        </ul>
+      </div>
+    </div>
   </body>
 </html>
