@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "redundantCodeChecker.h"
 
 int main() {
     int smellyCount = 0;//counter for any warnings found
@@ -17,14 +18,17 @@ int main() {
         return 1;
     }
 
-    //smellyCount = commentChecker();//makes smellyCount equal to sum of warning from all detector functions(add your functions here)
+    // All detector functions called here and added to smellyCount
 
-    if (smellyCount > 0){//smelly code found
-        std::cout << smellyCount << " smelly code found in the file." << std::endl;
+    //smellyCount = commentChecker(); //comment detector
+    smellyCount += redundantCodeChecker(inputFile); //redundant code detector
+    
+    if (smellyCount > 0){ //smelly code found
+        std::cout << smellyCount << " Smelly code found in the file." << std::endl;
         return 1;
     }
 
-    else{//no smelly code found (smellyCount = 0)
+    else{ //no smelly code found (smellyCount = 0)
         std::cout << "No smelly code found in the file." << std::endl;
     }
 
