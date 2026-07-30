@@ -37,7 +37,7 @@ namespace {
     }
 
     // stripes single line (//) and block (/* */) comments
-    std::string stipComments(const std::string& source) {
+    std::string stripComments(const std::string& source) {
         std::string noBlockComments = std::regex_replace(source, std::regex(R"(/\*[\s\S]*?|*/)"),"");
         std::string noLineComments = std::regex_replace(noBlockComments, std::regex(R"(//.*)"), "");
         return noLineComments;
@@ -119,3 +119,35 @@ namespace {
     }
 
 } // end of namespace
+
+int redundantCodeChecker(std::ifstream& inputFile) {
+    std::stringstream buffer;
+    buffer << inputFile.rdbuf();
+    std::string rawSource = buffer.str();
+    std::string source = stripComments(rawSource);
+
+    inputFile.clear();
+    inputFile.seekg(0, std::ios::beg);
+
+    auto functionBodies = splitIntoFunctionBodies(source);
+
+    int warningCount = 0;
+    for (const auto& fb : functionBodies) {
+        const std::string& body = fb.first;
+        int startLine = fb.second;
+        std::vector<DeclaredVariable> declarations = findDeclarations(body);
+
+        for (const auto& decl : declarations) {
+            int occurrences = countUsages(body, decl.name);
+            if (occurrences <= 1) {
+                int actualLine = startLine + decl.line - 1;
+                std::cout << "Warning: Redundant dead/unused code. \""
+                        << decl.name << "\" is declared but never used. "
+                        << "(line " << actualLine << ")\n";
+                ++warningCount;
+            }
+        }
+    }
+
+    return warningCount;
+}
