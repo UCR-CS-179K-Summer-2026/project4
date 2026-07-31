@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include "redundantCodeChecker.h"
+#include "poorNameChecker.h"
 
 int main() {
     int smellyCount = 0;//counter for any warnings found
@@ -22,6 +23,7 @@ int main() {
 
     //smellyCount = commentChecker(); //comment detector
     smellyCount += redundantCodeChecker(inputFile); //redundant code detector
+    smellyCount += PoorNameChecker().analyzeFile(inputFile); //poor name detector
     
     if (smellyCount > 0){ //smelly code found
         std::cout << smellyCount << " Smelly code found in the file." << std::endl;
