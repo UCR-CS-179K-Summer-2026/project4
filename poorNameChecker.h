@@ -5,20 +5,22 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include "ParsedSource.h"
+#include "Detector.h"
 
 struct SuggestedNamesInfo {
     std::vector<std::string> suggestedNames;
     std::string reason;
 };
 
-class PoorNameChecker {
+class PoorNameChecker : public Detector {
     private:
         bool isPoorName(const std::string& name);
         std::vector<std::string> recommendNames(const std::string& name);
         std::unordered_map<std::string, SuggestedNamesInfo> poorNamesMap;
     public:
         PoorNameChecker();
-        int analyzeFile(std::ifstream& inputFile);
+        int analyzeSource(const ParsedSource& parsedSource) override;
 };
 
 #endif

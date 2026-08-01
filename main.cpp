@@ -3,6 +3,7 @@
 #include <string>
 #include "redundantCodeChecker.h"
 #include "poorNameChecker.h"
+#include "Parser.h"
 
 int main() {
     int smellyCount = 0;//counter for any warnings found
@@ -19,11 +20,16 @@ int main() {
         return 1;
     }
 
+    Parser parser;
+    ParsedSource parsedSource = parser.parse(inputFile);
+
     // All detector functions called here and added to smellyCount
+    RedundantCodeChecker redundantCodeChecker;
+    PoorNameChecker poorNameChecker;
 
     //smellyCount = commentChecker(); //comment detector
-    smellyCount += redundantCodeChecker(inputFile); //redundant code detector
-    smellyCount += PoorNameChecker().analyzeFile(inputFile); //poor name detector
+    smellyCount += redundantCodeChecker.analyzeSource(parsedSource); //redundant code detector
+    smellyCount += poorNameChecker.analyzeSource(parsedSource); //poor name detector
     
     if (smellyCount > 0){ //smelly code found
         std::cout << smellyCount << " Smelly code found in the file." << std::endl;
