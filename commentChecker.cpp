@@ -15,7 +15,7 @@ int commentChecker::analyzeSource(const ParsedSource& parsedSource){
 
 
     //go throught parsedSource line by line
-    std::istringstream stream(parsedSource.rawSource);
+    std::istringstream stream(parsedSource.source);
     while (std::getline(stream, line)) {
         lines.push_back(line);
     }
