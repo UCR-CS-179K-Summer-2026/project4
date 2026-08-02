@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "ParsedSource.h"
+#include "Detector.h"
 
 class commentChecker : public Detector {
 //    private:
