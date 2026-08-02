@@ -1,8 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <regex>
-#include "commentChecker.h"
+#include "SmellyCodeDetector.h"
 
 int main() {
     int smellyCount = 0;//counter for any warnings found
@@ -18,20 +17,19 @@ int main() {
         return 1;
     }
 
-    smellyCount += commentChecker(inputFile);//makes smellyCount equal to sum of warning from all detector functions(add your functions here)
-
-    if (smellyCount > 0){//smelly code found
-        std::cout << smellyCount << " smelly code found in the file." << std::endl;
+    // // All detector functions called here and added to smellyCount
+    smellyCount += SmellyCodeDetector(inputFile).runDetectors(); //run all detectors
+    
+    if (smellyCount > 0){ //smelly code found
+        std::cout << smellyCount << " Smelly code found in the file." << std::endl;
         return 1;
     }
 
-    else{//no smelly code found
+    else{ //no smelly code found (smellyCount = 0)
         std::cout << "No smelly code found in the file." << std::endl;
     }
 
-
     inputFile.close();
-
 
     return 0;
 }
