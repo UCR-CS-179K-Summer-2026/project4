@@ -171,4 +171,6 @@ int RepeatedCodeChecker::analyzeSource(const ParsedSource& parsedSource){
             }
         }
     }
+    }
+    return warningCOunt;
 }
