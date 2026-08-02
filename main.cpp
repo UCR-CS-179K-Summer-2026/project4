@@ -7,7 +7,6 @@ int main() {
     int smellyCount = 0;//counter for any warnings found
     std::string fileName;
     std::ifstream inputFile("input.txt");
-    //int commentChecker();//checks if inputFile is commented, returns an int counter for warnings found. Warnings should also be printed to terminal as they are found within the function.
     
     std::cout << "Enter the name of the file to read: ";//asks for input file name, reads input file
     std::getline(std::cin, fileName);

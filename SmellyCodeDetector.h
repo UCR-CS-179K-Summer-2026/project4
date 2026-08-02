@@ -6,12 +6,14 @@
 #include "Parser.h"
 #include "poorNameChecker.h"
 #include "redundantCodeChecker.h"
+#include "commentChecker.h"
 #include "repeatedCodeChecker.h"
 
 class SmellyCodeDetector {
     private:
         PoorNameChecker poorNameChecker;
         RedundantCodeChecker redundantCodeChecker;
+        commentChecker commentChecker;
         RepeatedCodeChecker repeatedCodeChecker;
         Parser parser;
         ParsedSource parsedSource;
