@@ -6,13 +6,13 @@
 #include <regex>
 #include <string>
 #include <vector>
-include "ParsedSource.h"
+#include "ParsedSource.h"
 
 class commentChecker : public Detector {
 //    private:
 
 
     public: 
-        int analyzeSource(const ParsedSource& parsedSource);
-}
+        int analyzeSource(const ParsedSource& parsedSource) override;
+};
 #endif

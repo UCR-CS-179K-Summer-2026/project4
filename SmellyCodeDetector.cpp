@@ -8,5 +8,6 @@ int SmellyCodeDetector::runDetectors() {
     int totalWarnings = 0;
     totalWarnings += poorNameChecker.analyzeSource(parsedSource);
     totalWarnings += redundantCodeChecker.analyzeSource(parsedSource);
+    totalWarnings += commentChecker.analyzeSource(parsedSource);
     return totalWarnings;
 }
