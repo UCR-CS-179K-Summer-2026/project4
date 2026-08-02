@@ -1,3 +1,4 @@
+#include "commentChecker.h"
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -5,25 +6,19 @@
 #include <vector>
 
 
-int commentChecker(std::ifstream& inputFile){
+int commentChecker::analyzeSource(const ParsedSource& parsedSource){
     
     int warningCounter = 0;
-    
-    //check if inputFile is reading
-    if (!inputFile.is_open()) {
-        
-        std::cout << "Error: commentChecker could not open file " << std::endl;
-        return 0;
-    }
-
     std::vector<std::string> lines;//will contain input file as a vector of string lines
     std::string line;//will hold each line as it gets added to fileContent
-    
-    //copy inputFile's contents into lines vector one line at a time
-    while (std::getline(inputFile, line)){
-        
+
+
+    //go throught parsedSource line by line
+    std::istringstream stream(parsedSource.rawSource);
+    while (std::getline(stream, line)) {
         lines.push_back(line);
     }
+
 
     std::regex functionRegex(R"(^[a-zA-Z_][a-zA-Z0-9_<>\s\*\&]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^\)]*\))");//regex to find functions
     std::regex commentRegex(R"((\/\/|\/\*|\*))");//regex to find comments
