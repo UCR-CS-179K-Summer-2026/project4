@@ -80,9 +80,20 @@ Output: Warning: Uncommented function exFunction
 
 ### Redundant Code
 
-5. Redundant code: This feature will detect code that can be removed or refined without affecting its desired behavior, otherwise known as redundant code. Some cases include excessive conditional statements,dead/unused variables, redundant initialization of variables, and excessive boolean logic. There are variations of redundant code that may be expanded upon depending on the progress of the project.
+5. Redundant code: This feature will detect code that can be removed or refined without affecting its desired behavior, otherwise known as redundant code. Some cases include excessive conditional statements, dead/unused variables, redundant initialization of variables, and excessive boolean logic. There are variations of redundant code that may be expanded upon depending on the progress of the project.
 
-Conditional Statements
+**Dead/Unused Code**
+User story: As a developer, I want to be warned when I declare a variable but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
+```
+int calculateCost(int itemPrice, int tax) {
+	int processFee = 5;
+	int total = itemPrice + tax;
+	return total;
+}
+```
+Warning: Redundant dead/unused code. "processFee" is declared but never used. (line 2)
+
+**Conditional Statements**
 ```
 string numType(int number) {
 	if (number > 0) {
@@ -97,22 +108,9 @@ string numType(int number) {
 }
 ```
 
-Output:
-Warning: Redundant conditional statement. Modify the function to use “if”, “if else”, and “else” for “number” conditions.
+Output: Warning: Redundant conditional statement. Modify the function to use “if”, “if else”, and “else” for “number” conditions.
 
-Dead/Unused Code
-```
-int calculateCost(int itemPrice, int tax) {
-	int processFee = 5;
-	int total = itemPrice + tax;
-	return total;
-}
-```
-
-Output:
-Warning: Redundant dead/unused code. “processFee” is declared but never used.
-
-Initialization
+**Initialization**
 ```
 main() {
 	int totalScore = 0;
@@ -120,10 +118,9 @@ main() {
 }
 ```
 
-Output:
-Warning: Redundant initialization. Initialize with “int totalScore = calculateFinalScore();” 
+Output: Warning: Redundant initialization. Initialize with “int totalScore = calculateFinalScore();” 
 
-Boolean
+**Boolean**
 
 ```
 bool isEligible(int age) {
