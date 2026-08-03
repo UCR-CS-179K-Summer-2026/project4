@@ -1,4 +1,4 @@
-**Week 1 Sprint Goals:**
+# Week 1 Sprint Goals:
 
 Stuart Arief:
 
@@ -20,7 +20,37 @@ Jimmy Munoz:
 
 Aelynn Xu:
 
-* implement reading through the input file and identifying functions with regex  
-* identify comments  
-* if there is time, begin basic work on detecting if each function has at least one comment
+* Implement reading through the input file and identifying functions with regex  
+* Identify comments  
+* If there is time, begin basic work on detecting if each function has at least one comment
 
+# Week 2 Sprint Goals:
+
+Stuart Arief:
+
+* Implement functionality to allow for repeated blocks of code with same logic but different variable names to be detected
+* Modify main.cpp so that it could process multiple input files as opposed to just one
+* Update system architecture
+* Update test cases to cover more edge cases
+
+Rebecca Jennings:
+
+* Implement extensive test cases for identifying unused/dead variables in a c++ file
+* Modify redundantCodeChecker.cpp when we shift to new parser library
+* Modify redundantCodeChecker.cpp to identify unused/dead functions in a c++
+* Test with C++ file to identify multiple base case scenarios for unused/dead functions
+* Create UML Diagram and update documentation
+
+Jimmy Munoz:
+
+* Use regex for finding poor variable names instead of relying on a map with every possible case
+* Add more test cases (function parameter names, boolean names, and abbreviations)
+* Update parser to include function parameters in the DeclaredVariable array
+
+Aelynn Xu:
+
+* Write function to strip strings from source code in parser
+* Modify parser so its functions are available for separate use in detectors
+* Update commentchecker using aforementioned function so it will not be tripped up by brackets in string literals
+* Update commentChecker so that it will not be tripped up by brackets in ‘’ chars
+* Update commentchecker so that it will not be tripped up by brackets in comments
