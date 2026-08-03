@@ -9,7 +9,8 @@
 class RedundantCodeChecker : public Detector {
     private:
         int countVariableUsages(const std::string& body, const std::string& name);
-        int countFunctionCalls(const std::string& body, const std::string& name);
+        int countFunctionCalls(const std::string& source, const std::string& name);
+        std::string escapeRegex(const std::string& s);    
     public:
         RedundantCodeChecker() = default;
         int analyzeSource(const ParsedSource& parsedSource) override;
