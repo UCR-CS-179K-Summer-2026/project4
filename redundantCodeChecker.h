@@ -8,7 +8,8 @@
 // function (redundant/dead code).
 class RedundantCodeChecker : public Detector {
     private:
-        int countUsages(const std::string& body, const std::string& name);
+        int countVariableUsages(const std::string& body, const std::string& name);
+        int countFunctionCalls(const std::string& body, const std::string& name);
     public:
         RedundantCodeChecker() = default;
         int analyzeSource(const ParsedSource& parsedSource) override;
