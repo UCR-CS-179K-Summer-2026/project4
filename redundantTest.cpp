@@ -14,7 +14,7 @@ int processOrder(int quantity, int price) {
 }
 
 // Case 3: multi-declarator line with a mix of used and unused
-int computeStat(int a, int b) {
+int computeStats(int a, int b) {
     int minVal = a, maxVal = b, average = 0;
     return minVal + maxVal;
 }
