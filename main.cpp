@@ -17,7 +17,7 @@ int main() {
         return 1;
     }
 
-    // // All detector functions called here and added to smellyCount
+    // All detector functions called here and added to smellyCount
     smellyCount += SmellyCodeDetector(inputFile).runDetectors(); //run all detectors
     
     if (smellyCount > 0){ //smelly code found
