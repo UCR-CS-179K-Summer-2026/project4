@@ -25,7 +25,17 @@ int commentEndOfFunction(int num){
 }//comment on end bracket line
 
 
-int commentedBeforeFunction(int num){
+int commentedAfterBracketString(int num){
     std::string testerString = "}}}";
     return num;//previous line has closing brackets so if strings are not stripped the checker will not see this comment
+}
+
+int inlineCommentedBrackets(int num){
+    //}}}}}
+    return num;
+}
+
+int blockCommentedBrackets(int num){
+    /*}}}there are brackets in this comment*/
+    return num;
 }
