@@ -18,6 +18,7 @@ class PoorNameChecker : public Detector {
         bool isPoorName(const std::string& name);
         std::vector<std::string> recommendNames(const std::string& name);
         std::unordered_map<std::string, SuggestedNamesInfo> poorNamesMap;
+        void outputErrorMessage(const std::string& name, const int& line);
     public:
         PoorNameChecker();
         int analyzeSource(const ParsedSource& parsedSource) override;
