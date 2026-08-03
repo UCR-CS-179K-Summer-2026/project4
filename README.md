@@ -82,8 +82,9 @@ Output: Warning: Uncommented function exFunction
 
 5. Redundant code: This feature will detect code that can be removed or refined without affecting its desired behavior, otherwise known as redundant code. Some cases include excessive conditional statements, dead/unused variables, redundant initialization of variables, and excessive boolean logic. There are variations of redundant code that may be expanded upon depending on the progress of the project.
 
-**Dead/Unused Code - Variables and Functions**
-User story: As a developer, I want to be warned when I declare a variable but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
+**Dead/Unused Code - Variables**
+
+**User story:** As a developer, I want to be warned when I declare a variable but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
 ```
 int calculateCost(int itemPrice, int tax) {
 	int processFee = 5;
@@ -93,7 +94,9 @@ int calculateCost(int itemPrice, int tax) {
 ```
 Warning: Redundant dead/unused code. The variable "processFee" is declared but never used. (line 2)
 
-User story: As a developer, I want to be warned when I declare a function but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
+**Dead/Unused Code - Functions**
+
+**User story:** As a developer, I want to be warned when I declare a function but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
 ```
 int calculateCost(int itemPrice, int tax) {
     int total = itemPrice + tax;
