@@ -8,17 +8,23 @@
 
 PoorNameChecker::PoorNameChecker() {
     poorNamesMap = {
-        {"temp", {{"temporary", "tempVar"}, "Generic temporary variable name"}},
-        {"data", {{"info", "dataset"}, "Overly generic name"}},
-        {"var", {{"variable", "varName"}, "Too generic and non-descriptive"}},
-        {"test", {{"testCase", "unitTest"}, "Non-descriptive test variable name"}},
+        {"temp", {{"currentValue", "temporaryValue"}, "Generic temporary variable name"}},
+        {"data", {{"userData", "apiData"}, "Does not describe what kind of data it holds"}},
+        {"var", {{"variable", "varName"}, "Does not describe the purpose of the variable"}},
+        {"test", {{"testCase", "unitTest"}, "Does not describe what the test is for"}},
         {"x", {{"coordinateX", "xValue"}, "Single-letter variable name"}},
         {"y", {{"coordinateY", "yValue"}, "Single-letter variable name"}},
         {"z", {{"coordinateZ", "zValue"}, "Single-letter variable name"}},
+        {"flag", {{"isTrue", "isSet"}, "Does not describe the purpose of the flag"}},
+        {"m", {{"rows", "maxValue"}, "Non-descriptive variable name"}},
+        {"n", {{"columns", "count"}, "Non-descriptive variable name"}},
     };
 }
 
 bool PoorNameChecker::isPoorName(const std::string& name) {
+    if(name.length() < 3 && name != "id" && name != "i" && name != "j" && name != "k") {
+        return true;
+    }
     return poorNamesMap.find(name) != poorNamesMap.end();
 }
 std::vector<std::string> PoorNameChecker::recommendNames(const std::string& name) {
@@ -27,6 +33,21 @@ std::vector<std::string> PoorNameChecker::recommendNames(const std::string& name
         return it->second.suggestedNames;
     }
     return {};
+}
+
+void PoorNameChecker::outputErrorMessage(const std::string& name, const int& line) {
+    if(poorNamesMap.find(name) != poorNamesMap.end()) {
+        const SuggestedNamesInfo& info = poorNamesMap[name];
+        std::cout << "Warning: Variable name '" << name << "' is considered poor. Reason: " << info.reason << ". Suggested names: ";
+        for (const auto& suggestedName : info.suggestedNames) {
+            std::cout << suggestedName << ", ";
+        }
+    } else if(name.length() < 3 && name != "id") {
+        std::cout << "Warning: Variable name '" << name << "' is too short. Consider using a more descriptive name.";
+
+    }
+
+    std::cout << " (line " << line << ")\n\n";
 }
 
 int PoorNameChecker::analyzeSource(const ParsedSource& parsedSource) {
@@ -40,14 +61,7 @@ int PoorNameChecker::analyzeSource(const ParsedSource& parsedSource) {
         for (const auto& decl : declarations) {
             if(isPoorName(decl.name)) {
                 int actualLine = startLine + decl.line - 1;
-                std::cout << "Warning: Poor variable name \"" << decl.name
-                          << "\" found. Suggested alternatives: ";
-                auto suggestions = recommendNames(decl.name);
-                for (size_t i = 0; i < suggestions.size(); ++i) {
-                    std::cout << suggestions[i];
-                    if (i < suggestions.size() - 1) std::cout << ", ";
-                }
-                std::cout << ". (line " << actualLine << ")\n";
+                outputErrorMessage(decl.name, actualLine);
                 ++warningCount;
             }
         }
