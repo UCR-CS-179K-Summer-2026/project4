@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-
 int commentChecker::analyzeSource(const ParsedSource& parsedSource){
     
     int warningCounter = 0;
@@ -15,7 +14,9 @@ int commentChecker::analyzeSource(const ParsedSource& parsedSource){
 
 
     //go throught parsedSource line by line
-    std::istringstream stream(parsedSource.source);
+    std::string noStrings = parser.stripStrings(parsedSource.source);
+    std::istringstream stream(noStrings);//TODO: use stripStrings to prevent errors from string literals
+
     while (std::getline(stream, line)) {
         lines.push_back(line);
     }
