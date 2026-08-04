@@ -1,0 +1,552 @@
+:root {
+  --bg: #10141a;
+  --bg-elevated: #171c24;
+  --bg-card: #1b212a;
+  --border: #272e39;
+  --text: #e7e4da;
+  --text-muted: #9aa1ac;
+  --accent-warn: #e8a33d;   /* warning amber   */
+  --accent-pass: #52a99c;   /* clean / pass    */
+  --accent-smell: #d2665a;  /* smell / error   */
+
+  --font-display: "IBM Plex Mono", ui-monospace, monospace;
+  --font-body: "IBM Plex Sans", -apple-system, sans-serif;
+
+  --max-width: 900px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .logo, .section-label, .type-kind {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+code {
+  font-family: var(--font-display);
+  font-size: 0.9em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  color: var(--accent-warn);
+}
+
+a { color: inherit; }
+
+/* underline signature: a linter-style squiggle, used sparingly */
+.squiggle {
+  text-decoration: underline wavy var(--accent-smell);
+  text-underline-offset: 4px;
+}
+
+/* ---------------------------------------------
+   Header / Nav
+--------------------------------------------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(16, 20, 26, 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logo {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+.logo-accent { color: var(--accent-warn); }
+.logo-paren { color: var(--text-muted); }
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.site-nav a {
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 0.25rem 0.1rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  color: var(--text);
+  border-color: var(--accent-warn);
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+}
+.nav-toggle span {
+  width: 20px;
+  height: 2px;
+  background: var(--text);
+  display: block;
+}
+
+/* ---------------------------------------------
+   Layout helpers
+--------------------------------------------- */
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.section, .hero {
+  width: 100%;
+  max-width: var(--max-width);
+  padding: 5rem 1.5rem;
+  text-align: center;
+}
+
+.section + .section { border-top: 1px solid var(--border); }
+
+.section-label {
+  color: var(--accent-pass);
+  font-size: 0.8rem;
+  margin: 0 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.9rem;
+  margin: 0 0 1rem;
+}
+
+.section-intro {
+  max-width: 640px;
+  margin: 0 auto 3rem;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------
+   Hero
+--------------------------------------------- */
+.hero {
+  padding-top: 6rem;
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  color: var(--accent-warn);
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.15;
+  margin: 0 0 1.25rem;
+}
+
+.hero-sub {
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.terminal {
+  text-align: left;
+  max-width: 640px;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg-elevated);
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot-a { background: var(--accent-smell); }
+.dot-b { background: var(--accent-warn); }
+.dot-c { background: var(--accent-pass); }
+
+.terminal-title {
+  margin-left: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.terminal-body {
+  margin: 0;
+  padding: 1.1rem 1.2rem 1.3rem;
+  background: var(--bg-card);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.t-prompt { color: var(--accent-pass); }
+.t-warn { color: var(--accent-warn); }
+.t-smell { color: var(--accent-smell); }
+.t-pass { color: var(--accent-pass); }
+.t-dim { color: var(--text-muted); }
+
+/* ---------------------------------------------
+   Figures (architecture / flow / uml)
+--------------------------------------------- */
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(700px, 10fr));
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.figure-card { margin: 0; }
+
+.figure-frame {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-card);
+  aspect-ratio: 30 / 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.figure-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+.figure-placeholder span {
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+}
+
+.figure-card figcaption {
+  margin-top: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------------------------------------------
+   Class / struct type cards
+--------------------------------------------- */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  text-align: left;
+}
+
+.type-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-muted);
+  border-radius: 8px;
+  padding: 1.25rem 1.4rem;
+}
+
+.type-struct { border-left-color: var(--accent-pass); }
+.type-class { border-left-color: var(--accent-warn); }
+.type-abstract { border-left-color: var(--accent-smell); }
+
+.type-kind {
+  margin: 0 0 0.3rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.type-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.extends {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.type-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.type-card li + li { margin-top: 0.5rem; }
+
+/* ---------------------------------------------
+   Module cards
+--------------------------------------------- */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  text-align: left;
+}
+
+.module-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.4rem;
+}
+
+.module-card h3 {
+  margin: 0 0 0.9rem;
+  font-size: 0.95rem;
+  color: var(--accent-warn);
+}
+
+.fn-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.fn-list li + li { margin-top: 0.6rem; }
+
+/* ---------------------------------------------
+   Tag cards (apis / algorithms)
+--------------------------------------------- */
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.1rem;
+  text-align: left;
+}
+
+.tag-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.1rem 1.25rem;
+}
+
+.tag-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--accent-pass);
+}
+
+.tag-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------
+   Sprint timeline
+--------------------------------------------- */
+.timeline {
+  position: relative;
+  text-align: left;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-left: 2.5rem;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.95rem;
+  top: 0.3rem;
+  bottom: 0.3rem;
+  width: 2px;
+  background: var(--border);
+}
+
+.sprint {
+  position: relative;
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 2.25rem;
+}
+.sprint:last-child { margin-bottom: 0; }
+
+.sprint-marker {
+  position: absolute;
+  left: -2.5rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-warn);
+  color: var(--accent-warn);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sprint-body {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.1rem 1.4rem;
+  width: 100%;
+}
+
+.sprint-meta {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.sprint-body h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  color: var(--accent-pass);
+}
+
+.sprint-body ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.sprint-body li + li { margin-top: 0.35rem; }
+
+/* ---------------------------------------------
+   Team
+--------------------------------------------- */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.1rem;
+}
+
+.team-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+.team-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.team-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------
+   Footer
+--------------------------------------------- */
+.site-footer {
+  text-align: center;
+  padding: 2.5rem 1.5rem 3rem;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------------------------------------------
+   Focus visibility
+--------------------------------------------- */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent-warn);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------
+   Responsive
+--------------------------------------------- */
+@media (max-width: 720px) {
+  .nav-toggle { display: flex; }
+
+  .site-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease;
+  }
+
+  .site-nav.is-open {
+    max-height: 400px;
+  }
+
+  .site-nav a {
+    width: 100%;
+    text-align: center;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section, .hero { padding: 3.5rem 1.25rem; }
+}

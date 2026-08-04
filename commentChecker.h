@@ -8,10 +8,11 @@
 #include <vector>
 #include "ParsedSource.h"
 #include "Detector.h"
+#include "parser.h"
 
 class commentChecker : public Detector {
-//    private:
-
+    private:
+        Parser parser;
 
     public: 
         int analyzeSource(const ParsedSource& parsedSource) override;

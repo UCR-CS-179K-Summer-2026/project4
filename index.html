@@ -1,145 +1,377 @@
-<div>
-  <h2>System Architecture</h2>
-  <img src="CS179K_System_Architecture_V2.jpeg" alt="System Architecture">
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmellyCodeDetector — CS179K</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-<div>
-  <h2>Flow Diagram</h2>
-</div>
-
-<div>
-  <h2>UML Diagram</h2>
-  <p>(in progress)</p>
-</div>
-
-<div>
-  <h2>Class/struct structure</h2>
-
-  <div>
-    <p>DeclaredVariable (struct)</p>
-    <ul>
-      <li><strong>name</strong> - the variable's identifier</li>
-      <li><strong>line</strong> - the line number (relative to the start of its function's body) where it was declared</li>
-    </ul>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="logo" href="#top">Smelly<span class="logo-accent">CodeDetector</span><span class="logo-paren">()</span></a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" id="siteNav">
+      <a href="#overview">Overview</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#structures">Class&nbsp;Structure</a>
+      <a href="#modules">Modules</a>
+      <a href="#apis">APIs</a>
+      <a href="#algorithms">Algorithms</a>
+      <a href="#sprints">Sprints</a>
+      <a href="#team">Team</a>
+    </nav>
   </div>
+</header>
 
-  <div>
-    <p>FunctionInfo (struct)</p>
-    <ul>
-      <li><strong>functionStart</strong> - the function's signature/declaration text (e.g. int calculateCost(int itemPrice, int tax) {)</li>
-      <li><strong>functionBody</strong> - the full text of the function's body</li>
-      <li><strong>line</strong> - the line number where the function body begins</li>
-      <li><strong>variables</strong> - a vector of DeclaredVariable, populated by Parser with every variable declared inside this function</li>
-    </ul>
-  </div>
+<main id="top">
 
-  <div>
-    <p>ParsedSource (struct)</p>
-    <ul>
-      <li><strong>source</strong> - the raw, unmodified source code (including comments) — kept as-is since some detectors, like the comment checker, need to inspect comments directly</li>
-      <li><strong>functions</strong> - a vector of FunctionInfo, one per parsed function in the file</li>
-    </ul>
-  </div>
+  <!-- HERO -->
+  <section class="hero" id="overview">
+    <p class="eyebrow">CS179K &middot; Software Engineering</p>
+    <h1>Warnings your compiler<br>won't give you.</h1>
+    <p class="hero-sub">
+      A static analysis tool that reads a single C++ source file once, then hands the parsed
+      result to a set of independent detectors&nbsp;— each one hunting a different code smell,
+      from dead variables to copy-pasted blocks, and printing what it finds straight to the terminal.
+    </p>
 
-  <div>
-    <p>Parser (class)</p>
-    <ul>
-      <li><strong>parse()</strong> - the only public method; takes the opened input file, reads it once, and returns a fully-populated ParsedSource (source + functions + each function's declared variables). This is called exactly once in main.cpp, and the resulting ParsedSource is reused by every detector, instead of each detector re-parsing the file independently.</li>
-    </ul>
-  </div>
+    <div class="terminal" role="img" aria-label="Example terminal output from the detector">
+      <div class="terminal-bar">
+        <span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
+        <span class="terminal-title">main.cpp — smellycodedetector</span>
+      </div>
+      <pre class="terminal-body"><span class="t-prompt">$</span> g++ -std=c++17 *.cpp -o main
+      <pre class="terminal-body"><span class="t-prompt">$</span> ./main
+<span class="t-warn">Warning:</span> Redundant dead/unused code. The variable 'x' is declared but never used <span class="t-dim">(line 12)</span>
+<span class="t-warn">Warning:</span> Repeated code detected in lines: 3 to 5, 6 to 8
+<span class="t-dim">Repeated code:</span>
+<span class="t-dim">result = a + b;</span>
+<span class="t-dim">result = a - b;</span>
+<span class="t-dim">result = a * b;</span>
+<span class="t-warn">Warning:</span> variable name 'a' is considered poor. Reason: Non-descriptive variable name. Suggested names: rows, maxValue. <span class="t-dim">(line 18)</span>
+<span class="t-warn">Warning:</span> function in line 'calculateCost' has no comments.
+<span class="t-pass">4 Smelly code(s) found</span> in the file: filename.cpp</pre>
+    </div>
+  </section>
 
-  <div>
-    <p>Detector (abstract base class)</p>
-    <ul>
-      <li><strong>analyzeSource(const ParsedSource&)</strong> - pure virtual; every detector subclass implements this to scan the shared parsed data and return its warning count, printing warnings to the terminal as it finds them</li>
-      <li>Virtual destructor, since detectors are used polymorphically</li>
-    </ul>
-  </div>
+  <!-- ARCHITECTURE -->
+  <section class="section" id="architecture">
+    <p class="section-label">// 01 &nbsp;pipeline</p>
+    <h2>Architecture</h2>
+    <p class="section-intro">
+      One parse, many detectors. The source file is read exactly once and turned into a shared
+      <code>ParsedSource</code>; every detector below just reads from it.
+    </p>
 
-  <div>
-    <p>RedundantCodeChecker (extends Detector)</p>
-    <ul>
-      <li>Implements analyzeSource() to check each function's already-parsed variables for whether they're referenced again elsewhere in that function's body</li>
-    </ul>
-  </div>
+    <div class="figure-grid">
 
-  <div>
-    <p>SmellyCodeDetector</p>
-    <ul>
-      <li>Owns one Parser and one instance of each individual detector (e.g. RedundantCodeChecker, PoorNameChecker)</li>
-      <li>Constructor takes the opened input file and immediately parses it via Parser::parse(), storing the result in parsedSource</li>
-      <li>runDetectors() - calls analyzeSource(parsedSource) on every detector and sums their returned warning counts into one total</li>
-    </ul>
-  </div>
-</div>
+      <figure class="figure-card">
+        <div class="figure-frame">
+          <img src="CS179K_System_Architecture_V2.jpeg" alt="Flow diagram of the code smell detector">
+        </div>
+        <figcaption>Flow Diagram</figcaption>
+      </figure>
 
-<div>
-  <h2>Inferences of Modules</h2>
+      <figure class="figure-card">
+        <div class="figure-frame">
+          <img src="CS179K-UML.png" alt="UML diagram of the code smell detector">
+        </div>
+        <figcaption>UML Diagram</figcaption>
+      </figure>
+    </div>
+  </section>
 
-  <div>
-    <p>Parser.cpp</p>
-    <ul>
-      <li>splitIntoFunctionBodies() - finds functions in the source code file and isolates each function's body, along with its starting line, into a FunctionInfo (so variables in different functions aren't mixed up with each other).</li>
-      <li>stripComments() - removes // and /* */ comments before analysis, so commented-out code doesn't produce false declarations or false usages</li>
-      <li>findDeclarations() - finds variable declaration statements within a function body (e.g. int x;, int x = 5;, int a, b;) and extracts each declared variable's name and line number into a DeclaredVariable.</li>
-      <li>buildTypePattern() - builds the regex pattern used by findDeclarations() to recognize supported type keywords (int, float, bool, etc.) at the start of a declaration.</li>
-      <li>parse() - orchestrates the above: reads the input file in one go, strips comments, splits into function bodies, attaches each function's declared variables, and returns a ParsedSource shared by every detector.</li>
-    </ul>
-  </div>
+  <!-- CLASS / STRUCT STRUCTURE -->
+  <section class="section" id="structures">
+    <p class="section-label">// 02 &nbsp;data model</p>
+    <h2>Class &amp; Struct Structure</h2>
+    <p class="section-intro">
+      Structs carry data between stages; classes carry behavior. Every detector is a
+      subclass of the same abstract <code>Detector</code>, so <code>SmellyCodeDetector</code>
+      can run all of them the same way.
+    </p>
 
-  <div>
-    <p>poorNaming.cpp</p>
-    <ul>
-      <li>searchVariableNames() - searches for all variable names found in the source code. Returns all of the found variables</li>
-      <li>isPoor() - Accepts a string and determines whether the string is poor or not. It will return an empty list if not poor, or a list of recommendations if it is poor.</li>
-    </ul>
-  </div>
+    <div class="type-grid">
 
-  <div>
-    <p>repeatedCode.cpp</p>
-    <ul>
-      <li>stripBlockComment() - detects and removes blocked comments</li>
-      <li>stripLineComment() - detects and removes single line comments</li>
-      <li>normalizeWhiteSpace() - deletes whitespace to prevent false negatives</li>
-      <li>extractCodeLines() - using the cleaned code regex, return the vector containing the lines of code</li>
-      <li>reportRepeatedBlock() - from the extracted code lines, check for repeated blocks. If found, emit the warning message.</li>
-    </ul>
-  </div>
+      <article class="type-card type-struct">
+        <p class="type-kind">struct</p>
+        <h3>DeclaredVariable</h3>
+        <ul>
+          <li><code>name</code> — the variable's identifier</li>
+          <li><code>line</code> — line number, relative to the start of its function's body, where it was declared</li>
+        </ul>
+      </article>
 
-  <div>
-    <p>redundantCodeChecker.cpp</p>
-    <ul>
-      <li>analyzeSource() - inherited from Detector; iterates over every FunctionInfo in the shared ParsedSource and, for each of its already-parsed variables, checks whether that variable is ever referenced again.</li>
-      <li>countUsages() - counts how many times a given variable name appears as a whole word within a function's body, used to determine whether a declared variable is ever referenced again.</li>
-    </ul>
-  </div>
+      <article class="type-card type-struct">
+        <p class="type-kind">struct</p>
+        <h3>FunctionInfo</h3>
+        <ul>
+          <li><code>functionStart</code> — the function's signature text, e.g. <code>int calculateCost(int itemPrice, int tax) {</code></li>
+          <li><code>functionBody</code> — the full text of the function's body</li>
+          <li><code>line</code> — the line number where the function body begins</li>
+          <li><code>variables</code> — a vector of <code>DeclaredVariable</code>, populated by <code>Parser</code></li>
+        </ul>
+      </article>
 
-  <div>
-    <p>commentChecker.cpp</p>
-    <ul>
-      <li>analyzeSource() - inherited from Detector, iterates over source from parser to find uncommented functions. Supports comments in the line before a function, not counting whitespace, inline comments, comments in the body of the function, and comments at the end of the function (closing bracket line)</li>
-    </ul>
-  </div>
-</div>
+      <article class="type-card type-struct">
+        <p class="type-kind">struct</p>
+        <h3>ParsedSource</h3>
+        <ul>
+          <li><code>source</code> — the raw, unmodified source (comments included), since some detectors need to inspect comments directly</li>
+          <li><code>functions</code> — a vector of <code>FunctionInfo</code>, one per parsed function</li>
+        </ul>
+      </article>
 
-<div>
-  <h2>API's and Their Usage</h2>
-  <ul>
-    <li>Regex - used to strip comments, identify function boundaries, find variable declaration statements, and count variable usages within the source file.</li>
-    <li>Fstream - enables our input to be read from a C++ source file (std::ifstream).</li>
-    <li>Sstream - std::stringstream reads the entire file into one string in a single pass (rdbuf()); std::istringstream is used to split a function's body back into individual lines when locating declaration line numbers.</li>
-    <li>Vector - stores the parsed structures shared across all detectors: ParsedSource::functions (a vector of FunctionInfo), and FunctionInfo::variables (a vector of DeclaredVariable), the candidates each detector inspects for smells.</li>
-    <li>String - used to store the raw source code, each function's body text, individual variable names, and the regex pattern strings themselves.</li>
-  </ul>
-</div>
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>Parser</h3>
+        <ul>
+          <li><code>parse()</code> — the only public method; reads the opened input file once and returns a fully populated <code>ParsedSource</code>. Called exactly once in <code>main.cpp</code> and shared by every detector.</li>
+        </ul>
+      </article>
 
-<div>
-  <h2>Algorithms and Optimizations</h2>
-  <ul>
-    <li>Parallelism - Once the source code is parsed once by Parser, SmellyCodeDetector::runDetectors() currently calls each detector's analyzeSource() sequentially.</li>
-    <li>Hashmaps - instead of using pairwise comparison, we use a hashmap to check for cases such as repetitions.</li>
-    <li>Single compilation for regex - Applied for the fixed, name-independent patterns: declRegex, declaratorRegex, and funcStartRegex in Parser.cpp. They are all declared static const, so they compile once on first use rather than on every call.</li>
-    <li>Memoization - Function bodies are parsed and stored once in each FunctionInfo::functionBody, and declared variables are stored once in FunctionInfo::variables, both computed a single time in Parser::parse() and reused by every detector afterward.</li>
-    <li>Single-read files - Parser::parse() reads the entire input file into one string in a single pass via rdbuf(). Parsing happens once in main.cpp (via SmellyCodeDetector) instead of once per detector, so the file is read exactly once for the whole program.</li>
-  </ul>
-</div>
+      <article class="type-card type-abstract">
+        <p class="type-kind">abstract class</p>
+        <h3>Detector</h3>
+        <ul>
+          <li><code>analyzeSource(const ParsedSource&amp;)</code> — pure virtual; every subclass scans the shared parsed data and returns its warning count, printing as it finds them</li>
+          <li>Virtual destructor, since detectors are used polymorphically</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>RedundantCodeChecker <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Checks each function's already-parsed variables for whether they're referenced again anywhere in that function's body</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>SmellyCodeDetector</h3>
+        <ul>
+          <li>Owns one <code>Parser</code> and one instance of every detector (<code>RedundantCodeChecker</code>, <code>PoorNameChecker</code>, ...)</li>
+          <li>Constructor takes the opened input file and immediately parses it, storing the result in <code>parsedSource</code></li>
+          <li><code>runDetectors()</code> — calls <code>analyzeSource(parsedSource)</code> on every detector and sums the returned warning counts</li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- MODULES -->
+  <section class="section" id="modules">
+    <p class="section-label">// 03 &nbsp;implementation</p>
+    <h2>Modules</h2>
+    <p class="section-intro">One file per concern. Each module below owns a single smell, or the parsing that feeds all of them.</p>
+
+    <div class="module-grid">
+
+      <article class="module-card">
+        <h3>Parser.cpp</h3>
+        <ul class="fn-list">
+          <li><code>splitIntoFunctionBodies()</code> — isolates each function's body and starting line into a <code>FunctionInfo</code></li>
+          <li><code>stripComments()</code> — removes <code>//</code> and <code>/* */</code> comments before analysis</li>
+          <li><code>findDeclarations()</code> — finds declaration statements (<code>int x;</code>, <code>int x = 5;</code>, <code>int a, b;</code>) and extracts name + line</li>
+          <li><code>buildTypePattern()</code> — builds the regex recognizing supported type keywords</li>
+          <li><code>parse()</code> — orchestrates all of the above into one shared <code>ParsedSource</code></li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>redundantCodeChecker.cpp</h3>
+        <ul class="fn-list">
+          <li><code>analyzeSource()</code> — iterates every <code>FunctionInfo</code> and checks each declared variable for later use</li>
+          <li><code>countUsages()</code> — counts whole-word occurrences of a variable name within a function's body</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>poorNaming.cpp</h3>
+        <ul class="fn-list">
+          <li><code>searchVariableNames()</code> — collects every variable name found in the source</li>
+          <li><code>isPoor()</code> — flags a name as poor, returning recommendations if so</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>repeatedCode.cpp</h3>
+        <ul class="fn-list">
+          <li><code>stripBlockComment()</code> / <code>stripLineComment()</code> — remove block and line comments</li>
+          <li><code>normalizeWhiteSpace()</code> — strips whitespace to avoid false negatives</li>
+          <li><code>extractCodeLines()</code> — returns the cleaned lines of code</li>
+          <li><code>reportRepeatedBlock()</code> — checks the extracted lines for repeated blocks and emits a warning</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>commentChecker.cpp</h3>
+        <ul class="fn-list">
+          <li><code>analyzeSource()</code> — finds uncommented functions; recognizes leading comments, inline comments, body comments, and trailing comments at the closing brace</li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- APIS -->
+  <section class="section" id="apis">
+    <p class="section-label">// 04 &nbsp;dependencies</p>
+    <h2>APIs &amp; Their Usage</h2>
+    <div class="tag-grid">
+      <div class="tag-card"><h3>Regex</h3><p>Strips comments, identifies function boundaries, finds declaration statements, counts variable usages.</p></div>
+      <div class="tag-card"><h3>fstream</h3><p>Reads the input from a C++ source file via <code>std::ifstream</code>.</p></div>
+      <div class="tag-card"><h3>sstream</h3><p><code>stringstream</code> reads the whole file in one pass; <code>istringstream</code> splits a function body back into lines to locate declarations.</p></div>
+      <div class="tag-card"><h3>vector</h3><p>Holds the shared structures every detector inspects: <code>ParsedSource::functions</code> and <code>FunctionInfo::variables</code>.</p></div>
+      <div class="tag-card"><h3>string</h3><p>Stores raw source, function bodies, variable names, and the regex pattern strings themselves.</p></div>
+    </div>
+  </section>
+
+  <!-- ALGORITHMS -->
+  <section class="section" id="algorithms">
+    <p class="section-label">// 05 &nbsp;performance</p>
+    <h2>Algorithms &amp; Optimizations</h2>
+    <div class="tag-grid">
+      <div class="tag-card"><h3>Single-read files</h3><p><code>Parser::parse()</code> reads the entire input into one string in a single pass via <code>rdbuf()</code> — the file is read exactly once for the whole program.</p></div>
+      <div class="tag-card"><h3>Memoization</h3><p>Function bodies and declared variables are each computed once in <code>Parser::parse()</code> and reused by every detector afterward.</p></div>
+      <div class="tag-card"><h3>Single regex compilation</h3><p>Fixed patterns (<code>declRegex</code>, <code>declaratorRegex</code>, <code>funcStartRegex</code>) are <code>static const</code>, compiling once instead of on every call.</p></div>
+      <div class="tag-card"><h3>Hashmaps</h3><p>Used in place of pairwise comparison to detect repetitions.</p></div>
+      <div class="tag-card"><h3>Parallelism</h3><p><code>runDetectors()</code> currently runs each detector's <code>analyzeSource()</code> sequentially — a candidate for future parallel work.</p></div>
+    </div>
+  </section>
+
+  <!-- SPRINTS -->
+  <section class="section" id="sprints">
+    <p class="section-label">// 06 &nbsp;progress log</p>
+    <h2>Sprints</h2>
+    <p class="section-intro">What shipped, sprint by sprint. Replace the placeholders below with your own entries.</p>
+
+    <div class="timeline">
+
+      <article class="sprint">
+        <div class="sprint-marker">01</div>
+        <div class="sprint-body">
+          <p class="sprint-meta">Sprint 1 &middot; <span class="sprint-dates">7/27/2026 - 8/2/2026</span></p>
+          <h3>// Stuart Arief</h3>
+          <ul>
+            <li>Implement working ‘proof of concept’ for the entire detector.</li>
+            <li>Partially functional detection of ‘multiple lines of repeated code’ with basic base cases (If a block of code containing 3 lines of code is repeated in different parts of the input file, emit the warning message).</li>
+          </ul>
+          <h3>// Rebecca Jennings</h3>
+          <ul>
+            <li>Implement a basic detector for the redundant code case of unused/dead code (variables).</li>
+            <li>Test with C++ file to identify one unused/dead code in main().</li>
+            <li>Test with C++ file to identify multiple unused/dead code in main().</li>
+            <li>Test C++ file to identify multiple unused/dead code across multiple functions, conditional statements, etc.</li>
+          </ul>
+          <h3>// Jimmy Munoz</h3>
+          <ul>
+            <li>Implement the basic functionality to identify a poor variable name. Will focus on loops for now.</li>
+            <li>Once identified, recommend a more sufficient variable name rather than an ambiguous one.</li>
+            <li>Expand to more test cases in this scope. Find a way to analyze the code to recommend a more sufficient variable name when necessary.</li>
+          </ul>
+          <h3>// Aelynn Xu</h3>
+          <ul>
+            <li>Implement reading through the input file and identifying functions with regex.</li>
+            <li>Identify comments.</li>
+            <li>If there is time, begin basic work on detecting if each function has at least one comment.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="sprint">
+        <div class="sprint-marker">02</div>
+        <div class="sprint-body">
+          <p class="sprint-meta">Sprint 2 &middot; <span class="sprint-dates">8/3/2026 - 8/9/2026</span></p>
+          <h3>// Stuart Arief</h3>
+          <ul>
+            <li>Implement functionality to allow for repeated blocks of code with same logic but different variable names to be detected.</li>
+            <li>Modify main.cpp so that it could process multiple input files as opposed to just one.</li>
+            <li>Update system architecture.</li>
+            <li>Update test cases to cover more edge cases.</li>
+          </ul>
+          <h3>// Rebecca Jennings</h3>
+          <ul>
+            <li>Implement extensive test cases for identifying unused/dead variables in a C++ file.</li>
+            <li>Modify redundantCodeChecker.cpp when we shift to new parser library.</li>
+            <li>Modify redundantCodeChecker.cpp to identify unused/dead functions in a C++.</li>
+            <li>Test with C++ file to identify multiple base case scenarios for unused/dead functions.</li>
+            <li>Create UML Diagram and update documentation.</li>
+          </ul>
+          <h3>// Jimmy Munoz</h3>
+          <ul>
+            <li>Use regex for finding poor variable names instead of relying on a map with every possible case.</li>
+            <li>Add more test cases (function parameter names, boolean names, and abbreviations).</li>
+            <li>Update parser to include function parameters in the DeclaredVariable array.</li>
+          </ul>
+          <h3>// Aelynn Xu</h3>
+          <ul>
+            <li>Write function to strip strings from source code in parser.</li>
+            <li>Modify parser so its functions are available for separate use in detectors.</li>
+            <li>Update commentchecker using aforementioned function so it will not be tripped up by brackets in string literals.</li>
+            <li>Update commentChecker so that it will not be tripped up by brackets in ‘’ chars.</li>
+            <li>Update commentchecker so that it will not be tripped up by brackets in comments.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="sprint">
+        <div class="sprint-marker">03</div>
+        <div class="sprint-body">
+          <p class="sprint-meta">Sprint 3 &middot; <span class="sprint-dates">dates</span></p>
+          <h3>// TODO: sprint 3 focus</h3>
+          <ul>
+            <li>TBD</li>
+            <li>TBD</li>
+            <li>TBD</li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section class="section" id="team">
+    <p class="section-label">// 07 &nbsp;credits</p>
+    <h2>Team</h2>
+    <p class="section-intro">Our teams contributions to the project.</p>
+    <div class="team-grid">
+      <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, GitHub Page Website</p></div>
+      <div class="team-card"><h3>Jimmy Munoz</h3><p>Parser Architecture, Poor Name Checker, GitHub Page Website</p></div>
+      <div class="team-card"><h3>Aelynn Xu</h3><p>Parser Architecture, Comment Checker</p></div>
+      <div class="team-card"><h3>Stuart Arief</h3><p>Parser Architecture, Repeated Code Checker</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>CS179K &middot; SmellyCodeDetector</p>
+</footer>
+
+<script>
+  const navToggle = document.getElementById('navToggle');
+  const siteNav = document.getElementById('siteNav');
+  navToggle.addEventListener('click', () => {
+    const isOpen = siteNav.classList.toggle('is-open');
+    navToggle.setAttribute('aria-expanded', isOpen);
+  });
+  siteNav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      siteNav.classList.remove('is-open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+</script>
+
+</body>
+</html>
