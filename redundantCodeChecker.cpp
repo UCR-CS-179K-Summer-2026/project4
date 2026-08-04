@@ -31,7 +31,7 @@ int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
         // found is the function's own signature — i.e. no real callers.
         int functionCalls = countFunctionCalls(parsedSource.source, func.functionStart);
         if (functionCalls <= 1) {
-            std::cout << "Warning: Redundant dead/unused code \"" << func.functionStart
+            std::cout << "Warning: Redundant dead/unused code. The function \"" << func.functionStart
                     << "\" is declared but never used. "
                     << "(line " << func.line << ")\n";
             ++warningCount;
@@ -41,8 +41,8 @@ int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
             // 1 occurrence = only the declaration itself -> unused
             if (variableUsages <= 1) {
                 int actualLine = func.line + variable.line - 1;
-                std::cout << "Warning: Redundant dead/unused code. \""
-                        << variable.name << "\" is declared but never used. "
+                std::cout << "Warning: Redundant dead/unused code. The variable \"" << variable.name
+                        << "\" is declared but never used. "
                         << "(line " << actualLine << ")\n";
                 ++warningCount;
             }
