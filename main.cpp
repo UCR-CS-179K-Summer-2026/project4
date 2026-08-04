@@ -6,7 +6,7 @@
 int main() {
     int smellyCount = 0;//counter for any warnings found
     std::string fileName;
-    std::ifstream inputFile("input.txt");
+    std::ifstream inputFile;
     
     std::cout << "Enter the name of the file to read: ";//asks for input file name, reads input file
     std::getline(std::cin, fileName);

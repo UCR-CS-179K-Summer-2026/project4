@@ -1,6 +1,11 @@
 #include "Parser.h"
 #include <sstream>
 #include <regex>
+#include <tree_sitter/api.h>
+#include <iostream>
+extern "C" {
+    const TSLanguage *tree_sitter_cpp(void);
+}
 
 std::string Parser::buildTypePattern() {
     const std::vector<std::string> TYPE_KEYWORDS = {
@@ -97,9 +102,24 @@ std::vector<FunctionInfo> Parser::splitIntoFunctionBodies(const std::string& sou
 }
 
 ParsedSource Parser::parse(std::ifstream& inputFile) {
+    TSParser *parser = ts_parser_new();
+
+    ts_parser_set_language(parser, tree_sitter_cpp());
     std::stringstream buffer;
     buffer << inputFile.rdbuf();
     std::string rawSource = buffer.str();
+
+    TSTree *tree = ts_parser_parse_string(parser, nullptr, rawSource.c_str(), rawSource.size());
+    TSNode rootNode = ts_tree_root_node(tree);
+
+    uint32_t count = ts_node_child_count(rootNode);
+    for(uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(rootNode, i);
+        std::cout << "Child node type: " << ts_node_type(child) << std::endl;
+    }
+    ts_tree_delete(tree);
+    ts_parser_delete(parser);
+
     std::string source = stripComments(rawSource);
     std::vector<FunctionInfo> functions = splitIntoFunctionBodies(source);
     for (auto& func : functions) {
