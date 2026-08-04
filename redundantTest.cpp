@@ -1,3 +1,6 @@
+#include <iostream>
+#include <fstream>
+#include <string>
 // Case 1: base case - single unused variable
 int calculateCost(int itemPrice, int tax) {
     int processFee = 5;
@@ -71,4 +74,23 @@ int inventoryCheck(int stock, int threshold) {
     int isLowStock = stock < threshold;
     int notes = 0;
     return isLowStock;
+}
+
+int main1() {
+    int price = calculateCost(100, 10);
+    int orderTotal = processOrder(5, 20);
+    int stat = computeStat(10, 20);
+    int first = firstFunction(5);
+    int second = secondFunction(10);
+    int validated = validateInput(15);
+
+    std::cout << "Price: " << price << std::endl;
+    std::cout << "Order Total: " << orderTotal << std::endl;
+    std::cout << "Stat: " << stat << std::endl;
+    std::cout << "First: " << first << std::endl;
+    std::cout << "Second: " << second << std::endl;
+    std::cout << "Validated: " << validated << std::endl;
+
+    int num = 0;
+    return 0;
 }

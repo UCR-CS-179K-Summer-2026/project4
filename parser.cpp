@@ -72,13 +72,14 @@ std::vector<FunctionInfo> Parser::splitIntoFunctionBodies(const std::string& sou
     std::vector<FunctionInfo> functions;
 
     static const std::regex funcStartRegex(
-        R"([a-zA-Z_][a-zA-Z0-9_:<>]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^;{}]*\)\s*\{)"
+        R"([a-zA-Z_][a-zA-Z0-9_:<>]*\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\([^;{}]*\)\s*\{)"
     );
 
     auto begin = std::sregex_iterator(source.begin(), source.end(), funcStartRegex);
     auto end = std::sregex_iterator();
 
     for (auto it = begin; it != end; ++it) {
+        std::string functionName = (*it)[1].str(); 
         size_t openBracePos = it->position() + it->length() - 1;
         int depth = 1;
         size_t pos = openBracePos + 1;
@@ -94,7 +95,7 @@ std::vector<FunctionInfo> Parser::splitIntoFunctionBodies(const std::string& sou
             std::string body = source.substr(bodyStart, pos - bodyStart - 1);
             int startLine = static_cast<int>(
                 std::count(source.begin(), source.begin() + bodyStart, '\n')) + 1;
-            functions.push_back({it->str(), body, startLine});
+            functions.push_back({functionName, body, startLine});
         }
     }
 
