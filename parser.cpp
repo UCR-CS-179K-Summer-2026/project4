@@ -110,21 +110,24 @@ ParsedSource Parser::parse(std::ifstream& inputFile) {
     std::string rawSource = buffer.str();
 
     TSTree *tree = ts_parser_parse_string(parser, nullptr, rawSource.c_str(), rawSource.size());
-    TSNode rootNode = ts_tree_root_node(tree);
-
-    uint32_t count = ts_node_child_count(rootNode);
-    for(uint32_t i = 0; i < count; ++i) {
-        TSNode child = ts_node_child(rootNode, i);
-        std::cout << "Child node type: " << ts_node_type(child) << std::endl;
+    if(tree == nullptr) {
+        std::cerr << "Error: Failed to parse the source code." << std::endl;
+        ts_parser_delete(parser);
+        return {rawSource, nullptr};
     }
-    ts_tree_delete(tree);
+    TSNode rootNode = ts_tree_root_node(tree);
+    char* treeString = ts_node_string(rootNode);
+    std::cout << "Parse tree:\n" << treeString << std::endl;
+    free(treeString);  // Free the string returned by ts_node_string
+
+    // ts_tree_delete(tree);
     ts_parser_delete(parser);
 
     std::string source = stripComments(rawSource);
-    std::vector<FunctionInfo> functions = splitIntoFunctionBodies(source);
-    for (auto& func : functions) {
-        func.variables = findDeclarations(func.functionBody);
-    }
+    // std::vector<FunctionInfo> functions = splitIntoFunctionBodies(source);
+    // for (auto& func : functions) {
+    //     func.variables = findDeclarations(func.functionBody);
+    // }
 
-    return {rawSource, functions};
+    return {rawSource, tree};
 }
