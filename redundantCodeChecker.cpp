@@ -10,6 +10,10 @@ int RedundantCodeChecker::countUsages(const std::string& body, const std::string
     return static_cast<int>(std::distance(begin, end));
 }
 
+void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    // Used to visit the nodes in the syntax tree
+}
+
 int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     int warningCount = 0;
  

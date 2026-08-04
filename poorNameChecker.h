@@ -20,7 +20,7 @@ class PoorNameChecker : public Detector {
         std::vector<std::string> recommendNames(const std::string& name);
         std::unordered_map<std::string, SuggestedNamesInfo> poorNamesMap;
         void outputErrorMessage(const std::string& name, const int& line);
-        void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount);
+        void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
         TSNode findIdentifierNode(TSNode node);
     public:
         PoorNameChecker();
