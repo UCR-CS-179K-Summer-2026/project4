@@ -1,4 +1,5 @@
 #include <string>
+#include <vector>
 
 int multiply(int num1, int num2, int arr[]) {
     int x = 5;  // Example variable with a poor name in function scope
@@ -27,6 +28,7 @@ bool isAdmin(const std::string& username, const std::string& password) {
 void swapData() {
     int data = 10; // Example variable with a poor name in function scope
     int newNumber = 20;
+    std::vector<int> vec;
     
     int temp = data; // Example variable with a poor name in function scope
     data = newNumber;

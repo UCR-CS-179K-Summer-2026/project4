@@ -37,8 +37,8 @@ bool PoorNameChecker::isPoorName(const std::string& name, const std::string& typ
         return true;
     }
 
-    static std::regex restrictedArrayPattern(R"(\b(arr|array|list|vector)\b)");
-    if(declaratorType == "array_declarator" && std::regex_match(name, restrictedArrayPattern)) {
+    static std::regex restrictedArrayPattern(R"(\b(arr|array|list|vector|vec|list)\b)");
+    if((declaratorType == "array_declarator" || declaratorType == "qualified_identifier") && std::regex_match(name, restrictedArrayPattern)) {
         return true;
     }
 
@@ -64,7 +64,10 @@ void PoorNameChecker::checkVariableDeclaration(TSNode node, const ParsedSource& 
     }
 
     TSNode initDeclarator = ts_node_child_by_field_name(node, "declarator", 10);
-    std::string declaratorType = ts_node_type(initDeclarator);
+    std::cout << "Checking variable declaration, node type: " << ts_node_type(ts_node_child_by_field_name(node, "type", 4)) << std::endl;
+    std::string declaratorType = ts_node_type(ts_node_child_by_field_name(node, "type", 4)) == "qualified_identifier" ? "qualified_identifier" : ts_node_type(initDeclarator);
+    std::cout << "Declarator type: " << declaratorType << std::endl;
+    // std::string declaratorType = ts_node_type(initDeclarator);
     if(!ts_node_is_null(initDeclarator)) {
         // Find the declarator's identifier.
         // Identifier holds the name of the variable, extract it from the source code
