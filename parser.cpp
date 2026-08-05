@@ -120,19 +120,11 @@ ParsedSource Parser::parse(std::ifstream& inputFile) {
         ts_parser_delete(parser);
         return {rawSource, nullptr};
     }
-    TSNode rootNode = ts_tree_root_node(tree);
-    char* treeString = ts_node_string(rootNode);
-    std::cout << "Parse tree:\n" << treeString << std::endl;
-    free(treeString);  // Free the string returned by ts_node_string
 
     // ts_tree_delete(tree);
     ts_parser_delete(parser);
 
     std::string source = stripComments(rawSource);
-    // std::vector<FunctionInfo> functions = splitIntoFunctionBodies(source);
-    // for (auto& func : functions) {
-    //     func.variables = findDeclarations(func.functionBody);
-    // }
 
     return {rawSource, tree};
 }

@@ -22,6 +22,9 @@ class PoorNameChecker : public Detector {
         void outputErrorMessage(const std::string& name, const int& line);
         void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
         TSNode findIdentifierNode(TSNode node);
+        void checkVariableDeclaration(TSNode node, const ParsedSource& parsedSource, int& warningCount);
+        void checkFunctionDefinition(TSNode node, const ParsedSource& parsedSource, int& warningCount);
+        std::string extractIdentifierName(const ParsedSource& parsedSource, TSNode identifierNode);
     public:
         PoorNameChecker();
         int analyzeSource(const ParsedSource& parsedSource) override;
