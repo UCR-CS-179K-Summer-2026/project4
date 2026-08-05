@@ -38,3 +38,39 @@ std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, c
 
     return ""; // couldn't resolve — e.g. structured bindings, function pointers
 }
+
+// Walk a "declaration" node's children and collect (name, node) pairs.
+// Handles `int x;` `int x = 5;`and `int x, y = 2;`.
+void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations) {
+    uint32_t childCount = ts_node_child_count(declarationNode);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(declarationNode, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "identifier" || childType == "init_declarator" ||
+            childType == "pointer_declarator" || childType == "reference_declarator" ||
+            childType == "array_declarator") {
+            std::string name = extractIdentifierFromDeclarator(child, source);
+            if (!name.empty()) {
+                declarations.push_back({name, child});
+            }
+        }
+    }
+}
+
+// Recursively count identifier nodes matching `name` within scopeNode's subtree.
+int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name) {
+    int count = 0;
+    std::string type = ts_node_type(scopeNode);
+
+    if (type == "identifier" && nodeText(scopeNode, source) == name) {
+        count++;
+    }
+
+    uint32_t childCount = ts_node_child_count(scopeNode);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        count += countIdentifierOccurrences(ts_node_child(scopeNode, i), source, name);
+    }
+
+    return count;
+}
