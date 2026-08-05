@@ -26,8 +26,13 @@ int commentEndOfFunction(int num){
 
 
 int commentedAfterBracketString(int num){
-    std::string testerString = "}}}";
-    return num;//previous line has closing brackets so if strings are not stripped the checker will not see this comment
+    std::string testerString = "{{{";
+    return num;//previous line has closing brackets so if strings are not stripped the checker will not see the commentless function at the end of this test file
+}
+
+int commentedAfterBracketChar(int num){
+    char testerChar = '{';
+    return num;//previous line has open brackets so if chars are not stripped the checker will not detect the commentless function at the end of this test file
 }
 
 int inlineCommentedBrackets(int num){
@@ -37,5 +42,9 @@ int inlineCommentedBrackets(int num){
 
 int blockCommentedBrackets(int num){
     /*}}}there are brackets in this comment*/
+    return num;
+}
+
+int literalChecker(int num){
     return num;
 }
