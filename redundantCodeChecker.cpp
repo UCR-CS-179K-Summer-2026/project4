@@ -176,9 +176,10 @@ void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSour
         checkUnusedVariables(node, parsedSource, warningCount);
     } else if (type == "binary_expression") {
         checkBooleanComparison(node, parsedSource, warningCount);
-    } else if (type == "if_statement") {
-        checkRedundantIfElseReturn(node, parsedSource, warningCount);
     }
+    // } else if (type == "if_statement") {
+    //     checkRedundantIfElseReturn(node, parsedSource, warningCount);
+    // }
 
     uint32_t childCount = ts_node_child_count(node);
     for (uint32_t i = 0; i < childCount; ++i) {
