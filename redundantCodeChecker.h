@@ -7,8 +7,6 @@
 #include <vector>
 #include <utility>
 
-// Detects declared-but-unused local variables within each parsed
-// function (redundant/dead code).
 class RedundantCodeChecker : public Detector {
     private:
         // Traversal
@@ -18,7 +16,6 @@ class RedundantCodeChecker : public Detector {
         std::string nodeText(TSNode node, const std::string& source);
 
          // Check 1: unused/dead variables
-        int countUsages(const std::string& body, const std::string& name); // deprecated, kept for interface compatibility
         std::string extractIdentifierFromDeclarator(TSNode declaratorNode, const std::string& source);
         void collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations);
         int countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name);

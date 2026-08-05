@@ -3,12 +3,15 @@
 #include <string>
 #include <cstring>
 
+// ---------- Shared Helpers  ----------
 // Extract the text a node spans from the raw source.
 std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& source) {
     uint32_t start = ts_node_start_byte(node);
     uint32_t end = ts_node_end_byte(node);
     return source.substr(start, end - start);
 }
+
+// ---------- Check 1: unused/dead variables ----------
 
 // Given a declarator node (identifier, init_declarator, pointer_declarator, etc.),
 std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
@@ -40,7 +43,7 @@ std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, c
 }
 
 // Walk a "declaration" node's children and collect (name, node) pairs.
-// Handles `int x;` `int x = 5;`and `int x, y = 2;`.
+// Handles variables in formats: `int x;` `int x = 5;`and `int x, y = 2;`.
 void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations) {
     uint32_t childCount = ts_node_child_count(declarationNode);
     for (uint32_t i = 0; i < childCount; ++i) {
@@ -61,9 +64,7 @@ void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std
 // Recursively count identifier nodes matching `name` within scopeNode's subtree.
 int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name) {
     int count = 0;
-    std::string type = ts_node_type(scopeNode);
-
-    if (type == "identifier" && nodeText(scopeNode, source) == name) {
+    if (std::string(ts_node_type(scopeNode)) == "identifier" && nodeText(scopeNode, source) == name) {
         count++;
     }
 
@@ -75,108 +76,110 @@ int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std
     return count;
 }
 
-// Detects `x == true`, `x == false`, `x != true`, `x != false` style comparisons,
-// which should just be `x` or `!x`.
-void RedundantCodeChecker::checkBooleanComparisons(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
-    std::string type = ts_node_type(node);
+void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, int& warningCount) {
     const std::string& source = parsedSource.source;
 
-    if (type == "binary_expression") {
-        TSNode opNode = ts_node_child_by_field_name(node, "operator", strlen("operator"));
-        std::string op;
-        if (!ts_node_is_null(opNode)) {
-            op = nodeText(opNode, source);
-        } else if (ts_node_child_count(node) >= 3) {
-            op = nodeText(ts_node_child(node, 1), source); // fallback: left, operator, right
+    TSNode bodyNode = ts_node_child_by_field_name(functionDefNode, "body", strlen("body"));
+    if (ts_node_is_null(bodyNode)) return;
+
+    std::vector<std::pair<std::string, TSNode>> declarations;
+
+    std::vector<TSNode> stack = { bodyNode };
+    while (!stack.empty()) {
+        TSNode current = stack.back();
+        stack.pop_back();
+
+        if (std::string(ts_node_type(current)) == "declaration") {
+            collectDeclarations(current, source, declarations);
         }
 
-        if (op == "==" || op == "!=") {
-            TSNode left = ts_node_child_by_field_name(node, "left", strlen("left"));
-            TSNode right = ts_node_child_by_field_name(node, "right", strlen("right"));
-
-            auto isBoolLiteral = [](TSNode n) {
-                if (ts_node_is_null(n)) return false;
-                std::string t = ts_node_type(n);
-                return t == "true" || t == "false";
-            };
-
-            TSNode boolSide = TSNode{};
-            TSNode otherSide = TSNode{};
-            bool found = false;
-
-            if (isBoolLiteral(left)) {
-                boolSide = left;
-                otherSide = right;
-                found = true;
-            } else if (isBoolLiteral(right)) {
-                boolSide = right;
-                otherSide = left;
-                found = true;
-            }
-
-            if (found) {
-                bool boolValue = (std::string(ts_node_type(boolSide)) == "true");
-                bool negate = (op == "==") ? !boolValue : boolValue;
-
-                std::string otherText = nodeText(otherSide, source);
-                std::string suggestion = negate ? ("!" + otherText) : otherText;
-
-                int line = ts_node_start_point(node).row + 1;
-                std::string exprText = nodeText(node, source);
-                std::cout << "Warning: Redundant boolean comparison. \""
-                        << exprText << "\" can be simplified to \""
-                        << suggestion << "\". "
-                        << "(line " << line << ")\n";
-                ++warningCount;
-            }
+        uint32_t cc = ts_node_child_count(current);
+        for (uint32_t i = 0; i < cc; ++i) {
+            stack.push_back(ts_node_child(current, i));
         }
     }
 
-    uint32_t childCount = ts_node_child_count(node);
-    for (uint32_t i = 0; i < childCount; ++i) {
-        checkBooleanComparisons(ts_node_child(node, i), parsedSource, warningCount);
+    for (auto& [name, declNode] : declarations) {
+        int occurrences = countIdentifierOccurrences(bodyNode, source, name);
+        if (occurrences <= 1) {
+            int line = ts_node_start_point(declNode).row + 1;
+            std::cout << "Warning: Redundant dead/unused code. \""
+                    << name << "\" is declared but never used. "
+                    << "(line " << line << ")\n";
+            ++warningCount;
+        }
     }
 }
 
-void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
-    std::string type = ts_node_type(node);
+
+// ---------- Check 2: redundant boolean comparisons ----------
+
+// Detects `x == true`, `x == false`, `x != true`, `x != false` style comparisons,
+// which should just be `x` or `!x`.
+void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     const std::string& source = parsedSource.source;
 
+    TSNode opNode = ts_node_child_by_field_name(node, "operator", strlen("operator"));
+    std::string op;
+    if (!ts_node_is_null(opNode)) {
+        op = nodeText(opNode, source);
+    } else if (ts_node_child_count(node) >= 3) {
+        op = nodeText(ts_node_child(node, 1), source); // fallback: left, operator, right
+    }
+
+    if (op != "==" && op != "!=") return;
+
+    TSNode left = ts_node_child_by_field_name(node, "left", strlen("left"));
+    TSNode right = ts_node_child_by_field_name(node, "right", strlen("right"));
+
+    auto isBoolLiteral = [](TSNode n) {
+        if (ts_node_is_null(n)) return false;
+        std::string t = ts_node_type(n);
+        return t == "true" || t == "false";
+    };
+
+    TSNode boolSide{}, otherSide{};
+    bool found = false;
+
+    if (isBoolLiteral(left)) {
+        boolSide = left; otherSide = right; found = true;
+    } else if (isBoolLiteral(right)) {
+        boolSide = right; otherSide = left; found = true;
+    }
+
+    if (!found) return;
+
+    bool boolValue = (std::string(ts_node_type(boolSide)) == "true");
+    bool negate = (op == "==") ? !boolValue : boolValue;
+
+    std::string otherText = nodeText(otherSide, source);
+    std::string suggestion = negate ? ("!" + otherText) : otherText;
+
+    int line = ts_node_start_point(node).row + 1;
+    std::string exprText = nodeText(node, source);
+    std::cout << "Warning: Redundant boolean comparison. \""
+            << exprText << "\" can be simplified to \""
+            << suggestion << "\". "
+            << "(line " << line << ")\n";
+    ++warningCount;
+}
+
+// ---------- Check 3: redundant if/else returning boolean literals ----------
+
+
+
+
+// ---------- Single traversal, dispatches by node type ----------
+
+void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    std::string type = ts_node_type(node);
+
     if (type == "function_definition") {
-        TSNode bodyNode = ts_node_child_by_field_name(node, "body", strlen("body"));
-        if (!ts_node_is_null(bodyNode)) {
-            // Find all declarations inside this function's body (recursively, so nested blocks count too)
-            std::vector<std::pair<std::string, TSNode>> declarations;
-
-            // Simple recursive lambda substitute via helper stack-based walk
-            std::vector<TSNode> stack = { bodyNode };
-            while (!stack.empty()) {
-                TSNode current = stack.back();
-                stack.pop_back();
-
-                if (std::string(ts_node_type(current)) == "declaration") {
-                    collectDeclarations(current, source, declarations);
-                }
-
-                uint32_t cc = ts_node_child_count(current);
-                for (uint32_t i = 0; i < cc; ++i) {
-                    stack.push_back(ts_node_child(current, i));
-                }
-            }
-
-            for (auto& [name, declNode] : declarations) {
-                int occurrences = countIdentifierOccurrences(bodyNode, source, name);
-                // 1 occurrence = only the declaration itself -> unused
-                if (occurrences <= 1) {
-                    int line = ts_node_start_point(declNode).row + 1;
-                    std::cout << "Warning: Redundant dead/unused code. \""
-                            << name << "\" is declared but never used. "
-                            << "(line " << line << ")\n";
-                    ++warningCount;
-                }
-            }
-        }
-        return;
+        checkUnusedVariables(node, parsedSource, warningCount);
+    } else if (type == "binary_expression") {
+        checkBooleanComparison(node, parsedSource, warningCount);
+    } else if (type == "if_statement") {
+        checkRedundantIfElseReturn(node, parsedSource, warningCount);
     }
 
     uint32_t childCount = ts_node_child_count(node);
@@ -194,7 +197,6 @@ int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
 
     TSNode rootNode = ts_tree_root_node(parsedSource.tree);
     visitNode(rootNode, parsedSource, warningCount);
-    checkBooleanComparisons(rootNode, parsedSource, warningCount);
 
     return warningCount;
 }
