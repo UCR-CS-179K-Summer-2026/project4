@@ -41,6 +41,11 @@ std::string Parser::stripStrings(const std::string& source) {//strip string lite
     return noStrings;
 }
 
+std::string Parser::stripChars(const std::string& source) {//strip string literals from source
+    std::string noChars = std::regex_replace(source, std::regex(R"('(?:\\.|[^'])')"), "");//replace string keys with blank space
+    return noChars;
+}
+
 std::vector<DeclaredVariable> Parser::findDeclarations(const std::string& body) {
     std::vector<DeclaredVariable> declarations;
 
