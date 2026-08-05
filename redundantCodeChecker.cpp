@@ -74,3 +74,63 @@ int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std
 
     return count;
 }
+
+void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    std::string type = ts_node_type(node);
+    const std::string& source = parsedSource.source;
+
+    if (type == "function_definition") {
+        TSNode bodyNode = ts_node_child_by_field_name(node, "body", strlen("body"));
+        if (!ts_node_is_null(bodyNode)) {
+            // Find all declarations inside this function's body (recursively, so nested blocks count too)
+            std::vector<std::pair<std::string, TSNode>> declarations;
+
+            // Simple recursive lambda substitute via helper stack-based walk
+            std::vector<TSNode> stack = { bodyNode };
+            while (!stack.empty()) {
+                TSNode current = stack.back();
+                stack.pop_back();
+
+                if (std::string(ts_node_type(current)) == "declaration") {
+                    collectDeclarations(current, source, declarations);
+                }
+
+                uint32_t cc = ts_node_child_count(current);
+                for (uint32_t i = 0; i < cc; ++i) {
+                    stack.push_back(ts_node_child(current, i));
+                }
+            }
+
+            for (auto& [name, declNode] : declarations) {
+                int occurrences = countIdentifierOccurrences(bodyNode, source, name);
+                // 1 occurrence = only the declaration itself -> unused
+                if (occurrences <= 1) {
+                    int line = ts_node_start_point(declNode).row + 1;
+                    std::cout << "Warning: Redundant dead/unused code. \""
+                            << name << "\" is declared but never used. "
+                            << "(line " << line << ")\n";
+                    ++warningCount;
+                }
+            }
+        }
+        return;
+    }
+
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        visitNode(ts_node_child(node, i), parsedSource, warningCount);
+    }
+}
+
+int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
+    int warningCount = 0;
+
+    if (parsedSource.tree == nullptr) {
+        return warningCount;
+    }
+
+    TSNode rootNode = ts_tree_root_node(parsedSource.tree);
+    visitNode(rootNode, parsedSource, warningCount);
+
+    return warningCount;
+}
