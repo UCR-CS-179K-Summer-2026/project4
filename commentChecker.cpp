@@ -6,6 +6,10 @@
 #include <string>
 #include <vector>
 
+void commentChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    // Used to visit the nodes in the syntax tree
+}
+
 int commentChecker::analyzeSource(const ParsedSource& parsedSource){
     
     int warningCounter = 0;

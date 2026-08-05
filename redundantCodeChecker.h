@@ -9,6 +9,7 @@
 class RedundantCodeChecker : public Detector {
     private:
         int countUsages(const std::string& body, const std::string& name);
+        void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
     public:
         RedundantCodeChecker() = default;
         int analyzeSource(const ParsedSource& parsedSource) override;

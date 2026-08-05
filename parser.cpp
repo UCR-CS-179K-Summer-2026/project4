@@ -1,6 +1,11 @@
 #include "Parser.h"
 #include <sstream>
 #include <regex>
+#include <tree_sitter/api.h>
+#include <iostream>
+extern "C" {
+    const TSLanguage *tree_sitter_cpp(void);
+}
 
 std::string Parser::buildTypePattern() {
     const std::vector<std::string> TYPE_KEYWORDS = {
@@ -102,14 +107,32 @@ std::vector<FunctionInfo> Parser::splitIntoFunctionBodies(const std::string& sou
 }
 
 ParsedSource Parser::parse(std::ifstream& inputFile) {
+    TSParser *parser = ts_parser_new();
+
+    ts_parser_set_language(parser, tree_sitter_cpp());
     std::stringstream buffer;
     buffer << inputFile.rdbuf();
     std::string rawSource = buffer.str();
-    std::string source = stripComments(rawSource);
-    std::vector<FunctionInfo> functions = splitIntoFunctionBodies(source);
-    for (auto& func : functions) {
-        func.variables = findDeclarations(func.functionBody);
-    }
 
-    return {rawSource, functions};
+    TSTree *tree = ts_parser_parse_string(parser, nullptr, rawSource.c_str(), rawSource.size());
+    if(tree == nullptr) {
+        std::cerr << "Error: Failed to parse the source code." << std::endl;
+        ts_parser_delete(parser);
+        return {rawSource, nullptr};
+    }
+    TSNode rootNode = ts_tree_root_node(tree);
+    char* treeString = ts_node_string(rootNode);
+    std::cout << "Parse tree:\n" << treeString << std::endl;
+    free(treeString);  // Free the string returned by ts_node_string
+
+    // ts_tree_delete(tree);
+    ts_parser_delete(parser);
+
+    std::string source = stripComments(rawSource);
+    // std::vector<FunctionInfo> functions = splitIntoFunctionBodies(source);
+    // for (auto& func : functions) {
+    //     func.variables = findDeclarations(func.functionBody);
+    // }
+
+    return {rawSource, tree};
 }

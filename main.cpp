@@ -11,6 +11,7 @@ int main() {
     int processedFiles = 0;
     std::string line;
     std::ifstream inputFile("input.txt");
+
     
     std::cout << "Enter the name(s) of the file(s) to read: ";//asks for input file name, reads input file
     std::getline(std::cin, line);

@@ -10,22 +10,26 @@ int RedundantCodeChecker::countUsages(const std::string& body, const std::string
     return static_cast<int>(std::distance(begin, end));
 }
 
+void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    // Used to visit the nodes in the syntax tree
+}
+
 int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     int warningCount = 0;
  
-    for (const auto& func : parsedSource.functions) {
-        for (const auto& variable : func.variables) {
-            int occurrences = countUsages(func.functionBody, variable.name);
-            // 1 occurrence = only the declaration itself -> unused
-            if (occurrences <= 1) {
-                int actualLine = func.line + variable.line - 1;
-                std::cout << "Warning: Redundant dead/unused code. \""
-                        << variable.name << "\" is declared but never used. "
-                        << "(line " << actualLine << ")\n";
-                ++warningCount;
-            }
-        }
-    }
+    // for (const auto& func : parsedSource.functions) {
+    //     for (const auto& variable : func.variables) {
+    //         int occurrences = countUsages(func.functionBody, variable.name);
+    //         // 1 occurrence = only the declaration itself -> unused
+    //         if (occurrences <= 1) {
+    //             int actualLine = func.line + variable.line - 1;
+    //             std::cout << "Warning: Redundant dead/unused code. \""
+    //                     << variable.name << "\" is declared but never used. "
+    //                     << "(line " << actualLine << ")\n";
+    //             ++warningCount;
+    //         }
+    //     }
+    // }
  
     return warningCount;
 }

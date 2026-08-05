@@ -98,6 +98,10 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines
     std::cout << std::endl;
 }
 
+void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    // Used to visit the nodes in the syntax tree
+}
+
 int RepeatedCodeChecker::analyzeSource(const ParsedSource& parsedSource){
     std::vector<codeLine> codeLines = extractCodeLines(parsedSource.source);
     int n = static_cast<int>(codeLines.size());
