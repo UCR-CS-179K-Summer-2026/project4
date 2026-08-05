@@ -167,8 +167,6 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
 // ---------- Check 3: redundant if/else returning boolean literals ----------
 
 
-
-
 // ---------- Single traversal, dispatches by node type ----------
 
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
