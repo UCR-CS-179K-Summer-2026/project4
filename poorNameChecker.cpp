@@ -22,7 +22,7 @@ PoorNameChecker::PoorNameChecker() {
     };
 }
 
-bool PoorNameChecker::isPoorName(const std::string& name, const std::string& type) {
+bool PoorNameChecker::isPoorName(const std::string& name, const std::string& type, const std::string& declaratorType) {
     if(name.length() < 3 && name != "id" && name != "i" && name != "j" && name != "k") {
         return true;
     }
@@ -34,6 +34,11 @@ bool PoorNameChecker::isPoorName(const std::string& name, const std::string& typ
     
     static std::regex boolPrefixPattern(R"(\b(is|has|can|should|was|will)[A-Z].*)");
     if(type == "bool" && !std::regex_match(name, boolPrefixPattern)) {
+        return true;
+    }
+
+    static std::regex restrictedArrayPattern(R"(\b(arr|array|list|vector)\b)");
+    if(declaratorType == "array_declarator" && std::regex_match(name, restrictedArrayPattern)) {
         return true;
     }
 
@@ -59,6 +64,7 @@ void PoorNameChecker::checkVariableDeclaration(TSNode node, const ParsedSource& 
     }
 
     TSNode initDeclarator = ts_node_child_by_field_name(node, "declarator", 10);
+    std::string declaratorType = ts_node_type(initDeclarator);
     if(!ts_node_is_null(initDeclarator)) {
         // Find the declarator's identifier.
         // Identifier holds the name of the variable, extract it from the source code
@@ -68,9 +74,9 @@ void PoorNameChecker::checkVariableDeclaration(TSNode node, const ParsedSource& 
             std::string name = extractIdentifierName(parsedSource, identifierNode);
 
             TSNode primitiveTypeNode = ts_node_child_by_field_name(node, "type", 4);
-            std::string type = extractIdentifierName(parsedSource, primitiveTypeNode);
+            std::string variableType = extractIdentifierName(parsedSource, primitiveTypeNode);
 
-            if(isPoorName(name, type)) {
+            if(isPoorName(name, variableType, declaratorType)) {
                 int line = std::count(parsedSource.source.begin(), parsedSource.source.begin() + ts_node_start_byte(identifierNode), '\n') + 1;
                 outputErrorMessage(name, line);
                 ++warningCount;
@@ -97,14 +103,16 @@ void PoorNameChecker::checkFunctionDefinition(TSNode node, const ParsedSource& p
 
                 if(strcmp(ts_node_type(paramNode), "parameter_declaration") == 0) {
                     TSNode identifierNode = findIdentifierNode(paramNode);
+                    TSNode declaratorTypeNode = ts_node_child_by_field_name(paramNode, "declarator", 10);
+                    std::string declaratorType = ts_node_type(declaratorTypeNode);
 
                     if(!ts_node_is_null(identifierNode)) {
                         std::string name = extractIdentifierName(parsedSource, identifierNode);
 
                         TSNode typeNode = ts_node_child_by_field_name(paramNode, "type", 4);
-                        std::string type = extractIdentifierName(parsedSource, typeNode);
+                        std::string variableType = extractIdentifierName(parsedSource, typeNode);
 
-                        if(isPoorName(name, type)) {
+                        if(isPoorName(name, variableType, declaratorType)) {
                             int line = std::count(parsedSource.source.begin(), parsedSource.source.begin() + ts_node_start_byte(identifierNode), '\n') + 1;
                             outputErrorMessage(name, line);
                             ++warningCount;
@@ -126,6 +134,8 @@ void PoorNameChecker::outputErrorMessage(const std::string& name, const int& lin
     } else if(name.length() < 3 && name != "id") {
         std::cout << "Warning: Variable name '" << name << "' is too short. Consider using a more descriptive name.";
 
+    } else {
+        std::cout << "Warning: Variable name '" << name << "' is considered poor. Consider using a more descriptive name.";
     }
 
     std::cout << " (line " << line << ")\n\n";
@@ -158,7 +168,6 @@ void PoorNameChecker::visitNode(TSNode node, const ParsedSource& parsedSource, i
         return;
     }
 
-    // std::cout << "Visiting node type: " << ts_node_type(node) << std::endl;
     if(strcmp(ts_node_type(node), "declaration") == 0) { // The node is declaring a variable
         checkVariableDeclaration(node, parsedSource, warningCount);
     } else if(strcmp(ts_node_type(node), "function_definition") == 0) { // The node is a function definition

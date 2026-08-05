@@ -1,6 +1,6 @@
 #include <string>
 
-int multiply(int num1, int num2) {
+int multiply(int num1, int num2, int arr[]) {
     int x = 5;  // Example variable with a poor name in function scope
     return num1 * num2 * x;
 }
@@ -46,6 +46,7 @@ void nestedLoop() {
 }
 
 int addThreeNumbers() {
+    int arr[10];
     int x = 1; // Example variable with a poor name in function scope
     int y = 2; // Example variable with a poor name in function scope
     int z = 3; // Example variable with a poor name in function scope

@@ -16,7 +16,7 @@ struct SuggestedNamesInfo {
 
 class PoorNameChecker : public Detector {
     private:
-        bool isPoorName(const std::string& name, const std::string& type);
+        bool isPoorName(const std::string& name, const std::string& type, const std::string& declaratorType);
         std::vector<std::string> recommendNames(const std::string& name);
         std::unordered_map<std::string, SuggestedNamesInfo> poorNamesMap;
         void outputErrorMessage(const std::string& name, const int& line);
