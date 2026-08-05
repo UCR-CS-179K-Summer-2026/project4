@@ -94,27 +94,6 @@ int calculateCost(int itemPrice, int tax) {
 ```
 Warning: Redundant dead/unused code. The variable "processFee" is declared but never used. (line 2)
 
-**Dead/Unused Code - Functions**
-
-**User story:** As a developer, I want to be warned when I declare a function but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
-```
-int calculateCost(int itemPrice, int tax) {
-    int total = itemPrice + tax;
-    return total;
-}
-
-int processOrder(int quantity, int price) {
-    int subtotal = quantity * price;
-    return subtotal;
-}
-int main1() {
-    int price = calculateCost(100, 10);
-    std::cout << "Price: " << price << std::endl;
-    return 0;
-}
-```
-Warning: Redundant dead/unused code. The function "processOrder" is declared but never used. (line 5)
-
 **Conditional Statements**
 ```
 string numType(int number) {
@@ -144,18 +123,22 @@ Output: Warning: Redundant initialization. Initialize with “int totalScore = c
 
 **Boolean**
 
+**User Story:** As a developer using the smelly code detector, I want the tool to flag comparisons like x == true or x == false, so that I can simplify my conditionals to x or !x and keep my codebase more readable and idiomatic.
+
 ```
-bool isEligible(int age) {
-	if (age >= 18) {
-		return true;
-	}
-	else {
-		return false;
-	}
+int main() {
+	if(isValid == true) {
+        int totalCost = processOrder(quantity, price);
+        return totalCost;
+    } 
+    if(isValid == false) {
+        return price;
+    }
 }
 ```
 
-Output: Warning: Redundant boolean logic. Modify the function to “return age >= 18;”.
+Output: Warning: Redundant boolean comparison. "isValid == true" can be simplified. (line 2)
+Warning: Redundant boolean comparison. "isValid == false" can be simplified. (line 6)
 
 ```
 int main() {
