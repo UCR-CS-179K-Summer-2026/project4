@@ -64,9 +64,9 @@ void PoorNameChecker::checkVariableDeclaration(TSNode node, const ParsedSource& 
     }
 
     TSNode initDeclarator = ts_node_child_by_field_name(node, "declarator", 10);
-    std::cout << "Checking variable declaration, node type: " << ts_node_type(ts_node_child_by_field_name(node, "type", 4)) << std::endl;
-    std::string declaratorType = ts_node_type(ts_node_child_by_field_name(node, "type", 4)) == "qualified_identifier" ? "qualified_identifier" : ts_node_type(initDeclarator);
-    std::cout << "Declarator type: " << declaratorType << std::endl;
+    // std::cout << "Checking variable declaration, node type: " << ts_node_type(ts_node_child_by_field_name(node, "type", 4)) << std::endl;
+    std::string declaratorType = strcmp(ts_node_type(ts_node_child_by_field_name(node, "type", 4)), "qualified_identifier") == 0 ? "qualified_identifier" : ts_node_type(initDeclarator);
+    // std::cout << "Declarator type: " << declaratorType << std::endl;
     // std::string declaratorType = ts_node_type(initDeclarator);
     if(!ts_node_is_null(initDeclarator)) {
         // Find the declarator's identifier.
