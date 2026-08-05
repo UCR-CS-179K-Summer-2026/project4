@@ -169,6 +169,8 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
 
 // ---------- Single traversal, dispatches by node type ----------
 
+// one recursive traversal of the actual AST, 
+//dispatching to focused checks by real node type (ex. init_declarator, pointer_declarator, else_clause)
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     std::string type = ts_node_type(node);
 
