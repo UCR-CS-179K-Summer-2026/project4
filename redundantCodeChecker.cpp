@@ -93,8 +93,8 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
             collectDeclarations(current, source, declarations);
         }
 
-        uint32_t cc = ts_node_child_count(current);
-        for (uint32_t i = 0; i < cc; ++i) {
+        uint32_t currentChild = ts_node_child_count(current);
+        for (uint32_t i = 0; i < currentChild; ++i) {
             stack.push_back(ts_node_child(current, i));
         }
     }
@@ -120,22 +120,22 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
     const std::string& source = parsedSource.source;
 
     TSNode opNode = ts_node_child_by_field_name(node, "operator", strlen("operator"));
-    std::string op;
+    std::string currOperator;
     if (!ts_node_is_null(opNode)) {
-        op = nodeText(opNode, source);
+        currOperator = nodeText(opNode, source);
     } else if (ts_node_child_count(node) >= 3) {
-        op = nodeText(ts_node_child(node, 1), source); // fallback: left, operator, right
+        currOperator = nodeText(ts_node_child(node, 1), source); // fallback: left, operator, right
     }
 
-    if (op != "==" && op != "!=") return;
+    if (currOperator != "==" && currOperator != "!=") return;
 
     TSNode left = ts_node_child_by_field_name(node, "left", strlen("left"));
     TSNode right = ts_node_child_by_field_name(node, "right", strlen("right"));
 
     auto isBoolLiteral = [](TSNode n) {
         if (ts_node_is_null(n)) return false;
-        std::string t = ts_node_type(n);
-        return t == "true" || t == "false";
+        std::string currType = ts_node_type(n);
+        return currType == "true" || currType == "false";
     };
 
     TSNode boolSide{}, otherSide{};
@@ -150,7 +150,7 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
     if (!found) return;
 
     bool boolValue = (std::string(ts_node_type(boolSide)) == "true");
-    bool negate = (op == "==") ? !boolValue : boolValue;
+    bool negate = (currOperator == "==") ? !boolValue : boolValue;
 
     std::string otherText = nodeText(otherSide, source);
     std::string suggestion = negate ? ("!" + otherText) : otherText;
@@ -169,6 +169,8 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
 
 // ---------- Single traversal, dispatches by node type ----------
 
+// one recursive traversal of the actual AST, 
+//dispatching to focused checks by real node type (ex. init_declarator, pointer_declarator, else_clause)
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     std::string type = ts_node_type(node);
 
