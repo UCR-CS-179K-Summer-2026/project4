@@ -8,8 +8,13 @@
 // function (redundant/dead code).
 class RedundantCodeChecker : public Detector {
     private:
-        int countUsages(const std::string& body, const std::string& name);
         void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
+
+        // New helpers for tree-sitter based analysis
+        std::string nodeText(TSNode node, const std::string& source);
+        std::string extractIdentifierFromDeclarator(TSNode declaratorNode, const std::string& source);
+        void collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations);
+        int countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name);
     public:
         RedundantCodeChecker() = default;
         int analyzeSource(const ParsedSource& parsedSource) override;

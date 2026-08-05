@@ -1,35 +1,40 @@
 #include "redundantCodeChecker.h"
 #include <iostream>
-#include <regex>
+#include <string>
+#include <cstring>
 
-// Counts whole-word occurrences of `name` within `body`.
-int RedundantCodeChecker::countUsages(const std::string& body, const std::string& name) {
-    std::regex wordRegex("\\b" + name + "\\b");
-    auto begin = std::sregex_iterator(body.begin(), body.end(), wordRegex);
-    auto end = std::sregex_iterator();
-    return static_cast<int>(std::distance(begin, end));
+// Extract the text a node spans from the raw source.
+std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& source) {
+    uint32_t start = ts_node_start_byte(node);
+    uint32_t end = ts_node_end_byte(node);
+    return source.substr(start, end - start);
 }
 
-void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
-    // Used to visit the nodes in the syntax tree
-}
+// Given a declarator node (identifier, init_declarator, pointer_declarator, etc.),
+std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
+    std::string type = ts_node_type(node);
 
-int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
-    int warningCount = 0;
- 
-    // for (const auto& func : parsedSource.functions) {
-    //     for (const auto& variable : func.variables) {
-    //         int occurrences = countUsages(func.functionBody, variable.name);
-    //         // 1 occurrence = only the declaration itself -> unused
-    //         if (occurrences <= 1) {
-    //             int actualLine = func.line + variable.line - 1;
-    //             std::cout << "Warning: Redundant dead/unused code. \""
-    //                     << variable.name << "\" is declared but never used. "
-    //                     << "(line " << actualLine << ")\n";
-    //             ++warningCount;
-    //         }
-    //     }
-    // }
- 
-    return warningCount;
+    if (type == "identifier") {
+        return nodeText(node, source);
+    }
+
+    // init_declarator: has a "declarator" field (identifier or pointer_declarator etc.)
+    // pointer_declarator / reference_declarator: wraps another declarator
+    // array_declarator: wraps another declarator
+    TSNode declaratorField = ts_node_child_by_field_name(node, "declarator", strlen("declarator"));
+    if (!ts_node_is_null(declaratorField)) {
+        return extractIdentifierFromDeclarator(declaratorField, source);
+    }
+
+    // search children for an identifier
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(node, i);
+        std::string childType = ts_node_type(child);
+        if (childType == "identifier") {
+            return nodeText(child, source);
+        }
+    }
+
+    return ""; // couldn't resolve — e.g. structured bindings, function pointers
 }
