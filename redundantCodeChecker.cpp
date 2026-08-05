@@ -1,35 +1,136 @@
 #include "redundantCodeChecker.h"
 #include <iostream>
-#include <regex>
+#include <string>
+#include <cstring>
 
-// Counts whole-word occurrences of `name` within `body`.
-int RedundantCodeChecker::countUsages(const std::string& body, const std::string& name) {
-    std::regex wordRegex("\\b" + name + "\\b");
-    auto begin = std::sregex_iterator(body.begin(), body.end(), wordRegex);
-    auto end = std::sregex_iterator();
-    return static_cast<int>(std::distance(begin, end));
+// Extract the text a node spans from the raw source.
+std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& source) {
+    uint32_t start = ts_node_start_byte(node);
+    uint32_t end = ts_node_end_byte(node);
+    return source.substr(start, end - start);
+}
+
+// Given a declarator node (identifier, init_declarator, pointer_declarator, etc.),
+std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
+    std::string type = ts_node_type(node);
+
+    if (type == "identifier") {
+        return nodeText(node, source);
+    }
+
+    // init_declarator: has a "declarator" field (identifier or pointer_declarator etc.)
+    // pointer_declarator / reference_declarator: wraps another declarator
+    // array_declarator: wraps another declarator
+    TSNode declaratorField = ts_node_child_by_field_name(node, "declarator", strlen("declarator"));
+    if (!ts_node_is_null(declaratorField)) {
+        return extractIdentifierFromDeclarator(declaratorField, source);
+    }
+
+    // search children for an identifier
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(node, i);
+        std::string childType = ts_node_type(child);
+        if (childType == "identifier") {
+            return nodeText(child, source);
+        }
+    }
+
+    return ""; // couldn't resolve — e.g. structured bindings, function pointers
+}
+
+// Walk a "declaration" node's children and collect (name, node) pairs.
+// Handles `int x;` `int x = 5;`and `int x, y = 2;`.
+void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations) {
+    uint32_t childCount = ts_node_child_count(declarationNode);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(declarationNode, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "identifier" || childType == "init_declarator" ||
+            childType == "pointer_declarator" || childType == "reference_declarator" ||
+            childType == "array_declarator") {
+            std::string name = extractIdentifierFromDeclarator(child, source);
+            if (!name.empty()) {
+                declarations.push_back({name, child});
+            }
+        }
+    }
+}
+
+// Recursively count identifier nodes matching `name` within scopeNode's subtree.
+int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name) {
+    int count = 0;
+    std::string type = ts_node_type(scopeNode);
+
+    if (type == "identifier" && nodeText(scopeNode, source) == name) {
+        count++;
+    }
+
+    uint32_t childCount = ts_node_child_count(scopeNode);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        count += countIdentifierOccurrences(ts_node_child(scopeNode, i), source, name);
+    }
+
+    return count;
 }
 
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
-    // Used to visit the nodes in the syntax tree
+    std::string type = ts_node_type(node);
+    const std::string& source = parsedSource.source;
+
+    if (type == "function_definition") {
+        TSNode bodyNode = ts_node_child_by_field_name(node, "body", strlen("body"));
+        if (!ts_node_is_null(bodyNode)) {
+            // Find all declarations inside this function's body (recursively, so nested blocks count too)
+            std::vector<std::pair<std::string, TSNode>> declarations;
+
+            // Simple recursive lambda substitute via helper stack-based walk
+            std::vector<TSNode> stack = { bodyNode };
+            while (!stack.empty()) {
+                TSNode current = stack.back();
+                stack.pop_back();
+
+                if (std::string(ts_node_type(current)) == "declaration") {
+                    collectDeclarations(current, source, declarations);
+                }
+
+                uint32_t cc = ts_node_child_count(current);
+                for (uint32_t i = 0; i < cc; ++i) {
+                    stack.push_back(ts_node_child(current, i));
+                }
+            }
+
+            for (auto& [name, declNode] : declarations) {
+                int occurrences = countIdentifierOccurrences(bodyNode, source, name);
+                // 1 occurrence = only the declaration itself -> unused
+                if (occurrences <= 1) {
+                    int line = ts_node_start_point(declNode).row + 1;
+                    std::cout << "Warning: Redundant dead/unused code. \""
+                            << name << "\" is declared but never used. "
+                            << "(line " << line << ")\n";
+                    ++warningCount;
+                }
+            }
+        }
+        return;
+    }
+
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        visitNode(ts_node_child(node, i), parsedSource, warningCount);
+    }
 }
 
 int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     int warningCount = 0;
- 
-    // for (const auto& func : parsedSource.functions) {
-    //     for (const auto& variable : func.variables) {
-    //         int occurrences = countUsages(func.functionBody, variable.name);
-    //         // 1 occurrence = only the declaration itself -> unused
-    //         if (occurrences <= 1) {
-    //             int actualLine = func.line + variable.line - 1;
-    //             std::cout << "Warning: Redundant dead/unused code. \""
-    //                     << variable.name << "\" is declared but never used. "
-    //                     << "(line " << actualLine << ")\n";
-    //             ++warningCount;
-    //         }
-    //     }
-    // }
- 
+
+    if (parsedSource.tree == nullptr) {
+        return warningCount;
+    }
+
+    TSNode rootNode = ts_tree_root_node(parsedSource.tree);
+    visitNode(rootNode, parsedSource, warningCount);
+
     return warningCount;
 }
