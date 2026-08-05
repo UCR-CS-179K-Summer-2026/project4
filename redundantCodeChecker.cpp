@@ -83,11 +83,11 @@ void RedundantCodeChecker::checkBooleanComparisons(TSNode node, const ParsedSour
 
     if (type == "binary_expression") {
         TSNode opNode = ts_node_child_by_field_name(node, "operator", strlen("operator"));
-        // Note: in some tree-sitter-cpp versions the operator isn't a named field —
-        // if this comes back null, fall back to reading the middle child's text instead.
         std::string op;
         if (!ts_node_is_null(opNode)) {
             op = nodeText(opNode, source);
+        } else if (ts_node_child_count(node) >= 3) {
+            op = nodeText(ts_node_child(node, 1), source); // fallback: left, operator, right
         }
 
         if (op == "==" || op == "!=") {
@@ -115,10 +115,17 @@ void RedundantCodeChecker::checkBooleanComparisons(TSNode node, const ParsedSour
             }
 
             if (found) {
+                bool boolValue = (std::string(ts_node_type(boolSide)) == "true");
+                bool negate = (op == "==") ? !boolValue : boolValue;
+
+                std::string otherText = nodeText(otherSide, source);
+                std::string suggestion = negate ? ("!" + otherText) : otherText;
+
                 int line = ts_node_start_point(node).row + 1;
                 std::string exprText = nodeText(node, source);
                 std::cout << "Warning: Redundant boolean comparison. \""
-                        << exprText << "\" can be simplified. "
+                        << exprText << "\" can be simplified to \""
+                        << suggestion << "\". "
                         << "(line " << line << ")\n";
                 ++warningCount;
             }

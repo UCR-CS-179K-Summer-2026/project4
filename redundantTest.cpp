@@ -88,8 +88,16 @@ int main1() {
         int totalCost = processOrder(quantity, price);
         return totalCost;
     } 
-    if(isValid == false) {
+    else if(isValid == false) {
         return price;
+    }
+
+    bool isAvailable = true;
+
+    if(quantity > 0 && isAvailable == true) {
+        return quantity;
+    }else if(quantity <= 0 && isAvailable == false) {
+        return 0;
     }
     return 0;
 }
