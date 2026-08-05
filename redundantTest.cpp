@@ -72,3 +72,32 @@ int inventoryCheck(int stock, int threshold) {
     int notes = 0;
     return isLowStock;
 }
+
+int main1() {
+    int price = 5;
+    int quantity = 2;
+    bool isValid;
+
+    if(price > 0) {
+        isValid = true;
+    } else {
+        isValid = false;
+    }
+
+    if(isValid == true) {
+        int totalCost = processOrder(quantity, price);
+        return totalCost;
+    } 
+    else if(isValid == false) {
+        return price;
+    }
+
+    bool isAvailable = true;
+
+    if(quantity > 0 && isAvailable == true) {
+        return quantity;
+    }else if(quantity <= 0 && isAvailable == false) {
+        return 0;
+    }
+    return 0;
+}
