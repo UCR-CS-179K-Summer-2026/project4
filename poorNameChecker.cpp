@@ -6,6 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include <tree_sitter/api.h>
+#include <cstring>
 
 PoorNameChecker::PoorNameChecker() {
     poorNamesMap = {

@@ -18,8 +18,9 @@ int commentChecker::analyzeSource(const ParsedSource& parsedSource){
 
 
     //go throught parsedSource line by line
-    std::string noStrings = parser.stripStrings(parsedSource.source);
-    std::istringstream stream(noStrings);//TODO: use stripStrings to prevent errors from string literals
+    std::string trimmed = parser.stripStrings(parsedSource.source);//use stripStrings to prevent errors from string literals
+    trimmed = parser.stripChars(trimmed);//use stripChars to prevent errors from char literals
+    std::istringstream stream(trimmed);
 
     while (std::getline(stream, line)) {
         lines.push_back(line);
