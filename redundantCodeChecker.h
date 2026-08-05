@@ -15,6 +15,7 @@ class RedundantCodeChecker : public Detector {
         std::string extractIdentifierFromDeclarator(TSNode declaratorNode, const std::string& source);
         void collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations);
         int countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name);
+        void checkBooleanComparisons(TSNode node, const ParsedSource& parsedSource, int& warningCount);
     public:
         RedundantCodeChecker() = default;
         int analyzeSource(const ParsedSource& parsedSource) override;

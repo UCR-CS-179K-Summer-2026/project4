@@ -75,6 +75,62 @@ int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std
     return count;
 }
 
+// Detects `x == true`, `x == false`, `x != true`, `x != false` style comparisons,
+// which should just be `x` or `!x`.
+void RedundantCodeChecker::checkBooleanComparisons(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    std::string type = ts_node_type(node);
+    const std::string& source = parsedSource.source;
+
+    if (type == "binary_expression") {
+        TSNode opNode = ts_node_child_by_field_name(node, "operator", strlen("operator"));
+        // Note: in some tree-sitter-cpp versions the operator isn't a named field —
+        // if this comes back null, fall back to reading the middle child's text instead.
+        std::string op;
+        if (!ts_node_is_null(opNode)) {
+            op = nodeText(opNode, source);
+        }
+
+        if (op == "==" || op == "!=") {
+            TSNode left = ts_node_child_by_field_name(node, "left", strlen("left"));
+            TSNode right = ts_node_child_by_field_name(node, "right", strlen("right"));
+
+            auto isBoolLiteral = [](TSNode n) {
+                if (ts_node_is_null(n)) return false;
+                std::string t = ts_node_type(n);
+                return t == "true" || t == "false";
+            };
+
+            TSNode boolSide = TSNode{};
+            TSNode otherSide = TSNode{};
+            bool found = false;
+
+            if (isBoolLiteral(left)) {
+                boolSide = left;
+                otherSide = right;
+                found = true;
+            } else if (isBoolLiteral(right)) {
+                boolSide = right;
+                otherSide = left;
+                found = true;
+            }
+
+            if (found) {
+                int line = ts_node_start_point(node).row + 1;
+                std::string exprText = nodeText(node, source);
+                std::cout << "Warning: Redundant boolean comparison. \""
+                        << exprText << "\" can be simplified. "
+                        << "(line " << line << ")\n";
+                ++warningCount;
+            }
+        }
+    }
+
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        checkBooleanComparisons(ts_node_child(node, i), parsedSource, warningCount);
+    }
+}
+
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     std::string type = ts_node_type(node);
     const std::string& source = parsedSource.source;
@@ -131,6 +187,7 @@ int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
 
     TSNode rootNode = ts_tree_root_node(parsedSource.tree);
     visitNode(rootNode, parsedSource, warningCount);
+    checkBooleanComparisons(rootNode, parsedSource, warningCount);
 
     return warningCount;
 }
