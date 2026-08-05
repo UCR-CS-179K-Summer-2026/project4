@@ -54,4 +54,9 @@ int addThreeNumbers() {
     return sum;
 }
 
-/* EXPECTED CODE SMELLS: 10 */
+// Example function with poor variable names in parameters
+int addThreeNumbers(const int& a, const int& b, const int& c) {
+    return a + b + c;
+}
+
+/* EXPECTED CODE SMELLS: 13 */
