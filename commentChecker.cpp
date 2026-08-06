@@ -29,6 +29,7 @@ int commentChecker::analyzeSource(const ParsedSource& parsedSource){
 
     std::regex functionRegex(R"(^[a-zA-Z_][a-zA-Z0-9_<>\s\*\&]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^\)]*\))");//regex to find functions
     std::regex commentRegex(R"((\/\/|\/\*|\*))");//regex to find comments
+    std::regex comment_bracket_regex(R"((?://.*|/\*[\s\S]*?\*/)[^(\[{]*([({\[]))");//regex to find opening bracket in a comment
 
     
     //iterate through lines vector, searches for function within each line
@@ -67,6 +68,11 @@ int commentChecker::analyzeSource(const ParsedSource& parsedSource){
             int k = i;//iterator for inside function
             while(k < lines.size()){
 
+                
+                if(std::regex_search(lines[k], comment_bracket_regex)){//for case where there is an opening bracket in a comment, marks as comment detected and exits search
+                    hasComment = true;
+                    break;
+                }
                 //for loop goes through current line to find braces
                 for(char ch : lines[k]){
                     
