@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 
-int multiply(int num1, int num2, int arr[]) {
+int de(int num1, int num2, int arr[]) {
     int x = 5;  // Example variable with a poor name in function scope
     return num1 * num2 * x;
 }
@@ -62,4 +62,4 @@ int addThreeNumbers(const int& a, const int& b, const int& c) {
     return a + b + c;
 }
 
-/* EXPECTED CODE SMELLS: 13 */
+/* EXPECTED CODE SMELLS: 17 */
