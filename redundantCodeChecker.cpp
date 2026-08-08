@@ -189,6 +189,31 @@ void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSour
     }
 }
 
+// ---------- Check 4: redundant if/if else/else statements ----------
+
+// Does this statement unconditionally return? Handles `return x;` directly,
+// and `{ ... return x; }` where the return is the last statement in the block.
+bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
+    if (ts_node_is_null(statement)) return false;
+    std::string type = ts_node_type(statement);
+
+    if (type == "return_statement") return true;
+
+    if (type == "compound_statement") {
+        uint32_t count = ts_node_child_count(statement);
+        TSNode lastStatement{};
+        for (uint32_t i = 0; i < count; ++i) {
+            TSNode child = ts_node_child(statement, i);
+            std::string childType = ts_node_type(child);
+            if (childType == "{" || childType == "}") continue;
+            lastStatement = child;
+        }
+        return alwaysReturns(lastStatement);
+    }
+
+    return false;
+}
+
 int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     int warningCount = 0;
 
