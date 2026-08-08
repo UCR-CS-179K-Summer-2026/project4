@@ -103,7 +103,7 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
         int occurrences = countIdentifierOccurrences(bodyNode, source, name);
         if (occurrences <= 1) {
             int line = ts_node_start_point(declNode).row + 1;
-            std::cout << "Warning: Redundant dead/unused code. \""
+            std::cout << "Warning: Redundant dead/unused code. The variable \""
                     << name << "\" is declared but never used. "
                     << "(line " << line << ")\n";
             ++warningCount;
@@ -179,15 +179,90 @@ void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSour
     } else if (type == "binary_expression") {
         checkBooleanComparison(node, parsedSource, warningCount);
     }
-    // } else if (type == "if_statement") {
+     // } else if (type == "if_statement") {
     //     checkRedundantIfElseReturn(node, parsedSource, warningCount);
     // }
+     else if (type == "compound_statement") {
+        checkChainedReturnIfs(node, parsedSource, warningCount);
+    }
 
     uint32_t childCount = ts_node_child_count(node);
     for (uint32_t i = 0; i < childCount; ++i) {
         visitNode(ts_node_child(node, i), parsedSource, warningCount);
     }
 }
+
+// ---------- Check 4: redundant if/if else/else statements ----------
+
+// Does this statement unconditionally return? Handles `return x;` directly,
+// and `{ ... return x; }` where the return is the last statement in the block.
+bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
+    if (ts_node_is_null(statement)) return false;
+    std::string type = ts_node_type(statement);
+
+    if (type == "return_statement") return true;
+
+    if (type == "compound_statement") {
+        uint32_t count = ts_node_child_count(statement);
+        TSNode lastStatement{};
+        for (uint32_t i = 0; i < count; ++i) {
+            TSNode child = ts_node_child(statement, i);
+            std::string childType = ts_node_type(child);
+            if (childType == "{" || childType == "}") continue;
+            lastStatement = child;
+        }
+        return alwaysReturns(lastStatement);
+    }
+
+    return false;
+}
+
+// Looks at direct children of a block for runs of 2+ sibling if-statements,
+// each with no else and an unconditional return, a chain that should be if/else if/else.
+void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedSource& parsedSource, int& warningCount) {
+    const std::string& source = parsedSource.source;
+    uint32_t count = ts_node_child_count(blockNode);
+
+    int chainLength = 0;
+    TSNode chainStart{};
+
+    auto flushChain = [&]() {
+        if (chainLength >= 2) {
+            int line = ts_node_start_point(chainStart).row + 1;
+            std::cout << "Warning: Redundant conditional statement. "
+                    << chainLength << " separate if-statements each return unconditionally; "
+                    << "consider an if/else if/else chain instead. "
+                    << "(starting line " << line << ")\n";
+            ++warningCount;
+        }
+        chainLength = 0;
+    };
+
+    for (uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(blockNode, i);
+        std::string type = ts_node_type(child);
+
+        if (type == "if_statement") {
+            TSNode alternative = ts_node_child_by_field_name(child, "alternative", strlen("alternative"));
+            TSNode consequence = ts_node_child_by_field_name(child, "consequence", strlen("consequence"));
+
+            bool noElse = ts_node_is_null(alternative);
+            bool returns = alwaysReturns(consequence);
+
+            if (noElse && returns) {
+                if (chainLength == 0) chainStart = child;
+                chainLength++;
+                continue;
+            }
+        }
+
+        // Any non-qualifying statement breaks the chain
+        flushChain();
+    }
+    flushChain(); // catch a chain that runs to the end of the block
+}
+
+// ---------- Analyze Source ----------
 
 int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     int warningCount = 0;
