@@ -159,3 +159,14 @@ std:: string numType(int number) {
     if (number == 0) { return "zero"; }
     if (number < 0) { return "negative"; }
 }
+
+std:: string roleAssign(int number, int time) {
+    if (number < 10) { return "volunteer"; }
+    if (number >= 10 && number < 20) { return "committee"; }
+    if (number >= 20) { return "leader"; }
+
+    if (time < 5) { return "junior"; }
+    else if (time >= 5 && time < 10) { return "senior";} 
+    else if (time >= 10) { return "expert"; }
+    else { return "unknown"; }
+}

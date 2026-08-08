@@ -103,7 +103,7 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
         int occurrences = countIdentifierOccurrences(bodyNode, source, name);
         if (occurrences <= 1) {
             int line = ts_node_start_point(declNode).row + 1;
-            std::cout << "Warning: Redundant dead/unused code. \""
+            std::cout << "Warning: Redundant dead/unused code. The variable \""
                     << name << "\" is declared but never used. "
                     << "(line " << line << ")\n";
             ++warningCount;
@@ -218,7 +218,7 @@ bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
 }
 
 // Looks at direct children of a block for runs of 2+ sibling if-statements,
-// each with no else and an unconditional return — a chain that should be if/else if/else.
+// each with no else and an unconditional return, a chain that should be if/else if/else.
 void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedSource& parsedSource, int& warningCount) {
     const std::string& source = parsedSource.source;
     uint32_t count = ts_node_child_count(blockNode);
