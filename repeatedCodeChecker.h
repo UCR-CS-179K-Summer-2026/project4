@@ -20,6 +20,7 @@ private:
     };
     void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
 
+std::vector<codeLine> allCodeLines;
 static constexpr int kMinWindowSize = 3; // Minimum number of lines to consider for repetition
 static constexpr int kMaxWindowSize = 10; // Maximum number of lines to consider for repetition
 
@@ -32,7 +33,7 @@ std::vector<codeLine> extractCodeLines(const std::string& content) const;
  
 void reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices) const;
 
-
+int findRepeatedBlocks(const std::vector<codeLine>& lines) const;
 };
 
 #endif 
