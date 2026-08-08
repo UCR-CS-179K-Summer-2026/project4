@@ -204,78 +204,15 @@ void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSourc
 }
 
 int RepeatedCodeChecker::analyzeSource(const ParsedSource& parsedSource){
-    std::vector<codeLine> codeLines = extractCodeLines(parsedSource.source);
-    int n = static_cast<int>(codeLines.size());
-
-    int warningCOunt = 0;
-    if(n < kMinWindowSize){
-        return warningCOunt;
+    if (parsedSource.tree == nullptr){
+        return 0;
     }
 
+    allCodeLines = extractCodeLines(parsedSource.source);
 
-    std::vector<bool> covered(n,false);
-    int maxWindow = std::min(kMaxWindowSize, n);
+    int warningCount = 0;
+    TSNode rootNode = ts_tree_root_node(parsedSource.tree);
+    visitNode(rootNode, parsedSource, warningCount);
 
-    for (int windowSize = maxWindow; windowSize >= kMinWindowSize; --windowSize){
-        std::unordered_map<std::string, std::vector<int>> blockMap;
-
-        for (int start = 0; start+windowSize <= n; ++start){
-            bool anyCovered = false;
-
-            for(int i =0; i < windowSize; ++i){
-                if(covered[start + i]){
-                    anyCovered = true;
-                    break;
-                }
-            }
-
-            if (anyCovered){
-                continue;
-            }
-
-            std::string key;
-            for(int i = 0; i< windowSize; ++i){
-                key += codeLines[start + i].text + "\n";
-            }
-
-            blockMap[key].push_back(start);
-    }
-
-    std::vector <std::pair<std::string,std::vector<int>>> ordered(blockMap.begin(), blockMap.end());
-
-    std::sort(ordered.begin(),ordered.end(), [](const auto& a, const auto& b){
-        return a.second.front() < b.second.front();
-    });
-
-    for(auto& entry : ordered){
-        std::vector<int>& starts = entry.second;
-        if(starts.size() <2) {
-            continue;
-        }
-
-        std::vector<int> nonOverlapping;
-        int lastEnd = -1;
-
-        for(int s : starts){
-
-            if(s>lastEnd) {
-                nonOverlapping.push_back(s);
-                lastEnd = s + windowSize - 1;
-            }
-        }
-        if(nonOverlapping.size() <2){
-            continue;
-        }
-
-        reportRepeatedBlock(codeLines, windowSize, nonOverlapping);
-        ++warningCOunt;
-
-        for(int s : nonOverlapping){
-            for(int i = 0; i< windowSize; ++i){
-                covered[s + i] = true;
-            }
-        }
-    }
-    }
-    return warningCOunt;
+    return warningCount;
 }
