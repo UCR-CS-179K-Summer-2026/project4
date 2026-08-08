@@ -178,7 +178,29 @@ int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<codeLine>& lines) 
 
 
 void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
-    // Used to visit the nodes in the syntax tree
+    if(ts_node_is_null(node)){
+        return;
+    }
+
+    if(strcmp(ts_node_type(node), "function_definition") == 0){
+        int startLine = static_cast<int>(ts_node_start_point(node).row)+1;
+        int endLine = static_cast<int>(ts_node_end_point(node).row)+1;
+
+        std::vector<codeLine> functionLines;
+
+        for(const auto& line :allCodeLines){
+            if(line.lineNumber >= startLine && line.lineNumber <= endLine){
+                functionLines.push_back(line);
+            }
+        }
+
+        warningCount += findRepeatedBlocks(functionLines);
+        return;
+    }
+    uint32_t childCount = ts_node_child_count(node);
+    for(uint32_t i=0; i< childCount; ++i){
+        visitNode(ts_node_child(node, i), parsedSource, warningCount);
+    }
 }
 
 int RepeatedCodeChecker::analyzeSource(const ParsedSource& parsedSource){
