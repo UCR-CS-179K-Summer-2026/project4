@@ -152,3 +152,10 @@ int main1() {
     }
     return 0;
 }
+
+// Case 13: Redundant if/else if/ else conditional statements
+std:: string numType(int number) {
+    if (number > 0) { return "positive"; }
+    if (number == 0) { return "zero"; }
+    if (number < 0) { return "negative"; }
+}
