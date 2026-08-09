@@ -170,3 +170,37 @@ std:: string roleAssign(int number, int time) {
     else if (time >= 10) { return "expert"; }
     else { return "unknown"; }
 }
+
+// 
+bool caseA(bool cond) {
+    if (cond) return true;
+    else return false;          // should flag -> simplifies to "return cond;"
+}
+
+bool caseB(bool cond) {
+    if (cond) return false;
+    else return true;           // should flag -> simplifies to "return !cond;"
+}
+
+bool caseC(bool cond) {         // braced form -> tests compound_statement unwrapping
+    if (cond) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool caseD(bool cond) {         // should NOT flag: both branches return the SAME literal
+    if (cond) return true;
+    else return true;
+}
+
+bool caseE(bool cond, int x) {  // should NOT flag: else branch doesn't return a bool literal
+    if (cond) return true;
+    else return x > 0;
+}
+
+int caseF(bool cond) {          // should NOT flag: no else at all
+    if (cond) return 1;
+    return 0;
+}
