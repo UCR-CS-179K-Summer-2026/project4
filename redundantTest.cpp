@@ -171,7 +171,7 @@ std:: string roleAssign(int number, int time) {
     else { return "unknown"; }
 }
 
-// 
+// Case 14: Redundant if/else return edge cases ----------
 bool caseA(bool cond) {
     if (cond) return true;
     else return false;          // should flag -> simplifies to "return cond;"
