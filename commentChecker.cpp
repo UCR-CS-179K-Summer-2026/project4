@@ -5,112 +5,110 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <tree_sitter/api.h>
 
-void commentChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
-    // Used to visit the nodes in the syntax tree
+extern "C" {
+    const TSLanguage *tree_sitter_cpp();
 }
 
-int commentChecker::analyzeSource(const ParsedSource& parsedSource){
+//scans through the file for functions, detecting preceding comments, and then calls helper function to scan those functions for interior or inline comments
+void commentChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+    int functionLine;//for outputting later
+    bool hasComment = false;//flag for if the function has a comment
+
+    //convert to string view for comparison
+    std::string_view nodeType(ts_node_type(node));
     
-    int warningCounter = 0;
-    std::vector<std::string> lines;//will contain input file as a vector of string lines
-    std::string line;//will hold each line as it gets added to fileContent
-
-
-    //go throught parsedSource line by line
-    std::string trimmed = parser.stripStrings(parsedSource.source);//use stripStrings to prevent errors from string literals
-    trimmed = parser.stripChars(trimmed);//use stripChars to prevent errors from char literals
-    std::istringstream stream(trimmed);
-
-    while (std::getline(stream, line)) {
-        lines.push_back(line);
-    }
-
-
-    std::regex functionRegex(R"(^[a-zA-Z_][a-zA-Z0-9_<>\s\*\&]*\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\([^\)]*\))");//regex to find functions
-    std::regex commentRegex(R"((\/\/|\/\*|\*))");//regex to find comments
-    std::regex comment_bracket_regex(R"((?://.*|/\*[\s\S]*?\*/)[^(\[{]*([({\[]))");//regex to find opening bracket in a comment
-
-    
-    //iterate through lines vector, searches for function within each line
-    for (int i = 0; i < lines.size(); ++i) {
-
+    //check if the node is a function definition
+    if(nodeType == "function_definition"){
+        TSPoint funcStart = ts_node_start_point(node);//location of function start
+        TSPoint funcEnd = ts_node_end_point(node);//location of function end
+        functionLine = funcStart.row + 1;//save function start row to function line, plus one because default line indexing starts from 0
         
-        if (std::regex_search(lines[i], functionRegex)) {//detects function, assumes no comment until proven otherwise
-            
-            int functionLine = i + 1;//keeps track of function line for printing warning, +1 because i starts at 0
-            bool hasComment = false;//flag for if there is a comment
+        hasComment = false;//set flag for this function
 
+        //check the node above for a preceding comment
+        TSNode prevNode = ts_node_prev_sibling(node);
+        if(prevNode.id != nullptr && std::string_view(ts_node_type(prevNode)) == "comment"){
+            hasComment = true;//if comment found, set flag to true
+        }
 
-            //if i is not the first line of the file, checks if there is a preceding comment
-            if (i > 0) {
-                for (int j = i - 1; j >= 0; --j) {
-                    if (lines[j].find_first_not_of(" \t\r\n") == std::string::npos) {//skip empty lines/lines with only whitespace
-                        continue; 
-                    }
-                    if (std::regex_search(lines[j], commentRegex)) {//if the first non-empty line is a comment, set flag is true
-                        hasComment = true;
-                    }
-                    break; //break to stop from going back past the first non empty line
-                }
-            }
-            
+        //check for inline or internal comments
+        if (!hasComment) {//if we did not already find a comment
+            hasComment = scanForComments(node);//scan for comments with helper function
+        }
 
-            if (std::regex_search(lines[i], commentRegex)) {//checks for inline comment
+        //check for comments on the last line of the function, immediately after the closing bracket
+        if (!hasComment) {
+            //check if the next node is a comment
+            TSNode nextNode = ts_node_next_sibling(node);
+            if (nextNode.id != nullptr && std::string_view(ts_node_type(nextNode)) == "comment") {
+                TSPoint commentStart = ts_node_start_point(nextNode);
                 
-                hasComment = true;
-            }
-
-            
-            //search function body line by line for comments, using brace height to detect start and end
-            int insideFunction = false;//flag for use when scanning function interior
-            int braceDepth = 0;//for counting unclosed braces, used to find when the function ends
-            int k = i;//iterator for inside function
-            while(k < lines.size()){
-
-                
-                if(std::regex_search(lines[k], comment_bracket_regex)){//for case where there is an opening bracket in a comment, marks as comment detected and exits search
-                    hasComment = true;
-                    break;
+                // if the next node is a comment, check if it's on the same line as the closing bracket
+                if (commentStart.row == funcEnd.row) {
+                    hasComment = true;//if so, set flag to true
                 }
-                //for loop goes through current line to find braces
-                for(char ch : lines[k]){
-                    
-                    if (ch == '{'){
-                        
-                        braceDepth++;
-                        insideFunction = true;//after first brace means inside function body
-                    }
-                    else if(ch == '}'){//closing one of the open braces means one less brace depth
-                        
-                        braceDepth--;
-                    }
-                }
-
-                if(std::regex_search(lines[k], commentRegex)) {//check if current line has a comment
-                    
-                    hasComment = true;
-                }
-
-                if(insideFunction && braceDepth <= 0){//if braceDepth reaches 0 after having entered the function, then the function has ended
-                    
-                    break;
-                }
-
-                k++;//increment k to the next line
-            }
-            if (insideFunction && k < lines.size()) {//if we entered a function, and didn't reach the end of the file yet, set i = k so we don't rescan the lines between
-                
-                    i = k; 
-            }
-            if(!hasComment){//if no comments detected, add counter and print warning
-
-                std::cout << "Warning: function in line " << functionLine << " has no comments" << std::endl;
-                warningCounter++;
             }
         }
 
+        //warning if no comment found
+        if (!hasComment) {
+            std::cout << "Warning: function in line " << functionLine << " has no comments" << std::endl;
+            warningCount++;
+        }
     }
+    int childCount = ts_node_child_count(node);
+    for (int i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(node, i);
+        visitNode(child, parsedSource, warningCount);//check the rest of the file for functions
+    }
+}
 
-    return warningCounter;
+//goes through interior of functions given by visitNode to scan for comments
+bool commentChecker::scanForComments(TSNode currentNode){
+    if (currentNode.id == nullptr) return false;
+                
+    std::string_view type(ts_node_type(currentNode));//check current node type
+    if (type == "comment") {
+        return true; //if comment found, return true
+    }
+                
+    //recursively check children nodes
+    int childCount = ts_node_child_count(currentNode);
+        for (int i = 0; i < childCount; ++i) {
+            if (scanForComments(ts_node_child(currentNode, i))){
+                return true;//if a child node has a comment, propagate outwards
+            };
+        }
+    return false;//nothing found
+}
+
+//initializes tree sitter, calls visitNode to scan functions and print warnings, and cleans up tree sitter, returning warning counter
+int commentChecker::analyzeSource(const ParsedSource& parsedSource) {
+    int warningCounter = 0;
+
+    // initialize the tree sitter parser
+    TSParser *parser = ts_parser_new();
+    ts_parser_set_language(parser, tree_sitter_cpp());
+
+    // Parse the raw source string
+    const std::string& sourceCode = parsedSource.source;
+    TSTree *tree = ts_parser_parse_string(
+        parser, 
+        nullptr, 
+        sourceCode.c_str(), 
+        sourceCode.length()
+    );
+
+    
+    TSNode rootNode = ts_tree_root_node(tree);//extract the root node of the C++ syntax tree
+
+    visitNode(rootNode, parsedSource, warningCounter);//call visitNode to go through and scan for functions and comments and print warnings
+
+    //clean up tree sitter to avoid memory leaks
+    ts_tree_delete(tree);
+    ts_parser_delete(parser);
+
+    return warningCounter;//return the counter
 }

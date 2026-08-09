@@ -26,18 +26,19 @@ int commentEndOfFunction(int num){
 
 
 int commentedAfterBracketString(int num){
-    std::string testerString = "{{{";//line has open brackets so if strings are not stripped the checker will treat the rest of the file as one function and not see the commentless function at the end of this test file
-    return num;
-}
-
-int commentedAfterBracketChar(int num){
-    char testerChar = '{';//line has open brackets so if chars are not stripped the checker will treat the rest of the file as one function and not detect the commentless function at the end of this test file
+    std::string testerString = "//";//line has comment in string
     return num;
 }
 
 int inlineCommentedBrackets(int num){
-    if(true){//{{tests for same logic as above cases except for comments; includes an uncommented bracket on the same line to see if that breaks things
-        return num;
+    if(true){
+        if(true){
+            if(true){
+                if(true){
+                    return num;//comment in nested ifs
+                }
+            }
+        }
     }
     return num;
 }

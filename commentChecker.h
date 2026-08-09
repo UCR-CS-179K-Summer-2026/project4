@@ -15,6 +15,7 @@ class commentChecker : public Detector {
     private:
         Parser parser;
         void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
+        bool scanForComments(TSNode currentNode);
     public: 
         int analyzeSource(const ParsedSource& parsedSource) override;
 };
