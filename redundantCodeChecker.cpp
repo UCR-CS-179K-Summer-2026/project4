@@ -166,6 +166,42 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
 
 // ---------- Check 3: redundant if/else returning boolean literals ----------
 
+TSNode RedundantCodeChecker::unwrapToReturnStatement(TSNode node) {
+    if (ts_node_is_null(node)) return TSNode{};
+
+    std::string type = ts_node_type(node);
+
+    if (type == "return_statement") {
+        return node;
+    } 
+
+    else if(type == "else_clause") {
+        uint32_t count = ts_node_child_count(node);
+        if (count >=1) {
+            return unwrapToReturnStatement(ts_node_child(node, count -1));
+        }
+        return TSNode{};
+    }
+    
+    else if (type == "compound_statement") {
+        uint32_t count = ts_node_child_count(node);
+        TSNode onlyStatement{};
+        int statementCount = 0;
+        for (uint32_t i = 0; i < count; ++i) {
+            TSNode child = ts_node_child(node, i);
+            std::string childType = ts_node_type(child);
+            if (childType == "{" || childType == "}") continue;
+            statementCount++;
+            onlyStatement = child;
+        }
+        if (statementCount == 1){
+            return unwrapToReturnStatement(onlyStatement);
+        }
+        return TSNode{};
+    }
+
+    return TSNode{};
+}
 
 // ---------- Single traversal, dispatches by node type ----------
 

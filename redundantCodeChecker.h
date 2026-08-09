@@ -25,8 +25,8 @@ class RedundantCodeChecker : public Detector {
         void checkBooleanComparison(TSNode binaryExprNode, const ParsedSource& parsedSource, int& warningCount);
 
         // Check 3: redundant if/else returning boolean literals
-        // TSNode unwrapToReturnStatement(TSNode node);
-        // void checkRedundantIfElseReturn(TSNode ifStmtNode, const ParsedSource& parsedSource, int& warningCount);
+        TSNode unwrapToReturnStatement(TSNode node);
+        void checkRedundantIfElseReturn(TSNode ifStmtNode, const ParsedSource& parsedSource, int& warningCount);
 
         // Check 4: redundant if/else if/else statements
         bool alwaysReturns(TSNode statement);
