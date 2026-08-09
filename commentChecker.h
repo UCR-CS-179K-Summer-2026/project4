@@ -9,6 +9,7 @@
 #include "ParsedSource.h"
 #include "Detector.h"
 #include "parser.h"
+#include <tree_sitter/api.h>
 
 class commentChecker : public Detector {
     private:
