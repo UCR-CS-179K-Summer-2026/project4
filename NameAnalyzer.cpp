@@ -40,15 +40,21 @@ bool NameAnalyzer::isPoorName(const std::string& name, const std::string& type) 
         return true;
     }
 
+    static std::regex boolPrefixPattern(R"(\b(is|has|can|should|was|will)[A-Z].*)");
+    if(type == "bool" && !std::regex_match(name, boolPrefixPattern)) {
+        return true;
+    }
+
+    static std::regex functionNamePattern(R"(\b(func|function|do|perform|execute|calc|calculate|test|run|call|process|init|initialize|handle)\b)");
+    if(type == "function" && std::regex_match(name, functionNamePattern)) {
+        return true;
+    }
+    
     static std::regex poorNamePattern(R"(\b(temp|data|str|tmp|var|test|flag|item|items|val|value|values|element|elements|arr|array|list|vector|vec)\b)");
     if(std::regex_match(name, poorNamePattern)) {
         return true;
     }
     
-    static std::regex boolPrefixPattern(R"(\b(is|has|can|should|was|will)[A-Z].*)");
-    if(type == "bool" && !std::regex_match(name, boolPrefixPattern)) {
-        return true;
-    }
 
     return false;
 }
