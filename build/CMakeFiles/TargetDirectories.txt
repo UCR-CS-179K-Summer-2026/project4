@@ -1,0 +1,15 @@
+/Users/stuartarief/project4/build/CMakeFiles/tree-sitter-cpp.dir
+/Users/stuartarief/project4/build/CMakeFiles/project4.dir
+/Users/stuartarief/project4/build/CMakeFiles/edit_cache.dir
+/Users/stuartarief/project4/build/CMakeFiles/rebuild_cache.dir
+/Users/stuartarief/project4/build/CMakeFiles/list_install_components.dir
+/Users/stuartarief/project4/build/CMakeFiles/install.dir
+/Users/stuartarief/project4/build/CMakeFiles/install/local.dir
+/Users/stuartarief/project4/build/CMakeFiles/install/strip.dir
+/Users/stuartarief/project4/build/tree-sitter/CMakeFiles/tree-sitter.dir
+/Users/stuartarief/project4/build/tree-sitter/CMakeFiles/edit_cache.dir
+/Users/stuartarief/project4/build/tree-sitter/CMakeFiles/rebuild_cache.dir
+/Users/stuartarief/project4/build/tree-sitter/CMakeFiles/list_install_components.dir
+/Users/stuartarief/project4/build/tree-sitter/CMakeFiles/install.dir
+/Users/stuartarief/project4/build/tree-sitter/CMakeFiles/install/local.dir
+/Users/stuartarief/project4/build/tree-sitter/CMakeFiles/install/strip.dir

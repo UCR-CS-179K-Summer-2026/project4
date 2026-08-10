@@ -67,5 +67,6 @@ int main() {
         std::cout << "Total smelly code(s) found across all files: " << totalSmellyCount << std::endl;
         std::cout << "Total files processed: " << processedFiles << std::endl;
     }
+    
     return 0;
 }

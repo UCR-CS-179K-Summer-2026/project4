@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/stuartarief/project4/build/cmake_install.cmake",
+		"/Users/stuartarief/project4/build/tree-sitter/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
