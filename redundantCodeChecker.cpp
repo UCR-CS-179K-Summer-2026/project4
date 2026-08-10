@@ -64,20 +64,75 @@ void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std
     }
 }
 
-// Recursively counts how many identifier nodes matching a given name appear anywhere within a subtree
-int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name) {
+// // Recursively counts how many identifier nodes matching a given name appear anywhere within a subtree
+// int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name) {
+//     int count = 0;
+//     if (std::string(ts_node_type(scopeNode)) == "identifier" && nodeText(scopeNode, source) == name) {
+//         count++;
+//     }
+
+//     uint32_t childCount = ts_node_child_count(scopeNode);
+//     for (uint32_t i = 0; i < childCount; ++i) {
+//         count += countIdentifierOccurrences(ts_node_child(scopeNode, i), source, name);
+//     }
+
+//     return count;
+// }
+
+// Counts identifier occurrences matching `name` within a subtree, skipping into
+// any nested block that redeclares `name`
+int RedundantCodeChecker::countIdentifierOccurrences(TSNode node, const std::string& source, const std::string& name) {
     int count = 0;
-    if (std::string(ts_node_type(scopeNode)) == "identifier" && nodeText(scopeNode, source) == name) {
+
+    if (std::string(ts_node_type(node)) == "identifier" && nodeText(node, source) == name) {
         count++;
     }
 
-    uint32_t childCount = ts_node_child_count(scopeNode);
+    uint32_t childCount = ts_node_child_count(node);
     for (uint32_t i = 0; i < childCount; ++i) {
-        count += countIdentifierOccurrences(ts_node_child(scopeNode, i), source, name);
+        TSNode child = ts_node_child(node, i);
+        std::string childType = ts_node_type(child);
+
+        if (childType == "compound_statement" && blockRedeclares(child, source, name)) {
+            continue;
+        }
+
+        count += countIdentifierOccurrences(child, source, name);
     }
 
     return count;
 }
+
+// Walks up from a declarator node to find the nearest enclosing compound_statement —
+// i.e. the block this declaration's scope belongs to.
+TSNode RedundantCodeChecker::findEnclosingScope(TSNode node) {
+    TSNode parent = ts_node_parent(node);
+    while (!ts_node_is_null(parent)) {
+        if (std::string(ts_node_type(parent)) == "compound_statement") {
+            return parent;
+        }
+        parent = ts_node_parent(parent);
+    }
+    return TSNode{};
+}
+
+// Does this block directly declare a variable named `name`?
+// checks this block's direct "declaration" children
+bool RedundantCodeChecker::blockRedeclares(TSNode blockNode, const std::string& source, const std::string& name) {
+    uint32_t count = ts_node_child_count(blockNode);
+    for (uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(blockNode, i);
+        if (std::string(ts_node_type(child)) == "declaration") {
+            std::vector<std::pair<std::string, TSNode>> decls;
+            collectDeclarations(child, source, decls);
+            for (auto& [declName, declNode] : decls) {
+                if (declName == name) return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 // Given a function_definition node, finds its body, collects every variable declared anywhere
 // counts how many times each declared name is referenced
@@ -105,10 +160,13 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
     }
 
     for (auto& [name, declNode] : declarations) {
-        int occurrences = countIdentifierOccurrences(bodyNode, source, name);
+        TSNode scope = findEnclosingScope(declNode);
+        if (ts_node_is_null(scope)) scope = bodyNode; // fallback safety net
+
+        int occurrences = countIdentifierOccurrences(scope, source, name);
         if (occurrences <= 1) {
             int line = ts_node_start_point(declNode).row + 1;
-            std::cout << "Warning: Redundant dead/unused code. The variable \""
+            std::cout << "Warning: Redundant dead/unused code. \""
                     << name << "\" is declared but never used. "
                     << "(line " << line << ")\n";
             ++warningCount;
