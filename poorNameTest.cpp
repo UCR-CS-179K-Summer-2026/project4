@@ -26,13 +26,13 @@ bool isAdmin(const std::string& username, const std::string& password) {
 }
 
 void swapData() {
-    int data = 10; // Example variable with a poor name in function scope
-    int newNumber = 20;
+    int xy, data = 10; // Example variables with poor names in function scope
+    xy = 20;
     std::vector<int> vec; // Example vector with a poor name in function scope
     
     int temp = data; // Example variable with a poor name in function scope
-    data = newNumber;
-    newNumber = temp;
+    data = xy;
+    xy = temp;
 }
 
 void nestedLoop() {
