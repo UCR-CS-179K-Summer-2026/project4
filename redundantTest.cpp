@@ -3,15 +3,15 @@
 
 // Case 1: base case - single unused variable
 int calculateCost(int itemPrice, int tax) {
-    int processFee = 5;
+    int processFee = 5;         // UNUSED: -> should flag
     int total = itemPrice + tax;
     return total;
 }
 
 // Case 2: multiple unused variables in one function
 int processOrder(int quantity, int price) {
-    int discount = 10;
-    int shippingCost = 15;
+    int discount = 10;          // UNUSED: -> should flag
+    int shippingCost = 15;      // UNUSED: -> should flag
     int subtotal = quantity * price;
     return subtotal;
 }
@@ -24,19 +24,19 @@ int computeStat(int a, int b) {
 
 // Case 4: same variable name reused across different functions
 int firstFunction(int input) {
-    int counter = 0;
+    int counter = 0;        // UNUSED: -> should flag
     return input;
 }
 
 int secondFunction(int input) {
-    int counter = input * 2;
+    int counter = input * 2;    // USED: should NOT flag
     return counter;
 }
 
 // Case 5: unused variable declared inside a nested block (if/for)
 int validateInput(int value) {
     if (value > 0) {
-        int adjustedValue = value - 1;
+        int adjustedValue = value - 1;  // UNUSED: -> should flag
         int isValid = 1;
         return isValid;
     }
@@ -62,6 +62,7 @@ int cleanFunction(int a, int b) {
 // Case 8: commented-out declaration should NOT be flagged
 int withCommentedCode(int x) {
     // int oldDebugVar = 99;
+    /* int oldDebug Var = 100 */
     int result = x + 1;
     return result;
 }
@@ -69,16 +70,16 @@ int withCommentedCode(int x) {
 // Case 9: multiple unused variables spread across several statements
 // in the same function, mixed with used ones
 int inventoryCheck(int stock, int threshold) {
-    int reorderFlag = 0;
-    int lastCheckedBy = 7;
+    int reorderFlag = 0;    // UNUSED: -> should flag
+    int lastCheckedBy = 7;  // UNUSED: -> should flag
     int isLowStock = stock < threshold;
-    int notes = 0;
+    int notes = 0;          // UNUSED: -> should flag
     return isLowStock;
 }
 
 // Case 10:
 int unusedVariableCases() {
-    int a;              // UNUSED: never referenced -> should flag
+    int a;               // UNUSED: never referenced -> should flag
     int b = 5;           // UNUSED: initialized but never read -> should flag
     int c;
     c = 10;
@@ -118,50 +119,15 @@ void booleanComparisonCases(bool isValid, bool isReady, int count) {
     bool flag = (isValid == true);  // should flag even inside a nested assignment expression
 }
 
-// Case 12: Combined cases
-int main1() {
-    int price = 5;
-    int quantity = 2;
-    bool isValid;
-
-    std::string orderStatus;
-    bool isReady;
-
-
-    if(price > 0) {
-        isValid = true;
-        char c;
-    } else {
-        isValid = false;
-    }
-
-    if(isValid == true) {
-        int totalCost = processOrder(quantity, price);
-        return totalCost;
-    } 
-    else if(isValid == false) {
-        return price;
-    }
-
-    bool isAvailable = true;
-
-    if(quantity > 0 && isAvailable == true) {
-        return quantity;
-    }else if(quantity <= 0 && isAvailable == false) {
-        return 0;
-    }
-    return 0;
-}
-
-// Case 13: Redundant if/else if/ else conditional statements
+// Case 12: Redundant if/else if/ else conditional statements
 std:: string numType(int number) {
-    if (number > 0) { return "positive"; }
+    if (number > 0) { return "positive"; }      // should flag, recognizes 2+ consecutive ifs with unconditional returns
     if (number == 0) { return "zero"; }
     if (number < 0) { return "negative"; }
 }
 
 std:: string roleAssign(int number, int time) {
-    if (number < 10) { return "volunteer"; }
+    if (number < 10) { return "volunteer"; }    // should flag, recognizes 2+ consecutive ifs with unconditional returns
     if (number >= 10 && number < 20) { return "committee"; }
     if (number >= 20) { return "leader"; }
 
@@ -171,7 +137,12 @@ std:: string roleAssign(int number, int time) {
     else { return "unknown"; }
 }
 
-// Case 14: Redundant if/else return edge cases ----------
+int chainedReturns_singleIf(int x) {   // should NOT flag: only 1 if, no chain
+    if (x > 0) { return 1; }
+    return 0;
+}
+
+// Case 13: Redundant Boolean If/Else Return
 bool caseA(bool cond) {
     if (cond) return true;
     else return false;          // should flag -> simplifies to "return cond;"
@@ -202,5 +173,40 @@ bool caseE(bool cond, int x) {  // should NOT flag: else branch doesn't return a
 
 int caseF(bool cond) {          // should NOT flag: no else at all
     if (cond) return 1;
+    return 0;
+}
+
+// Case 14: Combined Cases
+int combined_orderStatusExample(int price, int quantity) {
+    bool isValid;
+    bool isAvailable = true;      // used below -> should NOT flag as unused
+
+    if (price > 0) {
+        isValid = true;
+        char unusedInBranch;      // UNUSED, nested inside an if-branch -> flag
+    } else {
+        isValid = false;
+    }
+    // isValid assigned in both branches, then read below -> should NOT flag as unused
+
+    if (isValid == true) {                          // flag: boolean comparison
+        int totalCost = quantity * price;             // used below -> should NOT flag
+        return totalCost;
+    } else if (isValid == false) {                   // flag: boolean comparison
+        return price;
+    }
+
+    if (quantity > 0 && isAvailable == true) {        // flag: boolean comparison, nested in &&
+        return quantity;
+    } else if (quantity <= 0 && isAvailable == false) { // flag: boolean comparison
+        return 0;
+    }
+
+    // Deliberately hits check 2 AND check 3 on adjacent lines
+    bool cond = true;                    // cond used below -> should NOT flag as unused
+    if (cond == true) return true;       // flag (check 2): "cond == true" -> "cond"
+                                          // flag (check 3, whole if/else): -> "return cond == true;"
+    else return false;
+
     return 0;
 }
