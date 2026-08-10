@@ -18,7 +18,9 @@ private:
         std::string text;
         int lineNumber;
     };
+    void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
 
+std::vector<codeLine> allCodeLines;
 static constexpr int kMinWindowSize = 3; // Minimum number of lines to consider for repetition
 static constexpr int kMaxWindowSize = 10; // Maximum number of lines to consider for repetition
 
@@ -27,11 +29,15 @@ std::string stripLineComment(const std::string& line) const;
 std::string normalizeWhitespace(const std::string& line) const;
 bool isStructuralOnly(const std::string& line) const;
  
+TSNode findIDNode(TSNode node) const;
+std::string extractFunctionName(TSNode functionDefNode, const std::string& source) const;
+
+
 std::vector<codeLine> extractCodeLines(const std::string& content) const;
  
-void reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices) const;
+void reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices, const std::string& functionName) const;
 
-
+int findRepeatedBlocks(const std::vector<codeLine>& codeLines, const std::string& functionName) const;
 };
 
 #endif 

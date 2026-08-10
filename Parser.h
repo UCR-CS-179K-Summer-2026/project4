@@ -17,6 +17,7 @@ class Parser {
         std::string buildTypePattern();
         std::string stripComments(const std::string& source);
         std::string stripStrings(const std::string& source);
+        std::string stripChars(const std::string& source);
         std::vector<DeclaredVariable> findDeclarations(const std::string& body);
         std::vector<FunctionInfo> splitIntoFunctionBodies(const std::string& source);
 };

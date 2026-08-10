@@ -1,6 +1,7 @@
 #include <string>
+#include <vector>
 
-int multiply(int num1, int num2) {
+int calc(int num1, int num2, int arr[]) { // Example with poor function name
     int x = 5;  // Example variable with a poor name in function scope
     return num1 * num2 * x;
 }
@@ -27,6 +28,7 @@ bool isAdmin(const std::string& username, const std::string& password) {
 void swapData() {
     int data = 10; // Example variable with a poor name in function scope
     int newNumber = 20;
+    std::vector<int> vec; // Example vector with a poor name in function scope
     
     int temp = data; // Example variable with a poor name in function scope
     data = newNumber;
@@ -46,6 +48,7 @@ void nestedLoop() {
 }
 
 int addThreeNumbers() {
+    int arr[10]; // Example array with a poor name in function scope
     int x = 1; // Example variable with a poor name in function scope
     int y = 2; // Example variable with a poor name in function scope
     int z = 3; // Example variable with a poor name in function scope
@@ -54,4 +57,9 @@ int addThreeNumbers() {
     return sum;
 }
 
-/* EXPECTED CODE SMELLS: 10 */
+// Example function with poor variable names in parameters
+int addThreeNumbers(const int& a, const int& b, const int& c) {
+    return a + b + c;
+}
+
+/* EXPECTED CODE SMELLS: 17 */

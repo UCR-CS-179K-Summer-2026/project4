@@ -1,3 +1,6 @@
+#include <iostream>
+#include <string>
+
 // Case 1: base case - single unused variable
 int calculateCost(int itemPrice, int tax) {
     int processFee = 5;
@@ -71,4 +74,133 @@ int inventoryCheck(int stock, int threshold) {
     int isLowStock = stock < threshold;
     int notes = 0;
     return isLowStock;
+}
+
+// Case 10:
+int unusedVariableCases() {
+    int a;              // UNUSED: never referenced -> should flag
+    int b = 5;           // UNUSED: initialized but never read -> should flag
+    int c;
+    c = 10;
+    std::cout << c;      // USED: should NOT flag
+
+    int x, y = 2;         // UNUSED: x -> should flag; y is used below
+    std::cout << y;
+
+    int* ptr = nullptr;   // UNUSED: pointer -> should flag (tests pointer_declarator)
+    int& ref = c;         // ref IS used below -> should NOT flag
+    std::cout << ref;
+
+    for (int i = 0; i < 10; i++) {  // USED: i is used in condition/increment/body -> should NOT flag
+        std::cout << i;
+    }
+
+    {
+        int nested = 42;  // UNUSED, but inside a nested block -> should still flag (tests recursive scan)
+    }
+
+    return 0;
+}
+
+// Case 11: boolean comparison cases
+void booleanComparisonCases(bool isValid, bool isReady, int count) {
+    if (isValid == true) {}     // should flag -> simplifies to "isValid"
+    if (isValid == false) {}    // should flag -> simplifies to "!isValid"
+    if (isValid != true) {}     // should flag -> simplifies to "!isValid"
+    if (isValid != false) {}    // should flag -> simplifies to "isValid"
+
+    if (true == isReady) {}     // should flag (literal on LEFT side -> tests that branch)
+
+    if (isValid == isReady) {}  // should NOT flag: neither side is a bool literal
+    if (count == 5) {}          // should NOT flag: int comparison, no bool literal involved
+    if (isValid) {}             // should NOT flag: no comparison at all
+
+    bool flag = (isValid == true);  // should flag even inside a nested assignment expression
+}
+
+// Case 12: Combined cases
+int main1() {
+    int price = 5;
+    int quantity = 2;
+    bool isValid;
+
+    std::string orderStatus;
+    bool isReady;
+
+
+    if(price > 0) {
+        isValid = true;
+        char c;
+    } else {
+        isValid = false;
+    }
+
+    if(isValid == true) {
+        int totalCost = processOrder(quantity, price);
+        return totalCost;
+    } 
+    else if(isValid == false) {
+        return price;
+    }
+
+    bool isAvailable = true;
+
+    if(quantity > 0 && isAvailable == true) {
+        return quantity;
+    }else if(quantity <= 0 && isAvailable == false) {
+        return 0;
+    }
+    return 0;
+}
+
+// Case 13: Redundant if/else if/ else conditional statements
+std:: string numType(int number) {
+    if (number > 0) { return "positive"; }
+    if (number == 0) { return "zero"; }
+    if (number < 0) { return "negative"; }
+}
+
+std:: string roleAssign(int number, int time) {
+    if (number < 10) { return "volunteer"; }
+    if (number >= 10 && number < 20) { return "committee"; }
+    if (number >= 20) { return "leader"; }
+
+    if (time < 5) { return "junior"; }
+    else if (time >= 5 && time < 10) { return "senior";} 
+    else if (time >= 10) { return "expert"; }
+    else { return "unknown"; }
+}
+
+// Case 14: Redundant if/else return edge cases ----------
+bool caseA(bool cond) {
+    if (cond) return true;
+    else return false;          // should flag -> simplifies to "return cond;"
+}
+
+bool caseB(bool cond) {
+    if (cond) return false;
+    else return true;           // should flag -> simplifies to "return !cond;"
+}
+
+bool caseC(bool cond) {         // braced form -> tests compound_statement unwrapping
+    if (cond) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool caseD(bool cond) {         // should NOT flag: both branches return the SAME literal
+    if (cond) return true;
+    else return true;
+}
+
+bool caseE(bool cond, int x) {  // should NOT flag: else branch doesn't return a bool literal
+    if (cond) return true;
+    else return x > 0;
+}
+
+int caseF(bool cond) {          // should NOT flag: no else at all
+    if (cond) return 1;
+    return 0;
 }

@@ -35,11 +35,10 @@ Stuart Arief:
 
 Rebecca Jennings:
 
-* Implement extensive test cases for identifying unused/dead variables in a c++ file
-* Modify redundantCodeChecker.cpp when we shift to new parser library
-* Modify redundantCodeChecker.cpp to identify unused/dead functions in a c++
-* Test with C++ file to identify multiple base case scenarios for unused/dead functions
-* Create UML Diagram and update documentation
+* Modify redundantCodeChecker.cpp when we shift to new parser library.
+* Modify redundantCodeChecker.cpp to identify a base case for redundant boolean logic.
+* Implement extensive test cases for identifying unused/dead variables and redundant boolean logic.
+* Update UML Diagram and documentation.
 
 Jimmy Munoz:
 
