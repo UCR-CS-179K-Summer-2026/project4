@@ -25,7 +25,6 @@ ParsedSource Parser::parse(std::ifstream& inputFile) {
         return {rawSource, nullptr};
     }
 
-    // ts_tree_delete(tree);
     ts_parser_delete(parser);
 
     return {rawSource, tree};
