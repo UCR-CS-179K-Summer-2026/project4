@@ -82,56 +82,29 @@ Output: Warning: Uncommented function exFunction
 
 5. Redundant code: This feature will detect code that can be removed or refined without affecting its desired behavior, otherwise known as redundant code. Some cases include excessive conditional statements, dead/unused variables, redundant initialization of variables, and excessive boolean logic. There are variations of redundant code that may be expanded upon depending on the progress of the project.
 
-**Dead/Unused Code - Variables**
+**Dead/Unused Variables**
 
-**User story:** As a developer, I want to be warned when I declare a variable but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
+**User story:** As a developer, I want the tool to flag when I declare a variable but never use it, so I can clean up leftover code before committing and avoid confusion for anyone reading the function later.
 ```
 int calculateCost(int itemPrice, int tax) {
-	int processFee = 5;
+	int processFee = 5;				// should -> variable is dead/unused
 	int total = itemPrice + tax;
 	return total;
 }
 ```
 Warning: Redundant dead/unused code. The variable "processFee" is declared but never used. (line 2)
 
-**Conditional Statements**
-```
-string numType(int number) {
-	if (number > 0) {
-		return “positive”;
-	}
-	if (number == 0)  {
-		return “zero”;
-	}
-	if (number < 0) {
-		return “negative”;
-	}
-}
-```
+**Redundant Boolean and If/Else Boolean Logic**
 
-Output: Warning: Redundant conditional statement. Modify the function to use “if”, “if else”, and “else” for “number” conditions.
-
-**Initialization**
-```
-main() {
-	int totalScore = 0;
-	totalScore = calculateFinalScore();
-}
-```
-
-Output: Warning: Redundant initialization. Initialize with “int totalScore = calculateFinalScore();” 
-
-**Boolean**
-
-**User Story:** As a developer using the smelly code detector, I want the tool to flag comparisons like x == true or x == false, so that I can simplify my conditionals to x or !x and keep my codebase more readable and idiomatic.
+**User Story:** As a developer using the smelly code detector, I want the tool to flag comparisons like x == true or x == false, so that I can simplify my conditionals to x or !x and return x or return !x to keep my codebase more readable.
 
 ```
 int main() {
-	if(isValid == true) {
+	if(isValid == true) { 					// should flag -> simplifies to "isValid"
         int totalCost = processOrder(quantity, price);
         return totalCost;
     } 
-    if(isValid == false) {
+    if(isValid == false) {					// should flag -> simplifies to "!isValid"
         return price;
     }
 }
@@ -141,14 +114,41 @@ Output: Warning: Redundant boolean comparison. "isValid == true" can be simplifi
 Warning: Redundant boolean comparison. "isValid == false" can be simplified. (line 6)
 
 ```
-int main() {
-	bool isGameOver = checkStatus();
-	if (isGameOver == true) {
-		endGame():
-	}
+bool caseA(bool cond) {
+    if (cond) return true;
+    else return false;          // should flag -> simplifies to "return cond;"
 }
 ```
 
-Output: Warning: Redundant boolean logic. Modify the statement to “if (isGameOver)”.
+Output: Warning: Redundant if/else returning boolean literals. Can be simplified to "return cond;". (line 5)
+
+**Redundant Conditional Statements**
+
+**User story:** As a developer using the smelly code detector, I want the tool to flag conditonals like repeated if statements, so that I can simplify my conditionals to an if/else if/else chain to keep my codebase more readable.
+```
+std:: string roleAssign(int number, int time) {
+    if (number < 10) { return "volunteer"; }
+    if (number >= 10 && number < 20) { return "committee"; }
+    if (number >= 20) { return "leader"; }
+
+    if (time < 5) { return "junior"; }
+    else if (time >= 5 && time < 10) { return "senior";} 
+    else if (time >= 10) { return "expert"; }
+    else { return "unknown"; }
+}
+```
+
+Output: Warning: Redundant conditional statement. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead. (starting line 2)
+
+**Redundant Initialization**
+```
+main() {
+	int totalScore = 0;
+	totalScore = calculateFinalScore();
+}
+```
+
+Output: Warning: Redundant initialization. Initialize with “int totalScore = calculateFinalScore();” 
+
 
 
