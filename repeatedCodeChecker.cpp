@@ -80,7 +80,40 @@ size_t RepeatedCodeChecker::hashSubtree(TSNode node, const std::string& source) 
     return h;
 }
 
+bool RepeatedCodeChecker::subtreesEqual(TSNode left, TSNode right, const std::string& source) const {
+    if (ts_node_is_null(left) || ts_node_is_null(right)) {
+        return ts_node_is_null(left) && ts_node_is_null(right);
+    }
 
+    if(strcmp (ts_node_type(left), ts_node_type(right)) != 0){
+        return false;
+    }
+
+    uint32_t leftChildCount = ts_node_child_count(left);
+    uint32_t rightChildCount = ts_node_child_count(right);
+
+    if(leftChildCount != rightChildCount){
+        return false;
+    }
+
+    if(leftChildCount ==0){
+        uint32_t leftStartByte = ts_node_start_byte(left);
+        uint32_t leftEndByte = ts_node_end_byte(left);
+
+        uint32_t rightStartByte = ts_node_start_byte(right);
+        uint32_t rightEndByte = ts_node_end_byte(right);
+
+        return source.compare(leftStartByte, leftEndByte - leftStartByte, source, rightStartByte, rightEndByte - rightStartByte) == 0;
+
+    }
+
+    for(uint32_t i = 0; i< leftChildCount; ++i){
+        if(!subtreesEqual(ts_node_child(left,i), ts_node_child(right,i), source)){
+            return false;
+        }
+    }
+    return true;
+}
  
 void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices, const std::string& functionName, const std::string& source) const
 {
