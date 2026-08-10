@@ -105,6 +105,15 @@ int unusedVariableCases() {
     return 0;
 }
 
+// UNUSED, x -> should be flagged despite being reinitialized in nested block
+void foo() {
+    int x = 5;
+    while (2-2) {
+        int x = 5;
+        std::cout << x;
+    }
+}
+
 // --------- Check 2: Redundant Boolean Comparisons ---------
 void booleanComparisonCases(bool isValid, bool isReady, int count) {
     if (isValid == true) {}     // should flag -> simplifies to "isValid"
@@ -235,12 +244,4 @@ int combined_orderStatusExample(int price, int quantity) {
     else return false;
 
     return 0;
-}
-
-void foo() {
-    int x = 5;
-    while (2-2) {
-        int x = 5;
-        std::cout << x;
-    }
 }
