@@ -23,11 +23,6 @@ private:
 std::vector<codeLine> allCodeLines;
 static constexpr int kMinWindowSize = 3; // Minimum number of lines to consider for repetition
 static constexpr int kMaxWindowSize = 10; // Maximum number of lines to consider for repetition
-
-std::string stripBlockComments(const std::string& content) const;
-std::string stripLineComment(const std::string& line) const;
-std::string normalizeWhitespace(const std::string& line) const;
-bool isStructuralOnly(const std::string& line) const;
  
 TSNode findIDNode(TSNode node) const;
 std::string extractFunctionName(TSNode functionDefNode, const std::string& source) const;
