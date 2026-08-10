@@ -236,3 +236,11 @@ int combined_orderStatusExample(int price, int quantity) {
 
     return 0;
 }
+
+void foo() {
+    int x = 5;
+    while (2-2) {
+        int x = 5;
+        std::cout << x;
+    }
+}
