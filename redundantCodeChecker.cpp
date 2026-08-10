@@ -4,7 +4,9 @@
 #include <cstring>
 
 // ---------- Shared Helpers  ----------
-// Extract the text a node spans from the raw source.
+
+// extracts the exact source text a given TSNode spans, 
+//using its start/end byte offsets against the raw source string. 
 std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& source) {
     uint32_t start = ts_node_start_byte(node);
     uint32_t end = ts_node_end_byte(node);
@@ -13,7 +15,8 @@ std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& sourc
 
 // ---------- Check 1: unused/dead variables ----------
 
-// Given a declarator node (identifier, init_declarator, pointer_declarator, etc.),
+// Given a declarator node
+// recursively digs down to find and return the variable name
 std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
     std::string type = ts_node_type(node);
 
@@ -42,8 +45,8 @@ std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, c
     return ""; // couldn't resolve — e.g. structured bindings, function pointers
 }
 
-// Walk a "declaration" node's children and collect (name, node) pairs.
-// Handles variables in formats: `int x;` `int x = 5;`and `int x, y = 2;`.
+// Handles variables in formats: `int x;` `int x = 5;`and `int x, y = 2;`
+// Given a declaration node, walks its direct children and pulls out every declared variable name 
 void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations) {
     uint32_t childCount = ts_node_child_count(declarationNode);
     for (uint32_t i = 0; i < childCount; ++i) {
@@ -61,7 +64,7 @@ void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std
     }
 }
 
-// Recursively count identifier nodes matching `name` within scopeNode's subtree.
+// Recursively counts how many identifier nodes matching a given name appear anywhere within a subtree
 int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name) {
     int count = 0;
     if (std::string(ts_node_type(scopeNode)) == "identifier" && nodeText(scopeNode, source) == name) {
@@ -76,6 +79,8 @@ int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std
     return count;
 }
 
+// Given a function_definition node, finds its body, collects every variable declared anywhere
+// counts how many times each declared name is referenced
 void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, int& warningCount) {
     const std::string& source = parsedSource.source;
 
@@ -115,7 +120,8 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
 // ---------- Check 2: redundant boolean comparisons ----------
 
 // Detects `x == true`, `x == false`, `x != true`, `x != false` style comparisons,
-// which should just be `x` or `!x`.
+// Given a binary_expression node, checks whether its operator is ==/!= 
+// and one side is a true/false literal
 void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     const std::string& source = parsedSource.source;
 
@@ -166,6 +172,7 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
 
 // ---------- Check 3: redundant if/else returning boolean literals ----------
 
+// Recursively unwraps a branch node down to the return_statement inside it
 TSNode RedundantCodeChecker::unwrapToReturnStatement(TSNode node) {
     if (ts_node_is_null(node)) return TSNode{};
 
@@ -203,7 +210,8 @@ TSNode RedundantCodeChecker::unwrapToReturnStatement(TSNode node) {
     return TSNode{};
 }
 
-// Looks only at this single if_statement node; does not recurse.
+// Given an if_statement node, checks whether both its consequence and alternative branches 
+// unconditionally return opposite boolean literals (true/false);
 void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     const std::string& source = parsedSource.source;
 
@@ -253,8 +261,7 @@ void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedS
 
 // ---------- Single traversal, dispatches by node type ----------
 
-// one recursive traversal of the actual AST, 
-//dispatching to focused checks by real node type (ex. init_declarator, pointer_declarator, else_clause)
+// one recursive traversal of the actual AST, dispatching to focused checks by real node type
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     std::string type = ts_node_type(node);
 
@@ -278,8 +285,8 @@ void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSour
 
 // ---------- Check 4: redundant if/if else/else statements ----------
 
-// Does this statement unconditionally return? Handles `return x;` directly,
-// and `{ ... return x; }` where the return is the last statement in the block.
+// Checks whether a given statement unconditionally returns, either directly or 
+// as the last statement inside a {} block.
 bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
     if (ts_node_is_null(statement)) return false;
     std::string type = ts_node_type(statement);
@@ -301,8 +308,8 @@ bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
     return false;
 }
 
-// Looks at direct children of a block for runs of 2+ sibling if-statements,
-// each with no else and an unconditional return, a chain that should be if/else if/else.
+// Given a compound_statement node, scans its direct children for runs of 2+ consecutive 
+//sibling if_statements, each with no else and an unconditional return
 void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedSource& parsedSource, int& warningCount) {
     uint32_t count = ts_node_child_count(blockNode);
 
@@ -347,6 +354,8 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
 
 // ---------- Analyze Source ----------
 
+// Gets the root node from the ParsedSource's TSTree, kicks off visitNode()
+// returns the total warning count
 int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     int warningCount = 0;
 
