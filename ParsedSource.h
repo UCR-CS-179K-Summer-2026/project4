@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include "FunctionInfo.h"
 #include <tree_sitter/api.h>
 
 // Includes the raw source code (functions, comments, etc.) and a vector of FunctionInfo
