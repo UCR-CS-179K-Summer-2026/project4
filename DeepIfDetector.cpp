@@ -1,4 +1,12 @@
 #include "DeepIfDetector.h"
+#include "NameAnalyzer.h"
+
+#include <iostream>
+
+void DeepIfDetector::outputErrorMessage(const std::string& name, const int& line, int& warningCount) {
+    std::cout << "Warning: " << name << " at line " << line << std::endl;
+    warningCount++;
+}
 
 void DeepIfDetector::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     if(ts_node_is_null(node)) {
@@ -7,11 +15,10 @@ void DeepIfDetector::visitNode(TSNode node, const ParsedSource& parsedSource, in
 
     const char* nodeType = ts_node_type(node);
     if(strcmp(nodeType, "if_statement") == 0) {
-        static int depth = 0;
         depth++;
-        if(depth > 3) {
+        if(depth > MAX_DEPTH) {
             int line = NameAnalyzer().getLineNumber(parsedSource, node);
-            NameAnalyzer().outputErrorMessage("Deeply nested if statement", line, warningCount);
+            outputErrorMessage("Deeply nested if statement", line, warningCount);
         }
     }
 
@@ -22,7 +29,6 @@ void DeepIfDetector::visitNode(TSNode node, const ParsedSource& parsedSource, in
     }
 
     if(strcmp(nodeType, "if_statement") == 0) {
-        static int depth = 0;
         depth--;
     }
 }

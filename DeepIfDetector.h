@@ -8,10 +8,12 @@
 
 class DeepIfDetector : public Detector {
     private:
+        int depth;
+        const int MAX_DEPTH = 3;
         void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
         void outputErrorMessage(const std::string& name, const int& line, int& warningCount);
     public:
-        DeepIfDetector() {};
+        DeepIfDetector() {depth = 0;};
         int analyzeSource(const ParsedSource& parsedSource) override;
 };
 
