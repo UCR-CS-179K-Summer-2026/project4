@@ -12,21 +12,35 @@ void PoorNameChecker::checkVariableDeclaration(TSNode node, const ParsedSource& 
         return;
     }
 
-    TSNode initDeclarator = ts_node_child_by_field_name(node, "declarator", 10);
+    uint32_t nodeChildCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < nodeChildCount; ++i) {
 
-    if(!ts_node_is_null(initDeclarator)) {
-        // Find the declarator's identifier.
-        // Identifier holds the name of the variable, extract it from the source code
-        TSNode identifierNode = nameAnalyzer.findIdentifierNode(initDeclarator);
+        TSNode childNode = ts_node_child(node, i);
+        const char* childType = ts_node_type(childNode);
 
-        if(!ts_node_is_null(identifierNode)) {
+        TSNode identifierNode = {};
+
+        if (strcmp(childType, "identifier") == 0) {
+            identifierNode = childNode;
+        }
+        else if (strcmp(childType, "init_declarator") == 0) {
+            TSNode declaratorNode = ts_node_child_by_field_name(childNode, "declarator", 10);
+
+            if (!ts_node_is_null(declaratorNode)) {
+                identifierNode = nameAnalyzer.findIdentifierNode(declaratorNode);
+            }
+        }
+        else if (strcmp(childType, "array_declarator") == 0) {
+            identifierNode = nameAnalyzer.findIdentifierNode(childNode);
+        }
+
+        if (!ts_node_is_null(identifierNode)) {
             std::string name = nameAnalyzer.extractIdentifierName(parsedSource, identifierNode);
-
-            TSNode primitiveTypeNode = ts_node_child_by_field_name(node, "type", 4);
-            std::string variableType = nameAnalyzer.extractIdentifierName(parsedSource, primitiveTypeNode);
-
-            if(nameAnalyzer.isPoorName(name, variableType)) {
-                int line = std::count(parsedSource.source.begin(), parsedSource.source.begin() + ts_node_start_byte(identifierNode), '\n') + 1;
+            TSNode typeNode = ts_node_child_by_field_name(node, "type", 4);
+            std::string variableType = nameAnalyzer.extractIdentifierName(parsedSource, typeNode);
+    
+            if (nameAnalyzer.isPoorName(name, variableType)) {
+                int line = nameAnalyzer.getLineNumber(parsedSource, identifierNode);
                 nameAnalyzer.outputErrorMessage(name, line, warningCount);
             }
         }
