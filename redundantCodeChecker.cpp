@@ -80,7 +80,7 @@ void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std
 // }
 
 // Counts identifier occurrences matching `name` within a subtree, skipping into
-// any nested block that redeclares `name` (since those refer to the shadowing variable).
+// any nested block that redeclares `name`
 int RedundantCodeChecker::countIdentifierOccurrences(TSNode node, const std::string& source, const std::string& name) {
     int count = 0;
 

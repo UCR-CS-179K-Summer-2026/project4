@@ -121,6 +121,16 @@ void foo() {
         std::cout << y;
         }
     }
+    // Should not be flagged
+    int val = 10;
+    while(val > 1) {
+        int z = 2;
+        val--;
+        if(z > 1) {
+            z--;
+            val--;
+        }
+    }
 }
 
 // --------- Check 2: Redundant Boolean Comparisons ---------
