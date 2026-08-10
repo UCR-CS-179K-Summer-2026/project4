@@ -32,7 +32,7 @@
 
 <main id="top">
 
-  <!-- HERO -->
+  <!-- Header -->
   <section class="hero" id="overview">
     <p class="eyebrow">CS179K &middot; Software Engineering</p>
     <h1>Warnings your compiler<br>won't give you.</h1>
@@ -47,17 +47,20 @@
         <span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
         <span class="terminal-title">main.cpp — smellycodedetector</span>
       </div>
-      <pre class="terminal-body"><span class="t-prompt">$</span> g++ -std=c++17 *.cpp -o main
-      <pre class="terminal-body"><span class="t-prompt">$</span> ./main
-<span class="t-warn">Warning:</span> Redundant dead/unused code. The variable 'x' is declared but never used <span class="t-dim">(line 12)</span>
+      <pre class="terminal-body"><span class="t-prompt">$</span> ./build/Debug/project4.exe
+      <pre class="terminal-body"><span class="t-prompt">$</span> Enter the name of the file to read: filename.cpp
+<span class="t-warn">Warning:</span> Redundant dead/unused code. The variable 'x' is declared but never used (line 12)
 <span class="t-warn">Warning:</span> Repeated code detected in lines: 3 to 5, 6 to 8
 <span class="t-dim">Repeated code:</span>
 <span class="t-dim">result = a + b;</span>
 <span class="t-dim">result = a - b;</span>
 <span class="t-dim">result = a * b;</span>
-<span class="t-warn">Warning:</span> variable name 'a' is considered poor. Reason: Non-descriptive variable name. Suggested names: rows, maxValue. <span class="t-dim">(line 18)</span>
+<span class="t-warn">Warning:</span> Poor identifier name detected: 'a' (line 20). Consider using a more descriptive name.
 <span class="t-warn">Warning:</span> function in line 'calculateCost' has no comments.
-<span class="t-pass">4 Smelly code(s) found</span> in the file: filename.cpp</pre>
+<span class="t-warn">Warning:</span> Redundant boolean comparison. "true == isReady" can be simplified to "isReady". (line 25)
+<span class="t-warn">Warning:</span> Redundant conditional statement. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead. (starting line 30)
+<span class="t-warn">Warning:</span> function in line 40 has no comments.
+<span class="t-pass">7 Smelly code(s) found</span> in the file: filename.cpp</pre>
     </div>
   </section>
 
@@ -74,7 +77,7 @@
 
       <figure class="figure-card">
         <div class="figure-frame">
-          <img src="CS179K_System_Architecture_V2.jpeg" alt="Flow diagram of the code smell detector">
+          <img src="Flow Diagram.png" alt="Flow diagram of the code smell detector">
         </div>
         <figcaption>Flow Diagram</figcaption>
       </figure>

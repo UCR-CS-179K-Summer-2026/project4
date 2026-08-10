@@ -253,7 +253,7 @@ h2 {
   border-radius: 8px;
   overflow: hidden;
   background: var(--bg-card);
-  aspect-ratio: 30 / 20;
+  aspect-ratio: 30 / 25;
   display: flex;
   align-items: center;
   justify-content: center;
