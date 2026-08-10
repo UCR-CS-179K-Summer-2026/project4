@@ -32,9 +32,9 @@ size_t hashSubtree(TSNode node, const std::string& source) const;
 
 bool subtreesEqual(TSNode left, TSNode right, const std:: string& source) const;
  
-void reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices, const std::string& functionName, const std::string& source) const;
+void reportRepeatedBlock(const std::vector<TSNode>& statements, int windowSize, const std::vector<int>& startIndices,const std::string& functionName, const std::string& source) const;
 
-int findRepeatedBlocks(const std::vector<codeLine>& codeLines, const std::string& functionName, const std::string& source) const;
+int findRepeatedBlocks(const std::vector<TSNode>& statements, const std::string& functionName, const std::string& source) const;
 void scanBlocksForRepeats(TSNode node, const std::string& functionName, const std::string& source, int& warningCount) const;
 };
 

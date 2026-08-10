@@ -1,11 +1,11 @@
 #include "repeatedCodeChecker.h"
 
 #include <iostream>
-#include <sstream>
-#include <regex>
+#include <cstring>
+#include <functional>
 #include <algorithm>
 #include <unordered_map>
-
+#include <tree_sitter/api.h>
 
 TSNode RepeatedCodeChecker::findIDNode(TSNode node) const {
     if (ts_node_is_null(node)) {
@@ -115,102 +115,127 @@ bool RepeatedCodeChecker::subtreesEqual(TSNode left, TSNode right, const std::st
     return true;
 }
  
-void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices, const std::string& functionName, const std::string& source) const
+void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<TSNode>& statements, int windowSize, const std::vector<int>& startIndices,const std::string& functionName, const std::string& source) const
 {
     std::cout << "Warning: Repeated code detected in function: " << functionName << std::endl;
 
     for (int startIndex : startIndices){
-        int firstLine = lines[startIndex].lineNumber;
-        int lastLine = lines[startIndex + windowSize - 1].lineNumber;
+        int firstLine = static_cast<int>(ts_node_start_point(statements[startIndex]).row)+1;
+        int lastLine = static_cast<int>(ts_node_end_point(statements[startIndex + windowSize - 1]).row)+1;
  
         std::cout << " In line(s) " << firstLine << " to " << lastLine << " " << std::endl;
     }
  
     std::cout << " Repeated code:" << std::endl;
  
-    for (int i = 0 ; i < windowSize; ++i){
-        std::cout << lines[startIndices[0] + i].text << std::endl;
-    }
- 
-    std::cout << std::endl;
+    uint32_t startBlockByte = ts_node_start_byte(statements[startIndices[0]]);
+    uint32_t endBlockByte = ts_node_end_byte(statements[startIndices[0] + windowSize - 1]);
+
+    std::cout << source.substr(startBlockByte, endBlockByte - startBlockByte) << std::endl;
 }
 
-int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<codeLine>& codeLines, const std::string& functionName, const std::string& source) const {
-    int n = static_cast<int>(codeLines.size());
- 
-    int warningCOunt = 0;
-    if(n < kMinWindowSize){
-        return warningCOunt;
+int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<TSNode>& statements, const std::string& functionName, const std::string& source) const {
+   int n = static_cast<int>(statements.size());
+    int warningCount = 0;
+    if (n < kMinWindowSize) {
+        return warningCount;
     }
  
-    std::vector<bool> covered(n,false);
+    std::vector<size_t> stmtHash(n);
+    for (int i = 0; i < n; ++i) {
+        stmtHash[i] = hashSubtree(statements[i], source);
+    }
+ 
+    std::vector<bool> covered(n, false);
     int maxWindow = std::min(kMaxWindowSize, n);
  
-    for (int windowSize = maxWindow; windowSize >= kMinWindowSize; --windowSize){
-        std::unordered_map<std::string, std::vector<int>> blockMap;
+    for (int windowSize = maxWindow; windowSize >= kMinWindowSize; --windowSize) {
+        std::unordered_map<size_t, std::vector<int>> blockMap;
  
-        for (int start = 0; start+windowSize <= n; ++start){
+        for (int start = 0; start + windowSize <= n; ++start) {
             bool anyCovered = false;
- 
-            for(int i =0; i < windowSize; ++i){
-                if(covered[start + i]){
-                    anyCovered = true;
-                    break;
-                }
+            for (int i = 0; i < windowSize; ++i) {
+                if (covered[start + i]) { anyCovered = true; break; }
             }
+            if (anyCovered) continue;
  
-            if (anyCovered){
-                continue;
-            }
- 
-            std::string key;
-            for(int i = 0; i< windowSize; ++i){
-                key += codeLines[start + i].text + "\n";
+            size_t key = 0;
+            for (int i = 0; i < windowSize; ++i) {
+                key ^= stmtHash[start + i] + 0x9e3779b97f4a7c15ULL + (key << 6) + (key >> 2);
             }
  
             blockMap[key].push_back(start);
         }
  
-        std::vector <std::pair<std::string,std::vector<int>>> ordered(blockMap.begin(), blockMap.end());
- 
-        std::sort(ordered.begin(),ordered.end(), [](const auto& a, const auto& b){
+        std::vector<std::pair<size_t, std::vector<int>>> ordered(blockMap.begin(), blockMap.end());
+        std::sort(ordered.begin(), ordered.end(), [](const auto& a, const auto& b) {
             return a.second.front() < b.second.front();
         });
  
-        for(auto& entry : ordered){
+        for (auto& entry : ordered) {
             std::vector<int>& starts = entry.second;
-            if(starts.size() <2) {
-                continue;
-            }
+            if (starts.size() < 2) continue;
  
             std::vector<int> nonOverlapping;
             int lastEnd = -1;
  
-            for(int s : starts){
-                if(s>lastEnd) {
-                    nonOverlapping.push_back(s);
-                    lastEnd = s + windowSize - 1;
+            for (int s : starts) {
+                if (s <= lastEnd) continue;
+ 
+               
+                if (!nonOverlapping.empty()) {
+                    int firstStart = nonOverlapping.front();
+                    bool matches = true;
+                    for (int i = 0; i < windowSize; ++i) {
+                        if (!subtreesEqual(statements[firstStart + i], statements[s + i], source)) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if (!matches) continue;
                 }
-            }
-            if(nonOverlapping.size() <2){
-                continue;
+ 
+                nonOverlapping.push_back(s);
+                lastEnd = s + windowSize - 1;
             }
  
-            // reportRepeatedBlock(codeLines, windowSize, nonOverlapping, functionName);
-            ++warningCOunt;
+            if (nonOverlapping.size() < 2) continue;
  
-            for(int s : nonOverlapping){
-                for(int i = 0; i< windowSize; ++i){
+            reportRepeatedBlock(statements, windowSize, nonOverlapping, functionName, source);
+            ++warningCount;
+ 
+            for (int s : nonOverlapping) {
+                for (int i = 0; i < windowSize; ++i) {
                     covered[s + i] = true;
                 }
             }
         }
     }
-    return warningCOunt;
+ 
+    return warningCount;
 }
 
 void RepeatedCodeChecker::scanBlocksForRepeats(TSNode node, const std::string& functionName, const std::string& source, int& warningCount) const{
+    if(ts_node_is_null(node)){
+        return;
+    }
 
+    const char* type = ts_node_type(node);
+
+    if(strcmp(type, "function_definition") == 0){
+        return;
+    }
+
+    if(strcmp(type, "compound_statement") == 0){
+        std::vector<TSNode> statements = collectStatements(node);
+        warningCount += findRepeatedBlocks(statements, functionName, source);
+    }
+
+    uint32_t childCount = ts_node_child_count(node);
+
+    for(uint32_t i = 0; i< childCount; ++i){
+        scanBlocksForRepeats(ts_node_child(node,i), functionName, source, warningCount);
+    }
 }
 
 void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
