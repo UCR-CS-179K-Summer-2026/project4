@@ -26,16 +26,30 @@ int commentEndOfFunction(int num){
 
 
 int commentedAfterBracketString(int num){
-    std::string testerString = "}}}";
-    return num;//previous line has closing brackets so if strings are not stripped the checker will not see this comment
+    std::string testerString = "//";//line has comment in string
+    return num;
 }
 
 int inlineCommentedBrackets(int num){
-    //}}}}}
+    if(true){
+        if(true){
+            if(true){
+                if(true){
+                    return num;//comment in nested ifs
+                }
+            }
+        }
+    }
     return num;
 }
 
 int blockCommentedBrackets(int num){
-    /*}}}there are brackets in this comment*/
+    if(true){/*{{same as above for block comments*/
+        return num;
+    }
+    return num;
+}
+
+int literalChecker(int num){
     return num;
 }
