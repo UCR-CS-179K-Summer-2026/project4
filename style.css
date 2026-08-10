@@ -285,7 +285,7 @@ h2 {
 --------------------------------------------- */
 .type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 1.25rem;
   text-align: left;
 }
@@ -336,7 +336,7 @@ h2 {
 --------------------------------------------- */
 .module-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 2fr));
   gap: 1.25rem;
   text-align: left;
 }
