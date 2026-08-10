@@ -60,7 +60,24 @@ return statements;
 }
 
 size_t RepeatedCodeChecker::hashSubtree(TSNode node, const std::string& source) const{
+    size_t h = std::hash<std::string>{}(ts_node_type(node));
+    uint32_t childCount = ts_node_child_count(node);
 
+        if(childCount == 0){
+            uint32_t startByte = ts_node_start_byte(node);
+            uint32_t endByte = ts_node_end_byte(node);
+
+            std::string text = source.substr(startByte, endByte - startByte);
+            h^= std::hash<std::string>{}(text); + 0x9e3779b9 + (h << 6) + (h >> 2);
+            return h;
+    }
+
+        for(uint32_t i = 0; i< childCount; ++i){
+            size_t childHash = hashSubtree(ts_node_child(node,i), source);
+            h^= childHash + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+
+    return h;
 }
 
 
@@ -73,7 +90,7 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines
         int firstLine = lines[startIndex].lineNumber;
         int lastLine = lines[startIndex + windowSize - 1].lineNumber;
  
-        std::cout << firstLine << " to " << lastLine << " " << std::endl;
+        std::cout << " In line(s) " << firstLine << " to " << lastLine << " " << std::endl;
     }
  
     std::cout << " Repeated code:" << std::endl;
