@@ -160,10 +160,13 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
     }
 
     for (auto& [name, declNode] : declarations) {
-        int occurrences = countIdentifierOccurrences(bodyNode, source, name);
+        TSNode scope = findEnclosingScope(declNode);
+        if (ts_node_is_null(scope)) scope = bodyNode; // fallback safety net
+
+        int occurrences = countIdentifierOccurrences(scope, source, name);
         if (occurrences <= 1) {
             int line = ts_node_start_point(declNode).row + 1;
-            std::cout << "Warning: Redundant dead/unused code. The variable \""
+            std::cout << "Warning: Redundant dead/unused code. \""
                     << name << "\" is declared but never used. "
                     << "(line " << line << ")\n";
             ++warningCount;
