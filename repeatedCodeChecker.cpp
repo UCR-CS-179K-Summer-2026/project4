@@ -6,6 +6,28 @@
 #include <algorithm>
 #include <unordered_map>
 
+
+TSNode RepeatedCodeChecker::findIDNode(TSNode node) const {
+    if (ts_node_is_null(node)) {
+        return node;
+    }
+ 
+    if (strcmp(ts_node_type(node), "identifier") == 0) {
+        return node;
+    }
+ 
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(node, i);
+        TSNode result = findIDNode(child);
+        if (!ts_node_is_null(result)) {
+            return result;
+        }
+    }
+ 
+    return {};
+}
+
 std::string RepeatedCodeChecker::extractFunctionName(TSNode functionDefNode, const std::string& source) const {
     TSNode declaratorNode = ts_node_child_by_field_name(functionDefNode, "declarator", strlen("declarator"));
     if (ts_node_is_null(declaratorNode)) {
@@ -21,32 +43,29 @@ std::string RepeatedCodeChecker::extractFunctionName(TSNode functionDefNode, con
     uint32_t endByte = ts_node_end_byte(identifierNode);
     return source.substr(startByte, endByte - startByte);
 }
- 
- 
-std::vector<RepeatedCodeChecker::codeLine> RepeatedCodeChecker::extractCodeLines(const std::string& content) const{
-    std::vector<codeLine> codeLines;
-    std::string noBlockComments = stripBlockComments(content);
 
-    std::istringstream stream(noBlockComments);
-    std::string rawLine;
+std::vector<TSNode> RepeatedCodeChecker::collectStatements(TSNode blockNode) const{
+std::vector<TSNode> statements;
+uint32_t childCount = ts_node_child_count(blockNode);
 
-    int lineNumber = 0;
+for(uint32_t i =0; i<childCount; ++i){
+    TSNode child = ts_node_child(blockNode, i);
 
-    while(std::getline(stream, rawLine)){
-        lineNumber++;
-        std::string noLineComment = stripLineComment(rawLine);
-        std::string normalized = normalizeWhitespace(noLineComment);
-
-        if(!normalized.empty() && !isStructuralOnly(normalized)){
-            codeLines.push_back({normalized, lineNumber});
-        }
-
-        continue;
+    if(ts_node_is_named(child) && strcmp(ts_node_type(child), "comment") !=0){
+        statements.push_back(child);
     }
-    return codeLines;
 }
+
+return statements;
+}
+
+size_t RepeatedCodeChecker::hashSubtree(TSNode node, const std::string& source) const{
+
+}
+
+
  
-void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices, const std::string& functionName) const
+void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices, const std::string& functionName, const std::string& source) const
 {
     std::cout << "Warning: Repeated code detected in function: " << functionName << std::endl;
 
@@ -66,7 +85,7 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines
     std::cout << std::endl;
 }
 
-int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<codeLine>& codeLines, const std::string& functionName) const {
+int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<codeLine>& codeLines, const std::string& functionName, const std::string& source) const {
     int n = static_cast<int>(codeLines.size());
  
     int warningCOunt = 0;
@@ -127,7 +146,7 @@ int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<codeLine>& codeLin
                 continue;
             }
  
-            reportRepeatedBlock(codeLines, windowSize, nonOverlapping, functionName);
+            // reportRepeatedBlock(codeLines, windowSize, nonOverlapping, functionName);
             ++warningCOunt;
  
             for(int s : nonOverlapping){
@@ -138,6 +157,10 @@ int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<codeLine>& codeLin
         }
     }
     return warningCOunt;
+}
+
+void RepeatedCodeChecker::scanBlocksForRepeats(TSNode node, const std::string& functionName, const std::string& source, int& warningCount) const{
+
 }
 
 void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
@@ -155,32 +178,19 @@ void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSourc
         }
  
         std::vector<codeLine> functionLines;
-        for (const auto& line : allCodeLines) {
-            if (line.lineNumber >= startLine && line.lineNumber <= endLine) {
-                functionLines.push_back(line);
-            }
-        }
+        // for (const auto& line : allCodeLines) {
+        //     if (line.lineNumber >= startLine && line.lineNumber <= endLine) {
+        //         functionLines.push_back(line);
+        //     }
+        // }
  
-        warningCount += findRepeatedBlocks(functionLines, functionName);
-        return; 
-    }
+        // warningCount += findRepeatedBlocks(functionLines, functionName);
+    //     return; 
+    // }
  
     uint32_t childCount = ts_node_child_count(node);
     for (uint32_t i = 0; i < childCount; ++i) {
         visitNode(ts_node_child(node, i), parsedSource, warningCount);
     }
 }
-
-int RepeatedCodeChecker::analyzeSource(const ParsedSource& parsedSource){
-    if (parsedSource.tree == nullptr){
-        return 0;
-    }
-
-    allCodeLines = extractCodeLines(parsedSource.source);
-
-    int warningCount = 0;
-    TSNode rootNode = ts_tree_root_node(parsedSource.tree);
-    visitNode(rootNode, parsedSource, warningCount);
-
-    return warningCount;
 }
