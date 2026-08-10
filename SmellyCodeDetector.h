@@ -8,6 +8,7 @@
 #include "redundantCodeChecker.h"
 #include "commentChecker.h"
 #include "repeatedCodeChecker.h"
+#include "DeepIfDetector.h"
 
 class SmellyCodeDetector {
     private:
@@ -15,6 +16,8 @@ class SmellyCodeDetector {
         RedundantCodeChecker redundantCodeChecker;
         commentChecker commentChecker;
         RepeatedCodeChecker repeatedCodeChecker;
+        DeepIfDetector deepIfDetector;
+
         Parser parser;
         ParsedSource parsedSource;
     public:
