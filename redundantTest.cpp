@@ -105,12 +105,21 @@ int unusedVariableCases() {
     return 0;
 }
 
-// UNUSED, x -> should be flagged despite being reinitialized in nested block
+// Unused variables nested in blocks/scopes with same name
 void foo() {
-    int x = 5;
+    int x = 5;      // UNUSED, x -> should be flagged
     while (2-2) {
         int x = 5;
         std::cout << x;
+    }
+    int y = 3;      //UNUSED, y -> should be flagged
+    if (x > 2) { 
+        int y = 2;  //UNUSED, y -> should be flagged
+        if(x > 1) {
+        int y = 4;
+        std::cout << x; 
+        std::cout << y;
+        }
     }
 }
 
