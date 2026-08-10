@@ -21,6 +21,10 @@ class RedundantCodeChecker : public Detector {
         int countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name);
         void checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, int& warningCount);
 
+        TSNode findEnclosingScope(TSNode declaratorNode);
+        bool blockRedeclares(TSNode blockNode, const std::string& source, const std::string& name);
+        int countScopedOccurrences(TSNode scopeNode, const std::string& source, const std::string& name);
+
         // Check 2: redundant boolean comparisons (x == true, x != false, etc.)
         void checkBooleanComparison(TSNode binaryExprNode, const ParsedSource& parsedSource, int& warningCount);
 

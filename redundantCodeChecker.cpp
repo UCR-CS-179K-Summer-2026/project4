@@ -79,6 +79,20 @@ int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std
     return count;
 }
 
+// Walks up from a declarator node to find the nearest enclosing compound_statement —
+// i.e. the block this declaration's scope belongs to.
+TSNode RedundantCodeChecker::findEnclosingScope(TSNode node) {
+    TSNode parent = ts_node_parent(node);
+    while (!ts_node_is_null(parent)) {
+        if (std::string(ts_node_type(parent)) == "compound_statement") {
+            return parent;
+        }
+        parent = ts_node_parent(parent);
+    }
+    return TSNode{};
+}
+
+
 // Given a function_definition node, finds its body, collects every variable declared anywhere
 // counts how many times each declared name is referenced
 void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, int& warningCount) {
