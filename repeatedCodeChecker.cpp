@@ -251,21 +251,31 @@ void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSourc
         if (functionName.empty()) {
             functionName = "<unnamed function>";
         }
- 
-        std::vector<codeLine> functionLines;
-        // for (const auto& line : allCodeLines) {
-        //     if (line.lineNumber >= startLine && line.lineNumber <= endLine) {
-        //         functionLines.push_back(line);
-        //     }
-        // }
- 
-        // warningCount += findRepeatedBlocks(functionLines, functionName);
-    //     return; 
-    // }
- 
-    uint32_t childCount = ts_node_child_count(node);
-    for (uint32_t i = 0; i < childCount; ++i) {
-        visitNode(ts_node_child(node, i), parsedSource, warningCount);
+
+        TSNode bodyNode = ts_node_child_by_field_name(node, "body", strlen("body"));
+        if(!ts_node_is_null(bodyNode)){
+            scanBlocksForRepeats(bodyNode, functionName, parsedSource.source, warningCount);
+        }
+
+        return;
     }
+
+        uint32_t childCount = ts_node_child_count(node);
+
+        for(uint32_t i =0; i< childCount; ++i){
+            visitNode(ts_node_child(node,i), parsedSource, warningCount);
+        }
 }
+
+int RepeatedCodeChecker::analyzeSource(const ParsedSource& source){
+    if(source.tree == nullptr){
+        return 0;
+    }
+
+    int warningCount = 0;
+    TSNode rootNode = ts_tree_root_node(source.tree);
+    visitNode(rootNode, source, warningCount);
+
+    return warningCount;
+
 }
