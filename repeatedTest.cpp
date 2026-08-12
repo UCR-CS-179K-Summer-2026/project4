@@ -22,6 +22,20 @@ int normalRepeatBlocks(int a, int b) {
     return result;
 }
 
+int whiteSpace(int a, int b) {
+    std::string message = " ";
+
+    message += "Hello";
+    message += "Hello";
+    message+="Hello";
+    message+="Hello";
+    message+="Hello";
+    message += "Hello";
+    message += "Hello";
+
+    return 1;
+}
+
 
 void shouldBeLoop(){
     int numbers[5] = {}, index = 0;
