@@ -5,8 +5,6 @@
 
 // ---------- Shared Helpers  ----------
 
-// extracts the exact source text a given TSNode spans, 
-//using its start/end byte offsets against the raw source string. 
 std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& source) {
     uint32_t start = ts_node_start_byte(node);
     uint32_t end = ts_node_end_byte(node);
@@ -15,8 +13,6 @@ std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& sourc
 
 // ---------- Check 1: unused/dead variables ----------
 
-// Given a declarator node
-// recursively digs down to find and return the variable name
 std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
     std::string type = ts_node_type(node);
 
@@ -24,15 +20,11 @@ std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, c
         return nodeText(node, source);
     }
 
-    // init_declarator: has a "declarator" field (identifier or pointer_declarator etc.)
-    // pointer_declarator / reference_declarator: wraps another declarator
-    // array_declarator: wraps another declarator
     TSNode declaratorField = ts_node_child_by_field_name(node, "declarator", strlen("declarator"));
     if (!ts_node_is_null(declaratorField)) {
         return extractIdentifierFromDeclarator(declaratorField, source);
     }
 
-    // search children for an identifier
     uint32_t childCount = ts_node_child_count(node);
     for (uint32_t i = 0; i < childCount; ++i) {
         TSNode child = ts_node_child(node, i);
@@ -42,11 +34,9 @@ std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, c
         }
     }
 
-    return ""; // couldn't resolve — e.g. structured bindings, function pointers
+    return "";
 }
 
-// Handles variables in formats: `int x;` `int x = 5;`and `int x, y = 2;`
-// Given a declaration node, walks its direct children and pulls out every declared variable name 
 void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations) {
     uint32_t childCount = ts_node_child_count(declarationNode);
     for (uint32_t i = 0; i < childCount; ++i) {
@@ -64,23 +54,6 @@ void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std
     }
 }
 
-// // Recursively counts how many identifier nodes matching a given name appear anywhere within a subtree
-// int RedundantCodeChecker::countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name) {
-//     int count = 0;
-//     if (std::string(ts_node_type(scopeNode)) == "identifier" && nodeText(scopeNode, source) == name) {
-//         count++;
-//     }
-
-//     uint32_t childCount = ts_node_child_count(scopeNode);
-//     for (uint32_t i = 0; i < childCount; ++i) {
-//         count += countIdentifierOccurrences(ts_node_child(scopeNode, i), source, name);
-//     }
-
-//     return count;
-// }
-
-// Counts identifier occurrences matching `name` within a subtree, skipping into
-// any nested block that redeclares `name`
 int RedundantCodeChecker::countIdentifierOccurrences(TSNode node, const std::string& source, const std::string& name) {
     int count = 0;
 
@@ -103,8 +76,6 @@ int RedundantCodeChecker::countIdentifierOccurrences(TSNode node, const std::str
     return count;
 }
 
-// Walks up from a declarator node to find the nearest enclosing compound_statement —
-// i.e. the block this declaration's scope belongs to.
 TSNode RedundantCodeChecker::findEnclosingScope(TSNode node) {
     TSNode parent = ts_node_parent(node);
     while (!ts_node_is_null(parent)) {
@@ -116,8 +87,6 @@ TSNode RedundantCodeChecker::findEnclosingScope(TSNode node) {
     return TSNode{};
 }
 
-// Does this block directly declare a variable named `name`?
-// checks this block's direct "declaration" children
 bool RedundantCodeChecker::blockRedeclares(TSNode blockNode, const std::string& source, const std::string& name) {
     uint32_t count = ts_node_child_count(blockNode);
     for (uint32_t i = 0; i < count; ++i) {
@@ -133,10 +102,7 @@ bool RedundantCodeChecker::blockRedeclares(TSNode blockNode, const std::string& 
     return false;
 }
 
-
-// Given a function_definition node, finds its body, collects every variable declared anywhere
-// counts how many times each declared name is referenced
-void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, int& warningCount) {
+void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     const std::string& source = parsedSource.source;
 
     TSNode bodyNode = ts_node_child_by_field_name(functionDefNode, "body", strlen("body"));
@@ -161,26 +127,23 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
 
     for (auto& [name, declNode] : declarations) {
         TSNode scope = findEnclosingScope(declNode);
-        if (ts_node_is_null(scope)) scope = bodyNode; // fallback safety net
+        if (ts_node_is_null(scope)) scope = bodyNode;
 
         int occurrences = countIdentifierOccurrences(scope, source, name);
         if (occurrences <= 1) {
             int line = ts_node_start_point(declNode).row + 1;
-            std::cout << "Warning: Redundant dead/unused code. \""
-                    << name << "\" is declared but never used. "
-                    << "(line " << line << ")\n";
-            ++warningCount;
+            warnings.push_back({
+                line,
+                "dead-variable",
+                "Redundant dead/unused code. \"" + name + "\" is declared but never used."
+            });
         }
     }
 }
 
-
 // ---------- Check 2: redundant boolean comparisons ----------
 
-// Detects `x == true`, `x == false`, `x != true`, `x != false` style comparisons,
-// Given a binary_expression node, checks whether its operator is ==/!= 
-// and one side is a true/false literal
-void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     const std::string& source = parsedSource.source;
 
     TSNode opNode = ts_node_child_by_field_name(node, "operator", strlen("operator"));
@@ -188,7 +151,7 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
     if (!ts_node_is_null(opNode)) {
         currOperator = nodeText(opNode, source);
     } else if (ts_node_child_count(node) >= 3) {
-        currOperator = nodeText(ts_node_child(node, 1), source); // fallback: left, operator, right
+        currOperator = nodeText(ts_node_child(node, 1), source);
     }
 
     if (currOperator != "==" && currOperator != "!=") return;
@@ -221,16 +184,16 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
 
     int line = ts_node_start_point(node).row + 1;
     std::string exprText = nodeText(node, source);
-    std::cout << "Warning: Redundant boolean comparison. \""
-            << exprText << "\" can be simplified to \""
-            << suggestion << "\". "
-            << "(line " << line << ")\n";
-    ++warningCount;
+
+    warnings.push_back({
+        line,
+        "redundant-boolean",
+        "Redundant boolean comparison. \"" + exprText + "\" can be simplified to \"" + suggestion + "\"."
+    });
 }
 
 // ---------- Check 3: redundant if/else returning boolean literals ----------
 
-// Recursively unwraps a branch node down to the return_statement inside it
 TSNode RedundantCodeChecker::unwrapToReturnStatement(TSNode node) {
     if (ts_node_is_null(node)) return TSNode{};
 
@@ -238,7 +201,7 @@ TSNode RedundantCodeChecker::unwrapToReturnStatement(TSNode node) {
 
     if (type == "return_statement") {
         return node;
-    } 
+    }
 
     else if (type == "else_clause") {
         uint32_t count = ts_node_child_count(node);
@@ -247,7 +210,7 @@ TSNode RedundantCodeChecker::unwrapToReturnStatement(TSNode node) {
         }
         return TSNode{};
     }
-    
+
     if (type == "compound_statement") {
         uint32_t count = ts_node_child_count(node);
         TSNode onlyStatement{};
@@ -268,9 +231,7 @@ TSNode RedundantCodeChecker::unwrapToReturnStatement(TSNode node) {
     return TSNode{};
 }
 
-// Given an if_statement node, checks whether both its consequence and alternative branches 
-// unconditionally return opposite boolean literals (true/false);
-void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     const std::string& source = parsedSource.source;
 
     TSNode consequence = ts_node_child_by_field_name(node, "consequence", strlen("consequence"));
@@ -310,41 +271,38 @@ void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedS
     std::string suggestion = thenValue ? condText : ("!" + condText);
     int line = ts_node_start_point(node).row + 1;
 
-    std::cout << "Warning: Redundant if/else returning boolean literals. "
-            << "Can be simplified to \"return " << suggestion << ";\". "
-            << "(line " << line << ")\n";
-    ++warningCount;
+    warnings.push_back({
+        line,
+        "redundant-if-else",
+        "Redundant if/else returning boolean literals. Can be simplified to \"return " + suggestion + ";\"."
+    });
 }
-
 
 // ---------- Single traversal, dispatches by node type ----------
 
-// one recursive traversal of the actual AST, dispatching to focused checks by real node type
-void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     std::string type = ts_node_type(node);
 
     if (type == "function_definition") {
-        checkUnusedVariables(node, parsedSource, warningCount);
+        checkUnusedVariables(node, parsedSource, warnings);
     } else if (type == "binary_expression") {
-        checkBooleanComparison(node, parsedSource, warningCount);
+        checkBooleanComparison(node, parsedSource, warnings);
     }
     else if (type == "if_statement") {
-        checkRedundantIfElseReturn(node, parsedSource, warningCount);
+        checkRedundantIfElseReturn(node, parsedSource, warnings);
     }
-     else if (type == "compound_statement") {
-        checkChainedReturnIfs(node, parsedSource, warningCount);
+    else if (type == "compound_statement") {
+        checkChainedReturnIfs(node, parsedSource, warnings);
     }
 
     uint32_t childCount = ts_node_child_count(node);
     for (uint32_t i = 0; i < childCount; ++i) {
-        visitNode(ts_node_child(node, i), parsedSource, warningCount);
+        visitNode(ts_node_child(node, i), parsedSource, warnings);
     }
 }
 
 // ---------- Check 4: redundant if/if else/else statements ----------
 
-// Checks whether a given statement unconditionally returns, either directly or 
-// as the last statement inside a {} block.
 bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
     if (ts_node_is_null(statement)) return false;
     std::string type = ts_node_type(statement);
@@ -366,9 +324,7 @@ bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
     return false;
 }
 
-// Given a compound_statement node, scans its direct children for runs of 2+ consecutive 
-//sibling if_statements, each with no else and an unconditional return
-void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedSource& parsedSource, int& warningCount) {
+void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     uint32_t count = ts_node_child_count(blockNode);
 
     int chainLength = 0;
@@ -377,11 +333,12 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
     auto flushChain = [&]() {
         if (chainLength >= 2) {
             int line = ts_node_start_point(chainStart).row + 1;
-            std::cout << "Warning: Redundant conditional statement. "
-                    << chainLength << " separate if-statements each return unconditionally; "
-                    << "consider an if/else if/else chain instead. "
-                    << "(starting line " << line << ")\n";
-            ++warningCount;
+            warnings.push_back({
+                line,
+                "chained-if",
+                std::to_string(chainLength) + " separate if-statements each return unconditionally; "
+                "consider an if/else if/else chain instead."
+            });
         }
         chainLength = 0;
     };
@@ -404,25 +361,22 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
             }
         }
 
-        // Any non-qualifying statement breaks the chain
         flushChain();
     }
-    flushChain(); // catch a chain that runs to the end of the block
+    flushChain();
 }
 
 // ---------- Analyze Source ----------
 
-// Gets the root node from the ParsedSource's TSTree, kicks off visitNode()
-// returns the total warning count
-int RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
-    int warningCount = 0;
+std::vector<Warning> RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
+    std::vector<Warning> warnings;
 
     if (parsedSource.tree == nullptr) {
-        return warningCount;
+        return warnings;
     }
 
     TSNode rootNode = ts_tree_root_node(parsedSource.tree);
-    visitNode(rootNode, parsedSource, warningCount);
+    visitNode(rootNode, parsedSource, warnings);
 
-    return warningCount;
+    return warnings;
 }
