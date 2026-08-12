@@ -139,7 +139,7 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<codeLine>& lines
 
     warnings.push_back({
         firstOccurrenceLine,
-        "repeated-code",
+        "Repeated Code",
         msg.str()
     });
 }

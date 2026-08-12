@@ -61,7 +61,7 @@ bool NameAnalyzer::isPoorName(const std::string& name, const std::string& type) 
 void NameAnalyzer::outputErrorMessage(const std::string& name, const int& line, std::vector<Warning>& warnings) {
     warnings.push_back({
         line,
-        "poor-name",
+        "Poor Naming",
         "Poor identifier name detected: '" + name + "'. Consider using a more descriptive name."
     });
 }

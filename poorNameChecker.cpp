@@ -43,7 +43,7 @@ void PoorNameChecker::checkVariableDeclaration(TSNode node, const ParsedSource& 
                 int line = nameAnalyzer.getLineNumber(parsedSource, identifierNode);
                 warnings.push_back({
                     line,
-                    "poor-name",
+                    "Poor Naming",
                     "Poor identifier name detected: '" + name + "'. Consider using a more descriptive name."
                 });
             }
