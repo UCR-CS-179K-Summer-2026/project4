@@ -2,8 +2,10 @@
 #define SMELLY_CODE_DETECTOR_H
 
 #include <fstream>
+#include <vector>
 #include "ParsedSource.h"
 #include "Parser.h"
+#include "Detector.h"
 #include "poorNameChecker.h"
 #include "redundantCodeChecker.h"
 #include "commentChecker.h"
@@ -19,6 +21,8 @@ class SmellyCodeDetector {
         RepeatedCodeChecker repeatedCodeChecker;
         DeepIfDetector deepIfDetector;
         longParamList longParamListDetector;
+
+        std::vector<Detector*> detectors;
 
         Parser parser;
         ParsedSource parsedSource;

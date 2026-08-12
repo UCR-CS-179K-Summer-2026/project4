@@ -1,22 +1,22 @@
 #include "FunctionAnalyzer.h"
 #include "NameAnalyzer.h"
 #include <iostream>
+#include <cstring>
 
-void FunctionAnalyzer::checkFunctionName(TSNode functionDeclarator, const ParsedSource& parsedSource, int& warningCount) {
+void FunctionAnalyzer::checkFunctionName(TSNode functionDeclarator, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     TSNode functionIdentifierNode = nameAnalyzer.findIdentifierNode(functionDeclarator);
-        
+
     if(!ts_node_is_null(functionIdentifierNode)) {
         std::string name = nameAnalyzer.extractIdentifierName(parsedSource, functionIdentifierNode);
-        // Perform checks on the function name here
-        // For example, you can check if the name is too short or doesn't follow naming conventions
+
         if(nameAnalyzer.isPoorName(name, "function")) {
             int line = nameAnalyzer.getLineNumber(parsedSource, functionIdentifierNode);
-            nameAnalyzer.outputErrorMessage(name, line, warningCount);
+            nameAnalyzer.outputErrorMessage(name, line, warnings);
         }
     }
 }
 
-void FunctionAnalyzer::checkParameterNames(TSNode functionDeclarator, const ParsedSource& parsedSource, int& warningCount) {
+void FunctionAnalyzer::checkParameterNames(TSNode functionDeclarator, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     TSNode parameterListNode = ts_node_child_by_field_name(functionDeclarator, "parameters", 10);
     if(!ts_node_is_null(parameterListNode)) {
         uint32_t paramCount = ts_node_child_count(parameterListNode);
@@ -34,7 +34,7 @@ void FunctionAnalyzer::checkParameterNames(TSNode functionDeclarator, const Pars
 
                     if(nameAnalyzer.isPoorName(name, variableType)) {
                         int line = nameAnalyzer.getLineNumber(parsedSource, identifierNode);
-                        nameAnalyzer.outputErrorMessage(name, line, warningCount);
+                        nameAnalyzer.outputErrorMessage(name, line, warnings);
                     }
                 }
             }

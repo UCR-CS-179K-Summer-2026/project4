@@ -1,10 +1,17 @@
 #include "SmellyCodeDetector.h"
 #include "Parser.h"
+#include <algorithm>
 #include <iostream>
 #include <tree_sitter/api.h>
 
 SmellyCodeDetector::SmellyCodeDetector(const std::ifstream& inputFile) {
     parsedSource = parser.parse(const_cast<std::ifstream&>(inputFile));
+
+    detectors.push_back(&poorNameChecker);
+    detectors.push_back(&redundantCodeChecker);
+    detectors.push_back(&repeatedCodeChecker);
+    detectors.push_back(&commentChecker);
+    detectors.push_back(&deepIfDetector);
 }
 
 int SmellyCodeDetector::runDetectors() {
