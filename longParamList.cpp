@@ -4,6 +4,7 @@
 #include <cstring>
 #include<tree_sitter/api.h>
 
+//Traverses the syntax tree to find function_definition node. When it is found, it extracts the function name and checks the number of parameters. If the number of parameters exceeds kMaxParams, it reports a warning.
 void longParamList::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount){
   if(ts_node_is_null(node)){
     return;
@@ -38,7 +39,7 @@ void longParamList::visitNode(TSNode node, const ParsedSource& parsedSource, int
     }
 
 }
-
+//Looks for the first identifier node given a subtree. This is used to extract the function name from a function_definition node.
 TSNode longParamList::findIDNode(TSNode node) const{
     if(ts_node_is_null(node)){
         return node;
@@ -61,6 +62,7 @@ TSNode longParamList::findIDNode(TSNode node) const{
     return {};
 }
 
+//Extracts the function name from a function_definition node. It looks for the declarator node and then finds the identifier node to extract the function name.
 std::string longParamList::extractFunctionName(TSNode functionDefNode, const std::string& source) const{
     TSNode declaratorNode = ts_node_child_by_field_name(functionDefNode, "declarator", strlen("declarator"));
     if(ts_node_is_null(declaratorNode)){
@@ -77,11 +79,13 @@ std::string longParamList::extractFunctionName(TSNode functionDefNode, const std
     return source.substr(startByte, endByte - startByte);
 }
 
+//Reports a warning message to the console when a function has too many parameters. It includes the function name, the number of parameters, and the line number where the function is defined.
 void longParamList::reportLongParamList(const std::string& functionName, int paramCount, int line ) const{
     std::cout << "Warning: Function: " << functionName << " has " << paramCount << " parameters " 
     << "on line: " << line << ". Consider reducing the number of parameters to improve code readability." << std::endl;
 }
 
+//Analyzes the source tree and parsed code to find functions with too many parameters. It traverses the syntax tree and counts the number of warnings generated.
 int longParamList::analyzeSource(const ParsedSource& source){
     if(source.tree == nullptr){
         return 0;
