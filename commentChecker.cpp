@@ -12,7 +12,7 @@ extern "C" {
 }
 
 //scans through the file for functions, detecting preceding comments, and then calls helper function to scan those functions for interior or inline comments
-void commentChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
+void commentChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     int functionLine;//for outputting later
     bool hasComment = false;//flag for if the function has a comment
 
@@ -54,14 +54,17 @@ void commentChecker::visitNode(TSNode node, const ParsedSource& parsedSource, in
 
         //warning if no comment found
         if (!hasComment) {
-            std::cout << "Warning: function in line " << functionLine << " has no comments" << std::endl;
-            warningCount++;
+            warnings.push_back({
+                functionLine,
+                "Comments",
+                "Function has no comments.",
+            });
         }
     }
     int childCount = ts_node_child_count(node);
     for (int i = 0; i < childCount; ++i) {
         TSNode child = ts_node_child(node, i);
-        visitNode(child, parsedSource, warningCount);//check the rest of the file for functions
+        visitNode(child, parsedSource, warnings);//check the rest of the file for functions
     }
 }
 
@@ -85,8 +88,8 @@ bool commentChecker::scanForComments(TSNode currentNode){
 }
 
 //initializes tree sitter, calls visitNode to scan functions and print warnings, and cleans up tree sitter, returning warning counter
-int commentChecker::analyzeSource(const ParsedSource& parsedSource) {
-    int warningCounter = 0;
+std::vector<Warning> commentChecker::analyzeSource(const ParsedSource& parsedSource) {
+    std::vector<Warning> warnings;
 
     // initialize the tree sitter parser
     TSParser *parser = ts_parser_new();
@@ -104,11 +107,11 @@ int commentChecker::analyzeSource(const ParsedSource& parsedSource) {
     
     TSNode rootNode = ts_tree_root_node(tree);//extract the root node of the C++ syntax tree
 
-    visitNode(rootNode, parsedSource, warningCounter);//call visitNode to go through and scan for functions and comments and print warnings
+    visitNode(rootNode, parsedSource, warnings);//call visitNode to go through and scan for functions and comments and print warnings
 
     //clean up tree sitter to avoid memory leaks
     ts_tree_delete(tree);
     ts_parser_delete(parser);
 
-    return warningCounter;//return the counter
+    return warnings;//return the counter
 }

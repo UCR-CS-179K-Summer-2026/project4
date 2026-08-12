@@ -105,26 +105,6 @@
 
     <article class="type-card type-struct">
       <p class="type-kind">struct</p>
-      <h3>DeclaredVariable</h3>
-      <ul>
-        <li><code>name</code> — the variable's identifier.</li>
-        <li><code>line</code> — line number, relative to the start of its function's body, where it was declared</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-struct">
-      <p class="type-kind">struct</p>
-      <h3>FunctionInfo</h3>
-      <ul>
-        <li><code>functionStart</code> — the function's signature text, e.g. <code>int calculateCost(int itemPrice, int tax) {</code>.</li>
-        <li><code>functionBody</code> — the full text of the function's body.</li>
-        <li><code>line</code> — the line number where the function body begins.</li>
-        <li><code>variables</code> — a vector of <code>DeclaredVariable</code>, populated by <code>Parser</code>.</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-struct">
-      <p class="type-kind">struct</p>
       <h3>ParsedSource</h3>
       <ul>
         <li><code>source</code> — the raw, unmodified source code (including comments), read once from the input file.</li>
@@ -227,9 +207,11 @@
         <li><code>visitNode()</code> — single recursive walk over every <code>TSNode</code>, dispatching by node type (<code>function_definition</code>, <code>binary_expression</code>, <code>if_statement</code>, <code>compound_statement</code>)</li>
         <li><code>analyzeSource()</code> — gets the tree's root node, kicks off <code>visitNode()</code>, returns the total warning count</li>
         <li><code>nodeText()</code> — extracts a node's exact source text via its byte offsets</li>
-        <li><code>checkUnusedVariables()</code> — flags variables declared but never referenced again</li>
+        <li><code>checkUnusedVariables()</code> — flags variables declared but never referenced again, scoped per-declaration to correctly handle shadowing (see below)</li>
         <li><code>extractIdentifierFromDeclarator()</code> / <code>collectDeclarations()</code> — resolve declared variable names from a <code>declaration</code> node, including pointers and comma-separated declarations</li>
-        <li><code>countIdentifierOccurrences()</code> — counts how many times a name is referenced within a subtree</li>
+        <li><code>findEnclosingScope()</code> — walks up from a declarator to the nearest enclosing <code>compound_statement</code>, so usage counting starts from the declaration's own scope instead of the whole function body</li>
+        <li><code>blockRedeclares()</code> — checks whether a block directly redeclares a given variable name, used to detect shadowing</li>
+        <li><code>countIdentifierOccurrences()</code> — counts how many times a name is referenced within a subtree, skipping into any nested block that redeclares the name (so shadowed inner variables don't inflate the outer variable's usage count)</li>
         <li><code>checkBooleanComparison()</code> — flags <code>x == true</code>/<code>x != false</code>-style comparisons and suggests the simplification</li>
         <li><code>checkRedundantIfElseReturn()</code> / <code>unwrapToReturnStatement()</code> — flags if/else branches that both return opposite boolean literals</li>
         <li><code>checkChainedReturnIfs()</code> / <code>alwaysReturns()</code> — flags consecutive if-statements, each returning unconditionally with no <code>else</code>, that should be an if/else if/else chain</li>
@@ -378,12 +360,22 @@
         <div class="sprint-marker">03</div>
         <div class="sprint-body">
           <p class="sprint-meta">Sprint 3 &middot; <span class="sprint-dates">dates</span></p>
-          <h3>// TODO: sprint 3 focus</h3>
+          <h3>// Stuart Arief</h3>
           <ul>
             <li>TBD</li>
-            <li>TBD</li>
-            <li>TBD</li>
           </ul>
+          <h3>// Rebecca Jennings</h3>
+          <ul>
+            <li>Revise redundantTest.cpp to account for multiple edge cases and combine cases for each of the checks implemented.</li>
+            <li>Create a Universal Test file to detect and output warnings for all our code detectors.</li>
+            <li>Revised Dead/Unused Variable case to account for same variable names that are dead, despite being reinitialized in a different scope.</li>
+            <li>Implement helper function to add our warnings to a vector and sort in ascending order.</li>
+            <li>Implement another redundant code conditional cases.</li>
+            <li>Implement redundant code initialization base case.</li>
+          </ul>
+           <h3>// Jimmy Munoz</h3>
+          <ul>
+            <li>TBD</li>
         </div>
       </article>
 
@@ -425,4 +417,4 @@
 </script>
 
 </body>
-</html>
+</html>  

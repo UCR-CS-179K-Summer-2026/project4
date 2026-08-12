@@ -9,8 +9,8 @@ class FunctionAnalyzer {
     private:
         NameAnalyzer nameAnalyzer;
     public:
-        void checkFunctionName(TSNode node, const ParsedSource& parsedSource, int& warningCount);
-        void checkParameterNames(TSNode node, const ParsedSource& parsedSource, int& warningCount);
+        void checkFunctionName(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+        void checkParameterNames(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
 };
 
 #endif // FUNCTION_ANALYZER_H

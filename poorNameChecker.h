@@ -16,14 +16,14 @@ class PoorNameChecker : public Detector {
 
         // bool isPoorName(const std::string& name, const std::string& type);
         void outputErrorMessage(const std::string& name, const int& line);
-        void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
+        void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
         // TSNode findIdentifierNode(TSNode node);
-        void checkVariableDeclaration(TSNode node, const ParsedSource& parsedSource, int& warningCount);
-        void checkFunctionDefinition(TSNode node, const ParsedSource& parsedSource, int& warningCount);
+        void checkVariableDeclaration(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+        void checkFunctionDefinition(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         // std::string extractIdentifierName(const ParsedSource& parsedSource, TSNode identifierNode);
     public:
         PoorNameChecker() {};
-        int analyzeSource(const ParsedSource& parsedSource) override;
+        std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
 };
 
 #endif
