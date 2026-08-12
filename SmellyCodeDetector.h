@@ -9,6 +9,7 @@
 #include "commentChecker.h"
 #include "repeatedCodeChecker.h"
 #include "DeepIfDetector.h"
+#include "longParamList.h"
 
 class SmellyCodeDetector {
     private:
@@ -17,6 +18,7 @@ class SmellyCodeDetector {
         commentChecker commentChecker;
         RepeatedCodeChecker repeatedCodeChecker;
         DeepIfDetector deepIfDetector;
+        longParamList longParamListDetector;
 
         Parser parser;
         ParsedSource parsedSource;

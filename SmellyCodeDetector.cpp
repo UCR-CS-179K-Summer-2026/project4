@@ -14,6 +14,7 @@ int SmellyCodeDetector::runDetectors() {
     totalWarnings += repeatedCodeChecker.analyzeSource(parsedSource);
     totalWarnings += commentChecker.analyzeSource(parsedSource);
     totalWarnings += deepIfDetector.analyzeSource(parsedSource);
+    totalWarnings += longParamListDetector.analyzeSource(parsedSource);
 
     ts_tree_delete(parsedSource.tree);
     return totalWarnings;
