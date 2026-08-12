@@ -29,7 +29,7 @@ int SmellyCodeDetector::runDetectors() {
         });
 
     for (const auto& w : allWarnings) {
-        std::cout << "Line " << w.line << " [" << w.category << "]: " << w.message << "\n";
+        std::cout << "Warning: [" << w.category << "]. " << w.message << "(line " << w.line <<")" <<  "\n";
     }
 
     int totalWarnings = static_cast<int>(allWarnings.size());

@@ -134,8 +134,8 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
             int line = ts_node_start_point(declNode).row + 1;
             warnings.push_back({
                 line,
-                "dead-variable",
-                "Redundant dead/unused code. \"" + name + "\" is declared but never used."
+                "Redundant dead/unused variable",
+                "The variable \"" + name + "\" is declared but never used."
             });
         }
     }
@@ -187,8 +187,8 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
 
     warnings.push_back({
         line,
-        "redundant-boolean",
-        "Redundant boolean comparison. \"" + exprText + "\" can be simplified to \"" + suggestion + "\"."
+        "Redundant boolean comparison",
+        " \"" + exprText + "\" can be simplified to \"" + suggestion + "\"."
     });
 }
 
@@ -273,8 +273,8 @@ void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedS
 
     warnings.push_back({
         line,
-        "redundant-if-else",
-        "Redundant if/else returning boolean literals. Can be simplified to \"return " + suggestion + ";\"."
+        "Redundant-If-Else Return Boolean",
+        "Can be simplified to \"return " + suggestion + ";\"."
     });
 }
 
@@ -335,7 +335,7 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
             int line = ts_node_start_point(chainStart).row + 1;
             warnings.push_back({
                 line,
-                "chained-if",
+                "Redundant Chained-If Statement",
                 std::to_string(chainLength) + " separate if-statements each return unconditionally; "
                 "consider an if/else if/else chain instead."
             });
