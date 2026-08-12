@@ -30,7 +30,8 @@ TSNode RepeatedCodeChecker::findIDNode(TSNode node) const {
     return {};
 }
 
-// Extracts the function name given a function_definition node.
+// Extracts the function name given a function_definition node. Uses its ID node's
+// child declarator node to extract the raw function name.
 std::string RepeatedCodeChecker::extractFunctionName(TSNode functionDefNode, const std::string& source) const {
     TSNode declaratorNode = ts_node_child_by_field_name(functionDefNode, "declarator", strlen("declarator"));
     if (ts_node_is_null(declaratorNode)) {
@@ -84,7 +85,7 @@ size_t RepeatedCodeChecker::hashSubtree(TSNode node, const std::string& source) 
     return h;
 }
 
-// Structural check to compare two subtrees together. Prevents hash collisions.
+// Structural check to compare two subtrees together. This is used to prevent hash collisions.
 bool RepeatedCodeChecker::subtreesEqual(TSNode left, TSNode right, const std::string& source) const {
     if (ts_node_is_null(left) || ts_node_is_null(right)) {
         return ts_node_is_null(left) && ts_node_is_null(right);
@@ -153,7 +154,7 @@ void RepeatedCodeChecker::findRepeatedBlocks(const std::vector<TSNode>& statemen
         return;
     }
 
-    // Hash each statement once to avoid repeated hashing of the same statement.
+    // Hash each statement once to prevent repeated hashing of the same statement.
     std::vector<size_t> stmtHash(n);
     for (int i = 0; i < n; ++i) {
         stmtHash[i] = hashSubtree(statements[i], source);
@@ -248,7 +249,8 @@ void RepeatedCodeChecker::scanBlocksForRepeats(TSNode node, const std::string& f
     }
 }
 
-// Walks the AST, finds function_definition nodes, and scans each function's body for repeated code.
+// Walks the AST and finds all function_definition nodes. For each, extracts the function name
+// and scans the body of the function for repeated code blocks.
 void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     if (ts_node_is_null(node)) {
         return;
@@ -274,6 +276,8 @@ void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSourc
     }
 }
 
+// Analyzes the parsed source code for repeated code blocks: checks the parse tree is valid, then
+// traverses it to find function definitions and analyze their bodies for repeated code.
 std::vector<Warning> RepeatedCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     std::vector<Warning> warnings;
 
