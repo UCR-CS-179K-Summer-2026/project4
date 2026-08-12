@@ -14,7 +14,7 @@ class DeepIfDetector : public Detector {
         void outputErrorMessage(const std::string& name, const int& line, int& warningCount);
     public:
         DeepIfDetector() {depth = 0;};
-        std::vector<Warning> DeepIfDetector::analyzeSource(const ParsedSource& parsedSource);
+        std::vector<Warning> analyzeSource(const ParsedSource& parsedSource);
 };
 
 #endif // DEEP_IF_DETECTOR_H

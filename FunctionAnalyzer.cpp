@@ -1,6 +1,7 @@
 #include "FunctionAnalyzer.h"
 #include "NameAnalyzer.h"
 #include <iostream>
+#include <cstring>
 
 void FunctionAnalyzer::checkFunctionName(TSNode functionDeclarator, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     TSNode functionIdentifierNode = nameAnalyzer.findIdentifierNode(functionDeclarator);
