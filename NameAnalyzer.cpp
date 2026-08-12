@@ -1,6 +1,7 @@
 #include "NameAnalyzer.h"
 #include <iostream>
 #include <regex>
+#include <cstring>
 
 std::string NameAnalyzer::extractIdentifierName(const ParsedSource& parsedSource, TSNode identifierNode) {
     uint32_t startByte = ts_node_start_byte(identifierNode);

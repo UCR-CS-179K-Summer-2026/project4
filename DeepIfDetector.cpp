@@ -2,6 +2,7 @@
 #include "NameAnalyzer.h"
 
 #include <iostream>
+#include <cstring>
 
 void DeepIfDetector::outputErrorMessage(const std::string& name, const int& line, int& warningCount) {
     std::cout << "Warning: " << name << " at line " << line << std::endl;
