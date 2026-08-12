@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <tree_sitter/api.h>
 
+//Perform DFS on the tree to find the first identifier node
 TSNode RepeatedCodeChecker::findIDNode(TSNode node) const {
     if (ts_node_is_null(node)) {
         return node;
@@ -27,7 +28,8 @@ TSNode RepeatedCodeChecker::findIDNode(TSNode node) const {
  
     return {};
 }
-
+//Extracts the function name given a function_definition node. Uses it's ID Node's
+//child declarator node to extract the raw function name.
 std::string RepeatedCodeChecker::extractFunctionName(TSNode functionDefNode, const std::string& source) const {
     TSNode declaratorNode = ts_node_child_by_field_name(functionDefNode, "declarator", strlen("declarator"));
     if (ts_node_is_null(declaratorNode)) {
@@ -44,21 +46,22 @@ std::string RepeatedCodeChecker::extractFunctionName(TSNode functionDefNode, con
     return source.substr(startByte, endByte - startByte);
 }
 
+//Collects all the statements in a compound_statement node, ignoring comments and unnamed nodes. Returns a vector of TSNode representing the statements.
 std::vector<TSNode> RepeatedCodeChecker::collectStatements(TSNode blockNode) const{
-std::vector<TSNode> statements;
-uint32_t childCount = ts_node_child_count(blockNode);
+    std::vector<TSNode> statements;
+    uint32_t childCount = ts_node_child_count(blockNode);
 
-for(uint32_t i =0; i<childCount; ++i){
-    TSNode child = ts_node_child(blockNode, i);
+    for(uint32_t i =0; i<childCount; ++i){
+        TSNode child = ts_node_child(blockNode, i);
 
-    if(ts_node_is_named(child) && strcmp(ts_node_type(child), "comment") !=0){
-        statements.push_back(child);
+        if(ts_node_is_named(child) && strcmp(ts_node_type(child), "comment") !=0){
+            statements.push_back(child);
+        }
     }
+    return statements;
 }
 
-return statements;
-}
-
+//Stores the subtrees into a hashmap. If two subtrees have the same hash, that means they are the same
 size_t RepeatedCodeChecker::hashSubtree(TSNode node, const std::string& source) const{
     size_t h = std::hash<std::string>{}(ts_node_type(node));
     uint32_t childCount = ts_node_child_count(node);
@@ -80,6 +83,7 @@ size_t RepeatedCodeChecker::hashSubtree(TSNode node, const std::string& source) 
     return h;
 }
 
+//Structural check to compare two subtrees together. This is used to prevent hash collisions.
 bool RepeatedCodeChecker::subtreesEqual(TSNode left, TSNode right, const std::string& source) const {
     if (ts_node_is_null(left) || ts_node_is_null(right)) {
         return ts_node_is_null(left) && ts_node_is_null(right);
@@ -114,7 +118,8 @@ bool RepeatedCodeChecker::subtreesEqual(TSNode left, TSNode right, const std::st
     }
     return true;
 }
- 
+
+//Responsible for printing the warning message to the console when called.
 void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<TSNode>& statements, int windowSize, const std::vector<int>& startIndices,const std::string& functionName, const std::string& source) const
 {
     std::cout << "Warning: Repeated code detected in function: " << functionName << std::endl;
@@ -134,21 +139,25 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<TSNode>& stateme
     std::cout << source.substr(startBlockByte, endBlockByte - startBlockByte) << std::endl;
 }
 
+//Uses the sliding window to find duplicates over one block's statement list
+//Start with large window size first then decrease the window size to find smaller duplicates. This is done to avoid overlapping duplicates.
 int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<TSNode>& statements, const std::string& functionName, const std::string& source) const {
    int n = static_cast<int>(statements.size());
     int warningCount = 0;
     if (n < kMinWindowSize) {
         return warningCount;
     }
- 
+ //Hash each statement once to prevent repeated hashing of the same statement.
     std::vector<size_t> stmtHash(n);
     for (int i = 0; i < n; ++i) {
         stmtHash[i] = hashSubtree(statements[i], source);
     }
  
-    std::vector<bool> covered(n, false);
+    std::vector<bool> covered(n, false);//If statement is already covered, store in this vector
     int maxWindow = std::min(kMaxWindowSize, n);
  
+ //Builds a combined has for every possible window of this size and skips any window that is already covered by 
+ //A previously found larger duplicate.
     for (int windowSize = maxWindow; windowSize >= kMinWindowSize; --windowSize) {
         std::unordered_map<size_t, std::vector<int>> blockMap;
  
@@ -167,6 +176,7 @@ int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<TSNode>& statement
             blockMap[key].push_back(start);
         }
  
+ //Sort the entries in blockMap by the first occurrence of the repeated block to ensure consistent output order.
         std::vector<std::pair<size_t, std::vector<int>>> ordered(blockMap.begin(), blockMap.end());
         std::sort(ordered.begin(), ordered.end(), [](const auto& a, const auto& b) {
             return a.second.front() < b.second.front();
@@ -174,9 +184,9 @@ int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<TSNode>& statement
  
         for (auto& entry : ordered) {
             std::vector<int>& starts = entry.second;
-            if (starts.size() < 2) continue;
+            if (starts.size() < 2) continue;//If only one occurance, its not a repeat
  
-            std::vector<int> nonOverlapping;
+            std::vector<int> nonOverlapping;//Only keep non-overlapping repeats and then verify each one structurally against the first kept occurance
             int lastEnd = -1;
  
             for (int s : starts) {
@@ -192,7 +202,7 @@ int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<TSNode>& statement
                             break;
                         }
                     }
-                    if (!matches) continue;
+                    if (!matches) continue;//Handles hash collisions, if the subtrees dont equal but have the same hash, skip
                 }
  
                 nonOverlapping.push_back(s);
@@ -215,6 +225,7 @@ int RepeatedCodeChecker::findRepeatedBlocks(const std::vector<TSNode>& statement
     return warningCount;
 }
 
+//Recursively scans the AST for compound_statement nodes. For each compound_statement node, it collects the statements and calls findRepeatedBlocks to check for repeated code blocks.
 void RepeatedCodeChecker::scanBlocksForRepeats(TSNode node, const std::string& functionName, const std::string& source, int& warningCount) const{
     if(ts_node_is_null(node)){
         return;
@@ -238,6 +249,7 @@ void RepeatedCodeChecker::scanBlocksForRepeats(TSNode node, const std::string& f
     }
 }
 
+//Walks the AST and finds all function_definition nodes. For each function_definition node, it extracts the function name and scans the body of the function for repeated code blocks.
 void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) {
     if (ts_node_is_null(node)) {
         return;
@@ -267,6 +279,7 @@ void RepeatedCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSourc
         }
 }
 
+//Analyzes the parsed source code for repeated code blocks. It starts by checking if the parse tree is valid, then traverses the tree to find function definitions and analyze their bodies for repeated code.
 int RepeatedCodeChecker::analyzeSource(const ParsedSource& source){
     if(source.tree == nullptr){
         return 0;
