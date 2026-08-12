@@ -3,6 +3,8 @@
 
 #include "ParsedSource.h"
 #include <tree_sitter/api.h>
+#include <vector>
+#include <Detector.h>
 
 #include <string>
 
@@ -14,7 +16,7 @@ class NameAnalyzer {
         void outputErrorMessage(const std::string& name, const int& line);
         TSNode findIdentifierNode(TSNode node);
         bool isPoorName(const std::string& name, const std::string& type);
-        void outputErrorMessage(const std::string& name, const int& line, int& warningCount);
+        void outputErrorMessage(const std::string& name, const int& line, std::vector<Warning>& warnings);
 };
 
 #endif
