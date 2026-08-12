@@ -5,7 +5,7 @@
 #include<tree_sitter/api.h>
 
 //Traverses the syntax tree to find function_definition node. When it is found, it extracts the function name and checks the number of parameters. If the number of parameters exceeds kMaxParams, it reports a warning.
-void longParamList::visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount){
+void longParamList::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
   if(ts_node_is_null(node)){
     return;
   }
@@ -27,15 +27,14 @@ void longParamList::visitNode(TSNode node, const ParsedSource& parsedSource, int
             }
 
             int line = static_cast<int>(ts_node_start_point(node).row)+1;
-            reportLongParamList(functionName, paramCount, line);
-            ++warningCount;
+            reportLongParamList(functionName, paramCount, line, warnings);
             }
         }
     }
   }
     uint32_t childCount = ts_node_child_count(node);
     for(uint32_t i = 0; i< childCount; ++i){
-        visitNode(ts_node_child(node,i), parsedSource, warningCount);
+        visitNode(ts_node_child(node,i), parsedSource, warnings);
     }
 
 }
@@ -80,20 +79,23 @@ std::string longParamList::extractFunctionName(TSNode functionDefNode, const std
 }
 
 //Reports a warning message to the console when a function has too many parameters. It includes the function name, the number of parameters, and the line number where the function is defined.
-void longParamList::reportLongParamList(const std::string& functionName, int paramCount, int line ) const{
-    std::cout << "Warning: Function: " << functionName << " has " << paramCount << " parameters " 
-    << "on line: " << line << ". Consider reducing the number of parameters to improve code readability." << std::endl;
+void longParamList::reportLongParamList(const std::string& functionName, int paramCount, int line, std::vector<Warning>& warnings) const{
+    warnings.push_back({
+        line,
+        "Long Parameter List",
+        "Function: " + functionName + " has " + std::to_string(paramCount) + " parameters. Consider reducing the number of parameters to improve code readability.",
+    });
 }
 
 //Analyzes the source tree and parsed code to find functions with too many parameters. It traverses the syntax tree and counts the number of warnings generated.
-int longParamList::analyzeSource(const ParsedSource& source){
+std::vector<Warning> longParamList::analyzeSource(const ParsedSource& source){
     if(source.tree == nullptr){
-        return 0;
+        return {};
     }
 
-    int warningCount = 0;
+    std::vector<Warning> warnings;
     TSNode rootNode = ts_tree_root_node(source.tree);
-    visitNode(rootNode, source, warningCount);
+    visitNode(rootNode, source, warnings);
 
-    return warningCount;
+    return warnings;
 }
