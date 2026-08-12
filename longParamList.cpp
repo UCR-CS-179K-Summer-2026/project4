@@ -32,6 +32,11 @@ void longParamList::visitNode(TSNode node, const ParsedSource& parsedSource, int
         }
     }
   }
+    uint32_t childCount = ts_node_child_count(node);
+    for(uint32_t i = 0; i< childCount; ++i){
+        visitNode(ts_node_child(node,i), parsedSource, warningCount);
+    }
+
 }
 
 TSNode longParamList::findIDNode(TSNode node) const{
@@ -52,6 +57,8 @@ TSNode longParamList::findIDNode(TSNode node) const{
             return result;
         }
     }
+
+    return {};
 }
 
 std::string longParamList::extractFunctionName(TSNode functionDefNode, const std::string& source) const{
