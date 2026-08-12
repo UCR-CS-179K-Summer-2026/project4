@@ -19,6 +19,7 @@
     </button>
     <nav class="site-nav" id="siteNav">
       <a href="#overview">Overview</a>
+      <a href="#build">Build</a>
       <a href="#architecture">Architecture</a>
       <a href="#structures">Class&nbsp;Structure</a>
       <a href="#code-structure">Code&nbsp;Structure</a>
@@ -43,8 +44,8 @@
       from dead variables and deeply nested conditionals to copy-pasted blocks, and printing
       what it finds straight to the terminal.
     </p>
-    <div class = >
-      <p>GitHub Repo</p>
+    <div class="hero">
+      <a href="https://github.com/UCR-CS-179K-Summer-2026/project4" class="button" target="_blank" rel="noopener">GitHub Repository</a>
     </div>
 
     <div class="terminal" role="img" aria-label="Example terminal output from the detector">
@@ -67,6 +68,57 @@
       <span class="t-warn">Warning:</span> [deep-if]. Deeply nested if statement(line 42)
       <span class="t-pass">7 Smelly code(s) found</span> in the file: filename.cpp</pre>
     </div>
+  </section>
+
+  <!-- BUILD -->
+  <section class="section" id="build">
+    <p class = "section-label">//00 &nbsp;how to build</p>
+    <h2>How to Build</h2>
+
+    <figure class = "figure-card">
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>CMake (3.10+) — cmake.org/download, or <code>winget install Kitware.CMake</code> on Windows. Confirm with <code>cmake --version</code>.</li>
+      <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
+      <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/.</code>.</li>
+      <li></li>
+    </ul>
+    </figure>
+
+    <figure class = "figure-card">
+    <h3>Cloning and Setting up the Repo</h3>
+    <ul>
+      <li><code>git clone "repo-url"</code></li>
+      <li><code>cd project4</code></li>
+      <li><code>git submodule update --init --recursive</code></li>
+      <li>The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</li>
+    </ul>
+    </figure>
+
+    <figure class = "figure-card">
+    <h3>Building</h3>
+    <ul>
+      <li><code>mkdir build</code></li>
+      <li><code>cd build</code></li>
+      <li><code>cmake .. -DBUILD_SHARED_LIBS=OFF</code></li>
+      <li><code>cmake --build .</code></li>
+      <li>This builds the tree-sitter runtime, the C++ grammar, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</li>
+    </ul>
+    </figure>
+
+    <figure class = "figure-card">
+    <h3>Running</h3>
+    <ul>
+      <li><code>cd Debug</code></li>
+      <li><code>./project4.exe</code></li>
+      <li>The program prompts for one or more file names to analyze:</li>
+      <li><code>Enter the name(s) of the file(s) to read: myFile.cpp</code></li>
+      <li>Paths are resolved relative to the directory you launch the executable from — since the build places the <code>.exe</code> in build/Debug, either give a relative path back up to your source files (e.g. <code>../../myFile.cpp</code>), or run the executable from the project root instead:</li>
+      <li><code>cd project4</code></li>
+      <li><code>./build/Debug/project4.exe</code></li>
+      <li>Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file.</li>
+    </ul>
+    </figure>
   </section>
 
   <!-- ARCHITECTURE -->
