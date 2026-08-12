@@ -18,6 +18,9 @@ set(SOURCE_FILES
     redundantCodeChecker.cpp
     repeatedCodeChecker.cpp
     commentChecker.cpp
+    FunctionAnalyzer.cpp
+    NameAnalyzer.cpp
+    DeepIfDetector.cpp
 )
 add_executable(project4 ${SOURCE_FILES})
 
