@@ -5,7 +5,6 @@
 #include <tree_sitter/api.h>
 #include <vector>
 #include <Detector.h>
-
 #include <string>
 
 class NameAnalyzer {
