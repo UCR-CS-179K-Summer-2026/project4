@@ -20,6 +20,8 @@ set(SOURCE_FILES
     commentChecker.cpp
     FunctionAnalyzer.cpp
     NameAnalyzer.cpp
+    DeepIfDetector.cpp
+    longParamList.cpp
 )
 add_executable(project4 ${SOURCE_FILES})
 

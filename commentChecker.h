@@ -14,9 +14,9 @@
 class commentChecker : public Detector {
     private:
         Parser parser;
-        void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
+        void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
         bool scanForComments(TSNode currentNode);
     public: 
-        int analyzeSource(const ParsedSource& parsedSource) override;
+        std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
 };
 #endif

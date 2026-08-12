@@ -7,37 +7,31 @@
 #include "ParsedSource.h"
 #include "Detector.h"
 
-class RepeatedCodeChecker: public Detector{
+class RepeatedCodeChecker: public Detector {
 
 public:
     RepeatedCodeChecker() = default;
-    int analyzeSource(const ParsedSource& source) override;
+    std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
 
 private:
-    struct codeLine{
-        std::string text;
-        int lineNumber;
-    };
-    void visitNode(TSNode node, const ParsedSource& parsedSource, int& warningCount) override;
+    void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
 
-std::vector<codeLine> allCodeLines;
-static constexpr int kMinWindowSize = 3; // Minimum number of lines to consider for repetition
-static constexpr int kMaxWindowSize = 10; // Maximum number of lines to consider for repetition
+    static constexpr int kMinWindowSize = 3; // Minimum number of statements to consider for repetition
+    static constexpr int kMaxWindowSize = 10; // Maximum number of statements to consider for repetition
 
-std::string stripBlockComments(const std::string& content) const;
-std::string stripLineComment(const std::string& line) const;
-std::string normalizeWhitespace(const std::string& line) const;
-bool isStructuralOnly(const std::string& line) const;
- 
-TSNode findIDNode(TSNode node) const;
-std::string extractFunctionName(TSNode functionDefNode, const std::string& source) const;
+    TSNode findIDNode(TSNode node) const;
+    std::string extractFunctionName(TSNode functionDefNode, const std::string& source) const;
 
+    std::vector<TSNode> collectStatements(TSNode blockNode) const;
 
-std::vector<codeLine> extractCodeLines(const std::string& content) const;
- 
-void reportRepeatedBlock(const std::vector<codeLine>& lines,int windowSize,const std::vector<int>& startIndices, const std::string& functionName) const;
+    size_t hashSubtree(TSNode node, const std::string& source) const;
 
-int findRepeatedBlocks(const std::vector<codeLine>& codeLines, const std::string& functionName) const;
+    bool subtreesEqual(TSNode left, TSNode right, const std::string& source) const;
+
+    void reportRepeatedBlock(const std::vector<TSNode>& statements, const std::string& source, int windowSize, const std::vector<int>& startIndices, const std::string& functionName, std::vector<Warning>& warnings) const;
+
+    void findRepeatedBlocks(const std::vector<TSNode>& statements, const std::string& functionName, const std::string& source, std::vector<Warning>& warnings) const;
+    void scanBlocksForRepeats(TSNode node, const std::string& functionName, const std::string& source, std::vector<Warning>& warnings) const;
 };
 
-#endif 
+#endif

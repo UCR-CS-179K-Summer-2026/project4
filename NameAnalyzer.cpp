@@ -1,6 +1,7 @@
 #include "NameAnalyzer.h"
 #include <iostream>
 #include <regex>
+#include <cstring>
 
 std::string NameAnalyzer::extractIdentifierName(const ParsedSource& parsedSource, TSNode identifierNode) {
     uint32_t startByte = ts_node_start_byte(identifierNode);
@@ -49,19 +50,19 @@ bool NameAnalyzer::isPoorName(const std::string& name, const std::string& type) 
     if(type == "function" && std::regex_match(name, functionNamePattern)) {
         return true;
     }
-    
+
     static std::regex poorNamePattern(R"(\b(temp|data|str|tmp|var|test|flag|item|items|val|value|values|element|elements|arr|array|list|vector|vec)\b)");
     if(std::regex_match(name, poorNamePattern)) {
         return true;
     }
-    
 
     return false;
 }
 
-void NameAnalyzer::outputErrorMessage(const std::string& name, const int& line, int& warningCount) {
-    std::cout << "Warning: Poor identifier name detected: '" << name << "'";
-    std::cout << " (line " << line << "). ";
-    std::cout << "Consider using a more descriptive name.\n\n";
-    warningCount++;
+void NameAnalyzer::outputErrorMessage(const std::string& name, const int& line, std::vector<Warning>& warnings) {
+    warnings.push_back({
+        line,
+        "Poor Naming",
+        "Poor identifier name detected: '" + name + "'. Consider using a more descriptive name."
+    });
 }
