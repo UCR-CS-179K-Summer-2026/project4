@@ -53,3 +53,33 @@ Aelynn Xu:
 * Update commentchecker using aforementioned function so it will not be tripped up by brackets in string literals
 * Update commentChecker so that it will not be tripped up by brackets in ‘’ chars
 * Update commentchecker so that it will not be tripped up by brackets in comments
+
+  # Week 3 Sprint
+
+Stuart Arief:
+
+* Fix repeatedCodeDetector.cpp not ignoring whitespaces by using TSNode instead of old regex functions
+* Transition to a new lint: Create a class that detects function headers that have unnecessarily long list of parameters
+* Transition to a new lint: Create a class that detects unnecessary links between two classes
+* Delete unused files in the project directory
+* Add comments to cpp files to improve readability
+
+Rebecca Jennings:
+
+* Revise redundantTest.cpp to account for multiple edge cases and combine cases for each of the checks implemented
+* Create a Universal Test file to detect and output warnings for all our code detectors
+* Revised Dead/Unused Variable case to account for same variable names that are dead, despite being reinitialized in a different scope
+* Implement helper function to add our warnings to a vector and sort in ascending order
+* Implement logic to detect Dead/Unused Code Blocks
+
+Jimmy Munoz:
+
+* Create a new lint to detect nested if-statements that are too long. Any nested if-statements longer than 3 will be flagged.
+* Create a new lint that detects the length of each function. If a function is too long, about more than 50 - 100 lines, the function will be flagged.
+* Create a new lint to find literal values that are not explained. If found, flag it and recommend the user to use a constant
+
+Aelynn Xu:
+
+* List out and categorize cases for memory leaks
+* Implement memory leak detector to account for various cases
+
