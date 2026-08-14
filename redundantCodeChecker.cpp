@@ -293,6 +293,7 @@ void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSour
     }
     else if (type == "compound_statement") {
         checkChainedReturnIfs(node, parsedSource, warnings);
+        checkUnreachableCode(node, parsedSource, warnings);
     }
 
     uint32_t childCount = ts_node_child_count(node);
@@ -439,6 +440,7 @@ void RedundantCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSo
         }
     }
 }
+
 
 // ---------- Analyze Source ----------
 

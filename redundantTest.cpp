@@ -101,8 +101,6 @@ int unusedVariableCases() {
     {
         int nested = 42;  // UNUSED, but inside a nested block -> should still flag (tests recursive scan)
     }
-
-    return 0;
 }
 
 // Unused variables nested in blocks/scopes with same name
@@ -226,8 +224,10 @@ bool caseE(bool cond, int x) {  // should NOT flag: else branch doesn't return a
 }
 
 int caseF(bool cond) {          // should NOT flag: no else at all
-    if (cond) return 1;
-    return 0;
+    int num1 = 1;
+    int num2 = 0;
+    if (cond) return num1;
+    return num2;
 }
 
 // --------- Check 5: Combined Cases --------- 
