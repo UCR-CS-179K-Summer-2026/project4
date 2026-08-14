@@ -385,6 +385,35 @@ TSNode RedundantCodeChecker::getLastStatement(TSNode compoundStatement) {
     return last;
 }
 
+bool RedundantCodeChecker::alwaysExits(TSNode statement) {
+    if(ts_node_is_null(statement)) return false;
+    std::string type = ts_node_type(statement);
+
+    if (type == "return_statement" || type == "break_statement" ||
+        type == "continue_statement" || type == "goto_statement") {
+        return true;
+    }
+
+    if (type == "compund_statement") {
+        return alwaysExits(getLastStatement(statement));
+    }
+
+    if (type == "else_clause") {
+        uint32_t count = ts_node_child(statement);
+        if (count == 0) return false;
+        return alwaysExits(ts_node_child(statement, count - 1));
+    }
+
+    if (type == "if_statement") {
+        TSNode consequence = ts_node_child_by_field_name(statement, "consequence", strlen("consequence"));
+        TSNode alternative = ts_node_child_by_field_name(statement, "alternative", strlen("alternative"));
+        if (ts_node_is_null(alternative)) return false; // no else -> can fall through
+        return alwaysExits(consequence) && alwaysExits(alternative);
+    }
+
+    return false;
+}
+
 
 // ---------- Analyze Source ----------
 
