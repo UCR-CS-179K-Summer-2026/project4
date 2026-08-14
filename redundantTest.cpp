@@ -1,137 +1,118 @@
 #include <iostream>
 #include <string>
 
-// --------- Check 1: Unused/Dead Variables --------- 
+// ==================================================================
+// Check 1: Unused / Dead Variables
+// ==================================================================
 
-// single unused variable 
-int calculateCost(int itemPrice, int tax) {
-    int processFee = 5;         // UNUSED: -> should flag
-    int total = itemPrice + tax;
+// Base case: one unused var next to one used var
+int basicUnusedVariable(int itemPrice, int tax) {
+    int processFee = 5;          // UNUSED -> should flag
+    int total = itemPrice + tax; // USED
     return total;
 }
 
-// multiple unused variables in one function
-int processOrder(int quantity, int price) {
-    int discount = 10;          // UNUSED: -> should flag
-    int shippingCost = 15;      // UNUSED: -> should flag
+// Multiple unused vars + a multi-declarator line with mixed used/unused
+int multipleUnusedAndMultiDeclarator(int quantity, int price) {
+    int discount = 10;      // UNUSED -> should flag
+    int shippingCost = 15;  // UNUSED -> should flag
+    int minVal = quantity, maxVal = price, average = 0; // average UNUSED -> should flag
     int subtotal = quantity * price;
-    return subtotal;
+    return subtotal + minVal + maxVal;
 }
 
-// multi-declarator line with a mix of used and unused
-int computeStat(int a, int b) {
-    int minVal = a, maxVal = b, average = 0;
-    return minVal + maxVal;
-}
-
-// same variable name reused across different functions
+// Same variable name reused across separate functions: each function's scope is independent
 int firstFunction(int input) {
-    int counter = 0;        // UNUSED: -> should flag
+    int counter = 0;         // UNUSED -> should flag (never read in this function)
     return input;
 }
-
 int secondFunction(int input) {
-    int counter = input * 2;    // USED: should NOT flag
+    int counter = input * 2; // USED -> should NOT flag
     return counter;
 }
 
-// unused variable declared inside a nested block (if/for)
-int validateInput(int value) {
-    if (value > 0) {
-        int adjustedValue = value - 1;  // UNUSED: -> should flag
-        int isValid = 1;
-        return isValid;
-    }
-    return 0;
-}
-
-// variable declared outside a block, used only inside it
-int sumIfPositive(int value) {
+// Unused var nested inside a block, vs. an outer var only ever used inside a block
+int nestedBlockCases(int value) {
     int result = 0;
     if (value > 0) {
-        result = value;
+        int adjustedValue = value - 1; // UNUSED, nested in if-branch -> should flag
+        result = value;                // outer var used inside block -> should NOT flag
     }
     return result;
 }
 
-// no unused variables at all (confirm no false positives)
-int cleanFunction(int a, int b) {
+// Negative control: everything declared is read somewhere -> no false positives
+int cleanNoFalsePositives(int a, int b) {
     int sum = a + b;
     int product = a * b;
     return sum + product;
 }
 
-// commented-out declaration should NOT be flagged
-int withCommentedCode(int x) {
+// Commented-out declarations must never be flagged (parser shouldn't see them)
+int commentedCodeIgnored(int x) {
     // int oldDebugVar = 99;
-    /* int oldDebug Var = 100 */
+    /* int oldDebugVar2 = 100; */
     int result = x + 1;
     return result;
 }
 
-// multiple unused variables spread across several statements
-// in the same function, mixed with used ones
-int inventoryCheck(int stock, int threshold) {
-    int reorderFlag = 0;    // UNUSED: -> should flag
-    int lastCheckedBy = 7;  // UNUSED: -> should flag
-    int isLowStock = stock < threshold;
-    int notes = 0;          // UNUSED: -> should flag
-    return isLowStock;
-}
-
-// Unused Variables in Different Contexts
-int unusedVariableCases() {
-    int a;               // UNUSED: never referenced -> should flag
-    int b = 5;           // UNUSED: initialized but never read -> should flag
+// Declarator-type coverage in one place: plain, pointer, reference, loop var, nested-scope scan
+int declaratorTypeCoverage() {
+    int a;             // UNUSED -> should flag
+    int b = 5;          // UNUSED -> should flag
     int c;
     c = 10;
-    std::cout << c;      // USED: should NOT flag
+    std::cout << c;     // USED -> should NOT flag
 
-    int x, y = 2;         // UNUSED: x -> should flag; y is used below
+    int x, y = 2;         // x UNUSED -> should flag; y used below -> should NOT flag
     std::cout << y;
 
-    int* ptr = nullptr;   // UNUSED: pointer -> should flag (tests pointer_declarator)
-    int& ref = c;         // ref IS used below -> should NOT flag
+    int* ptr = nullptr;   // UNUSED pointer -> should flag
+    int& ref = c;         // USED below -> should NOT flag
     std::cout << ref;
 
-    for (int i = 0; i < 10; i++) {  // USED: i is used in condition/increment/body -> should NOT flag
+    for (int i = 0; i < 10; i++) {  // loop var used in condition/body -> should NOT flag
         std::cout << i;
     }
 
     {
-        int nested = 42;  // UNUSED, but inside a nested block -> should still flag (tests recursive scan)
+        int nested = 42;  // UNUSED inside a nested {} block -> should still flag
     }
+
+    return 0;
 }
 
-// Unused variables nested in blocks/scopes with same name
-void foo() {
-    int x = 5;      // UNUSED, x -> should be flagged
-    while (2-2) {
-        int x = 5;
+// Shadowing: same name re-declared in nested scopes must be tracked independently
+void shadowingAcrossScopes() {
+    int x = 5;       // UNUSED in this (outer) scope -> should flag
+    while (2 - 2) {
+        int x = 5;    // inner shadow, USED below -> should NOT flag
         std::cout << x;
     }
-    int y = 3;      //UNUSED, y -> should be flagged
-    if (x > 2) { 
-        int y = 2;  //UNUSED, y -> should be flagged
-        if(x > 1) {
-        int y = 4;
-        std::cout << x; 
-        std::cout << y;
+    int y = 3;        // UNUSED -> should flag
+    if (x > 2) {
+        int y = 2;      // UNUSED shadow -> should flag
+        if (x > 1) {
+            int y = 4;   // USED below -> should NOT flag
+            std::cout << x;
+            std::cout << y;
         }
     }
-    // Should not be flagged
+    // Negative control: no unused vars in this loop
     int val = 10;
-    while(val > 1) {
+    while (val > 1) {
         int z = 2;
         val--;
-        if(z > 1) {
+        if (z > 1) {
             z--;
             val--;
         }
     }
 }
 
-// --------- Check 2: Redundant Boolean Comparisons ---------
+// ==================================================================
+// Check 2: Redundant Boolean Comparisons
+// ==================================================================
 void booleanComparisonCases(bool isValid, bool isReady, int count) {
     if (isValid == true) {}     // should flag -> simplifies to "isValid"
     if (isValid == false) {}    // should flag -> simplifies to "!isValid"
@@ -148,30 +129,32 @@ void booleanComparisonCases(bool isValid, bool isReady, int count) {
 }
 
 void booleanComparisons_nestedAndNegative(bool isReady, bool isAvailable, int quantity) {
-    // nested inside && -> should still be found by traversal
     if (quantity > 0 && isAvailable == true) {}   // flag: "isAvailable == true" -> "isAvailable"
 
     if (isReady == isAvailable) {}   // should NOT flag: neither side is a bool literal
     if (quantity == 5) {}            // should NOT flag: int comparison
     if (isReady) {}                  // should NOT flag: no comparison at all
 
-    bool flag = (isReady == true);   // flag even inside an assignment expression, not just if-conditions
+    bool flag = (isReady == true);   // flag even inside an assignment expression
 }
 
-// --------- Check 3: Redundant if/else if/ else conditional statements ---------
-std:: string numType(int number) {
-    if (number > 0) { return "positive"; }      // should flag, recognizes 2+ consecutive ifs with unconditional returns
+// ==================================================================
+// Check 3: Chained If-Statements That Should Be If/Else If/Else
+// ==================================================================
+std::string numType(int number) {
+    if (number > 0) { return "positive"; }   // should flag: 2+ consecutive ifs, each unconditional return
     if (number == 0) { return "zero"; }
     if (number < 0) { return "negative"; }
+    return "";
 }
 
-std:: string roleAssign(int number, int time) {
-    if (number < 10) { return "volunteer"; }    // should flag, recognizes 2+ consecutive ifs with unconditional returns
+std::string roleAssign(int number, int time) {
+    if (number < 10) { return "volunteer"; }              // should flag
     if (number >= 10 && number < 20) { return "committee"; }
     if (number >= 20) { return "leader"; }
 
     if (time < 5) { return "junior"; }
-    else if (time >= 5 && time < 10) { return "senior";} 
+    else if (time >= 5 && time < 10) { return "senior"; }
     else if (time >= 10) { return "expert"; }
     else { return "unknown"; }
 }
@@ -181,20 +164,22 @@ int chainedReturns_singleIf(int x) {   // should NOT flag: only 1 if, no chain
     return 0;
 }
 
-int chainedReturns_brokenByOtherStatement(int x) {   // should NOT flag as one chain: statement breaks adjacency
+int chainedReturns_brokenByOtherStatement(int x) {   // should NOT flag: adjacency broken
     if (x > 0) { return 1; }
     std::cout << "checking x\n";   // breaks the chain
     if (x < 0) { return -1; }
     return 0;
 }
 
-int chainedReturns_hasElseIf(int x) {   // should NOT flag: already written as if/else if/else, not separate ifs
+int chainedReturns_hasElseIf(int x) {   // should NOT flag: already if/else if/else
     if (x > 0) { return 1; }
     else if (x < 0) { return -1; }
     else { return 0; }
 }
 
-// --------- Check 4: Redundant If/Else Returning Boolean Literals --------- 
+// ==================================================================
+// Check 4: Redundant If/Else Returning Boolean Literals
+// ==================================================================
 bool caseA(bool cond) {
     if (cond) return true;
     else return false;          // should flag -> simplifies to "return cond;"
@@ -218,19 +203,98 @@ bool caseD(bool cond) {         // should NOT flag: both branches return the SAM
     else return true;
 }
 
-bool caseE(bool cond, int x) {  // should NOT flag: else branch doesn't return a bool literal
+bool caseE(bool cond, int x) {  // should NOT flag: else branch isn't a bool literal
     if (cond) return true;
     else return x > 0;
 }
 
 int caseF(bool cond) {          // should NOT flag: no else at all
-    int num1 = 1;
-    int num2 = 0;
-    if (cond) return num1;
-    return num2;
+    if (cond) return 1;
+    return 0;
 }
 
-// --------- Check 5: Combined Cases --------- 
+// ==================================================================
+// Check 5: Unreachable / Dead Code
+// ==================================================================
+
+// Base case: statement after an unconditional return
+int unreachableAfterReturn(int x) {
+    return x;
+    x = x + 1;              // UNREACHABLE -> should flag
+}
+
+// Statement after break inside a loop
+void unreachableAfterBreak() {
+    for (int i = 0; i < 10; i++) {
+        break;
+        std::cout << i;     // UNREACHABLE -> should flag
+    }
+}
+
+// Statement after continue inside a loop
+void unreachableAfterContinue() {
+    for (int i = 0; i < 10; i++) {
+        continue;
+        std::cout << i;     // UNREACHABLE -> should flag
+    }
+}
+
+// Statement after goto
+void unreachableAfterGoto(int x) {
+    if (x < 0) goto cleanup;
+    std::cout << "processing\n";
+    goto cleanup;
+    std::cout << "never runs\n";   // UNREACHABLE -> should flag
+cleanup:
+    std::cout << "done\n";
+}
+
+// if/else where BOTH branches unconditionally return -> code after is unreachable
+int unreachableAfterExhaustiveIfElse(int x) {
+    if (x > 0) {
+        return 1;
+    } else {
+        return -1;
+    }
+    x = 0;                  // UNREACHABLE -> should flag
+    return x;
+}
+
+// if with NO else: falls through even though the branch returns -> should NOT flag
+int noFlagWhenIfHasNoElse(int x) {
+    if (x > 0) {
+        return 1;
+    }
+    return 0;                // reachable -> should NOT flag
+}
+
+// if/else where only ONE branch exits -> falls through -> should NOT flag
+int noFlagWhenOnlyOneBranchExits(int x) {
+    if (x > 0) {
+        return 1;
+    } else {
+        x = x + 1;
+    }
+    return x;                 // reachable -> should NOT flag
+}
+
+// Multiple trailing statements after one exit: only the first should be reported
+int onlyFirstUnreachableStatementFlagged(int x) {
+    return x;
+    int a = 1;    // UNREACHABLE -> should flag (start of the dead run)
+    int b = 2;    // still dead, but no additional warning expected
+    std::cout << a << b;
+}
+
+// Return as the true last statement: nothing follows -> should NOT flag
+int noFlagWhenReturnIsLast(int x) {
+    int y = x + 1;
+    return y;
+}
+
+// ==================================================================
+// Check 6: Combined Cases
+// ==================================================================
 int combined_orderStatusExample(int price, int quantity) {
     bool isValid;
     bool isAvailable = true;      // used below -> should NOT flag as unused
@@ -243,16 +307,16 @@ int combined_orderStatusExample(int price, int quantity) {
     }
     // isValid assigned in both branches, then read below -> should NOT flag as unused
 
-    if (isValid == true) {                          // flag: boolean comparison
-        int totalCost = quantity * price;             // used below -> should NOT flag
+    if (isValid == true) {                              // flag: boolean comparison
+        int totalCost = quantity * price;                  // used below -> should NOT flag
         return totalCost;
-    } else if (isValid == false) {                   // flag: boolean comparison
+    } else if (isValid == false) {                       // flag: boolean comparison
         return price;
     }
 
-    if (quantity > 0 && isAvailable == true) {        // flag: boolean comparison, nested in &&
+    if (quantity > 0 && isAvailable == true) {            // flag: boolean comparison, nested in &&
         return quantity;
-    } else if (quantity <= 0 && isAvailable == false) { // flag: boolean comparison
+    } else if (quantity <= 0 && isAvailable == false) {   // flag: boolean comparison
         return 0;
     }
 
