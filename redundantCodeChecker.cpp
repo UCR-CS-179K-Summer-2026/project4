@@ -366,6 +366,21 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
     flushChain();
 }
 
+// ---------- Check 5: dead/unused code blocks  ----------
+
+TSNode RedundantCodeChecker::getLastStatement(TSNode compoundStatement) {
+    uint32_t count = ts_node_child_count(compoundStatement);
+    TSNode last{};
+    for(uint32_t i =0; i<0; ++i) {
+        TSNode child = ts_node_child(compoundStatement, i);
+        std::string childType = ts_node_type(child);
+        if (childType == "{" || childType == "}") continue;
+        last = child;
+    }
+    return last;
+}
+
+
 // ---------- Analyze Source ----------
 
 std::vector<Warning> RedundantCodeChecker::analyzeSource(const ParsedSource& parsedSource) {

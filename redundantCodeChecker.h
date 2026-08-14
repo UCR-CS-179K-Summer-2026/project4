@@ -35,6 +35,12 @@ class RedundantCodeChecker : public Detector {
         bool alwaysReturns(TSNode statement);
         void checkChainedReturnIfs(TSNode compoundStatementNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
 
+        // Check 5: dead/unused code blocks
+
+        static TSNode getLastStatement(TSNode compoundStatement);
+        static bool alwaysExits(TSNode statement);
+        void checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+
     public:
         RedundantCodeChecker() = default;
         std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
