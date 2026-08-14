@@ -307,21 +307,26 @@ bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
     if (ts_node_is_null(statement)) return false;
     std::string type = ts_node_type(statement);
 
-    if (type == "return_statement") { return true; }
-
-    else if (type == "compound_statement") {
-        uint32_t count = ts_node_child_count(statement);
-        TSNode lastStatement{};
-        for (uint32_t i = 0; i < count; ++i) {
-            TSNode child = ts_node_child(statement, i);
-            std::string childType = ts_node_type(child);
-            if (childType == "{" || childType == "}") continue;
-            lastStatement = child;
-        }
-        return alwaysReturns(lastStatement);
-    }
+    if (type == "return_statement") return true;
+    if (type == "compound_statement") return alwaysReturns(getLastStatement(statement));
 
     return false;
+
+    // if (type == "return_statement") { return true; }
+
+    // else if (type == "compound_statement") {
+    //     uint32_t count = ts_node_child_count(statement);
+    //     TSNode lastStatement{};
+    //     for (uint32_t i = 0; i < count; ++i) {
+    //         TSNode child = ts_node_child(statement, i);
+    //         std::string childType = ts_node_type(child);
+    //         if (childType == "{" || childType == "}") continue;
+    //         lastStatement = child;
+    //     }
+    //     return alwaysReturns(lastStatement);
+    // }
+
+    // return false;
 }
 
 void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
