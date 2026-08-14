@@ -145,18 +145,6 @@ std:: string roleAssign(int number, int time) {
 ```
 
 Output: Warning: Redundant conditional statement. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead. (starting line 2)
-
-**Redundant initialization** — a variable initialized to a placeholder value that's
-immediately overwritten before being read. *(Planned; not yet implemented.)*
-```cpp
-main() {
-    int totalScore = 0;
-    totalScore = calculateFinalScore();
-}
-```
-```
-Warning: Redundant initialization. Initialize with "int totalScore = calculateFinalScore();"
-```
 ---
  
 ## Setup
