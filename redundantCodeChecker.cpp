@@ -414,31 +414,31 @@ bool RedundantCodeChecker::alwaysExits(TSNode statement) {
     return false;
 }
 
-void RedundantCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std:: vector<Warning>& warnings) {
-    uint32_t count = ts_node_child_count(blockNode);
-    bool exited = false;
+// void RedundantCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std:: vector<Warning>& warnings) {
+//     uint32_t count = ts_node_child_count(blockNode);
+//     bool exited = false;
 
-    for (uint32_t i = 0; i < count; ++i) {
-        TSNode child = ts_node_child(blockNode, i);
-        std::string type = ts_node_type(child);
-        if (type == "{" || type == "}") continue;
+//     for (uint32_t i = 0; i < count; ++i) {
+//         TSNode child = ts_node_child(blockNode, i);
+//         std::string type = ts_node_type(child);
+//         if (type == "{" || type == "}") continue;
 
-        if(exited) {
-            int line = ts_node_start_point(child).row + 1;
-            warnings.push_back({
-                line,
-                "Unreachable Code",
-                "This code block can never execute because a previous statement in this block "
-                "always exits via return/break/continue/goto."
-            });
-            break;
-        }
+//         if(exited) {
+//             int line = ts_node_start_point(child).row + 1;
+//             warnings.push_back({
+//                 line,
+//                 "Unreachable Code",
+//                 "This code block can never execute because a previous statement in this block "
+//                 "always exits via return/break/continue/goto."
+//             });
+//             break;
+//         }
 
-        if (alwaysExits(child)) {
-            exited = true;
-        }
-    }
-}
+//         if (alwaysExits(child)) {
+//             exited = true;
+//         }
+//     }
+// }
 
 // ---------- Analyze Source ----------
 
