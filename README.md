@@ -145,6 +145,7 @@ std:: string roleAssign(int number, int time) {
 ```
 
 Output: Warning: Redundant conditional statement. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead. (starting line 2)
+
 ---
  
 ## Setup
