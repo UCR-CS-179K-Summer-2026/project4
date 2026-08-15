@@ -337,6 +337,8 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
         TSNode child = ts_node_child(blockNode, i);
         std::string type = ts_node_type(child);
 
+        if (type == "comment") continue;
+        
         if (type == "if_statement") {
             TSNode alternative = ts_node_child_by_field_name(child, "alternative", strlen("alternative"));
             TSNode consequence = ts_node_child_by_field_name(child, "consequence", strlen("consequence"));
@@ -402,7 +404,7 @@ void RedundantCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSo
     for (uint32_t i = 0; i < count; ++i) {
         TSNode child = ts_node_child(blockNode, i);
         std::string type = ts_node_type(child);
-        if (type == "{" || type == "}") continue;
+        if (type == "{" || type == "}" || type == "comment") continue;   // <-- add comment
 
         if (exited) {
             int line = ts_node_start_point(child).row + 1;
