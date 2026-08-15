@@ -5,26 +5,26 @@
 
 void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
     for (const auto& entry : variableClumps) {
-        const std::vector<std::string>& paramNames = entry.first;
-        const std::vector<std::string>& functionNames = entry.second;
+        const std::vector<std::string>& variableNames = entry.first;
+        const std::vector<int>& lineNumbers = entry.second;
 
-        if (functionNames.size() > 1) {
-            std::string paramList;
-            for (const auto& paramName : paramNames) {
-                paramList += paramName + ", ";
+        if (lineNumbers.size() > 1) {
+            std::string variableList;
+            for (const auto& variable : variableNames) {
+                variableList += variable + ", ";
             }
-            paramList = paramList.substr(0, paramList.length() - 2);
+            variableList = variableList.substr(0, variableList.length() - 2);
 
-            std::string functionList;
-            for (const auto& functionName : functionNames) {
-                functionList += functionName + ", ";
+            std::string lineList;
+            for (const auto& line : lineNumbers) {
+                lineList += std::to_string(line) + ", ";
             }
-            functionList = functionList.substr(0, functionList.length() - 2);
+            lineList = lineList.substr(0, lineList.length() - 2);
 
             warnings.push_back({
-                0,
+                lineNumbers.front(),
                 "Data Clump",
-                "The following functions share the same set of parameters: " + functionList + ". Parameters: " + paramList
+                "The following lines share the same set of variables: " + lineList + ". Variables: " + variableList + ". Consider using a struct or class to reduce code duplication."
             });
         }
     }
@@ -57,7 +57,7 @@ void DataClumpDetector::checkFunctionParams(TSNode node, const ParsedSource& par
 
         if(!paramNames.empty()) {
             std::sort(paramNames.begin(), paramNames.end());
-            variableClumps[paramNames].push_back(nameAnalyzer.extractIdentifierName(parsedSource, node));
+            variableClumps[paramNames].push_back(nameAnalyzer.getLineNumber(parsedSource, functionDeclarator));
         }
     }
 }
