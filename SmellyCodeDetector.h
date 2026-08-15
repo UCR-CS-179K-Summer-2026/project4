@@ -11,6 +11,7 @@
 #include "commentChecker.h"
 #include "repeatedCodeChecker.h"
 #include "DeepIfDetector.h"
+#include "DataClumpDetector.h"
 
 class SmellyCodeDetector {
     private:
@@ -19,6 +20,7 @@ class SmellyCodeDetector {
         commentChecker commentChecker;
         RepeatedCodeChecker repeatedCodeChecker;
         DeepIfDetector deepIfDetector;
+        DataClumpDetector dataClumpDetector;
 
         std::vector<Detector*> detectors;
 
