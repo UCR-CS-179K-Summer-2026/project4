@@ -14,6 +14,7 @@ class DataClumpDetector : public Detector {
         std::map<std::vector<std::string>, std::vector<int>> variableClumps;
         void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
         void checkFunctionParams(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+        void checkInsideFunction(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkForDataClumps(std::vector<Warning>& warnings);
     public:
         DataClumpDetector() = default;
