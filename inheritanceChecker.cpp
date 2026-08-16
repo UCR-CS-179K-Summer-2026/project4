@@ -4,7 +4,7 @@
 #include <cstring>
 #include <tree_sitter/api.h>
 
-//Walks through parse tree to search for class_specifier
+//Walks through parse tree to search for class_specifier. If a class_specifier is found, we have a class and we call checkClass to continue.
 void InheritanceChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings){
     if (ts_node_is_null(node)){
         return;
