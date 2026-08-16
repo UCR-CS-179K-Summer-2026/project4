@@ -121,6 +121,44 @@ std::string roleAssign(int number) {
 Warning: [Redundant Chained-If Statement]. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead.(line 2)
 ```
 
+### Dead Code
+
+Covers two related checks in a single traversal:
+
+**Unreachable code** — any statement that appears after a previous statement in the same
+block has already unconditionally exited via return, break, continue, or goto (an
+if/else only counts as exiting when both branches do).
+
+```cpp
+int getStatus(int code) {
+    return code;
+    std::cout << "logging: " << code << "\n";   // never runs
+}
+```
+
+**Unused functions** — functions defined in the file but never reachable from main,
+whether directly or transitively through other calls (self-recursion and mutual recursion
+are both handled correctly and won't cause a false flag on their own).
+
+```
+Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
+```
+
+```cpp
+int square(int x) {
+    return x * x;
+}
+
+int main() {
+    std::cout << square(4) << "\n";
+    return 0;
+}
+```
+
+```
+Warning: [Unused Function]. Function "square" is never called from main (directly or indirectly) and is dead code.(line 1)
+```
+
 ### Repeated Code
 
 Detects runs of consecutive statements repeated elsewhere within the same block. Each
