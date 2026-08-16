@@ -283,9 +283,9 @@ void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedS
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     std::string type = ts_node_type(node);
 
-    if (type == "function_definition") {
-        checkUnusedVariables(node, parsedSource, warnings);
-    } else if (type == "binary_expression") {
+    // if (type == "function_definition") {
+    //     checkUnusedVariables(node, parsedSource, warnings);
+    if (type == "binary_expression") {
         checkBooleanComparison(node, parsedSource, warnings);
     }
     else if (type == "if_statement") {

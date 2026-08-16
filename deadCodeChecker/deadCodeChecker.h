@@ -17,7 +17,7 @@ class DeadCodeChecker : public Detector {
         // Shared helpers
         std::string nodeText(TSNode node, const std::string& source);
 
-         // Check 1: unused/dead variables
+        // ---------- Check 1: unused/dead variables ----------
         std::string extractIdentifierFromDeclarator(TSNode declaratorNode, const std::string& source);
         void collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations);
         int countIdentifierOccurrences(TSNode scopeNode, const std::string& source, const std::string& name);
@@ -26,12 +26,12 @@ class DeadCodeChecker : public Detector {
         TSNode findEnclosingScope(TSNode declaratorNode);
         bool blockRedeclares(TSNode blockNode, const std::string& source, const std::string& name);
         
-        // Check 5: dead/unused code blocks
-
+        // ---------- Check 5: dead/unused code blocks  ----------
         static TSNode getLastStatement(TSNode compoundStatement);
         static bool alwaysExits(TSNode statement);
         void checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
 
+        // ---------- Check 6: Unused/Dead Functions (unreachable from main) ----------
         std::string getFunctionName(TSNode functionDefNode, const std::string& source);
         void collectCalledFunctionNames(TSNode node, const std::string& source, std::set<std::string>& callees);
         void checkUnusedFunctions(const ParsedSource& parsedSource, std::vector<Warning>& warnings);
