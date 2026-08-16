@@ -338,8 +338,9 @@ any detector in this repository. Listed here so the gap is visible rather than s
 dropped.
 
 **Memory leak detection** — flagging a dynamically allocated variable (`new`) that is never `delete`d before going out of scope.
-**Unused/Dead Code Blocks** - flagging code that will never be executed in a program.
+
 **Date Clumps** - flagging individually writen fields of data that can be grouped into a set.
+
 **Uneccessary/Unused Links Between Files** - flagging if another file inherits items from another file but does not implement.
 
 
