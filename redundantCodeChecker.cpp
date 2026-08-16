@@ -3,143 +3,143 @@
 #include <string>
 #include <cstring>
 
-// // ---------- Shared Helpers  ----------
+// ---------- Shared Helpers  ----------
 
-// std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& source) {
-//     uint32_t start = ts_node_start_byte(node);
-//     uint32_t end = ts_node_end_byte(node);
-//     return source.substr(start, end - start);
-// }
+std::string RedundantCodeChecker::nodeText(TSNode node, const std::string& source) {
+    uint32_t start = ts_node_start_byte(node);
+    uint32_t end = ts_node_end_byte(node);
+    return source.substr(start, end - start);
+}
 
-// // ---------- Check 1: unused/dead variables ----------
+// ---------- Check 1: unused/dead variables ----------
 
-// std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
-//     std::string type = ts_node_type(node);
+std::string RedundantCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
+    std::string type = ts_node_type(node);
 
-//     if (type == "identifier") {
-//         return nodeText(node, source);
-//     }
+    if (type == "identifier") {
+        return nodeText(node, source);
+    }
 
-//     TSNode declaratorField = ts_node_child_by_field_name(node, "declarator", strlen("declarator"));
-//     if (!ts_node_is_null(declaratorField)) {
-//         return extractIdentifierFromDeclarator(declaratorField, source);
-//     }
+    TSNode declaratorField = ts_node_child_by_field_name(node, "declarator", strlen("declarator"));
+    if (!ts_node_is_null(declaratorField)) {
+        return extractIdentifierFromDeclarator(declaratorField, source);
+    }
 
-//     uint32_t childCount = ts_node_child_count(node);
-//     for (uint32_t i = 0; i < childCount; ++i) {
-//         TSNode child = ts_node_child(node, i);
-//         std::string childType = ts_node_type(child);
-//         if (childType == "identifier") {
-//             return nodeText(child, source);
-//         }
-//     }
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(node, i);
+        std::string childType = ts_node_type(child);
+        if (childType == "identifier") {
+            return nodeText(child, source);
+        }
+    }
 
-//     return "";
-// }
+    return "";
+}
 
-// void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations) {
-//     uint32_t childCount = ts_node_child_count(declarationNode);
-//     for (uint32_t i = 0; i < childCount; ++i) {
-//         TSNode child = ts_node_child(declarationNode, i);
-//         std::string childType = ts_node_type(child);
+void RedundantCodeChecker::collectDeclarations(TSNode declarationNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& declarations) {
+    uint32_t childCount = ts_node_child_count(declarationNode);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(declarationNode, i);
+        std::string childType = ts_node_type(child);
 
-//         if (childType == "identifier" || childType == "init_declarator" ||
-//             childType == "pointer_declarator" || childType == "reference_declarator" ||
-//             childType == "array_declarator") {
-//             std::string name = extractIdentifierFromDeclarator(child, source);
-//             if (!name.empty()) {
-//                 declarations.push_back({name, child});
-//             }
-//         }
-//     }
-// }
+        if (childType == "identifier" || childType == "init_declarator" ||
+            childType == "pointer_declarator" || childType == "reference_declarator" ||
+            childType == "array_declarator") {
+            std::string name = extractIdentifierFromDeclarator(child, source);
+            if (!name.empty()) {
+                declarations.push_back({name, child});
+            }
+        }
+    }
+}
 
-// int RedundantCodeChecker::countIdentifierOccurrences(TSNode node, const std::string& source, const std::string& name) {
-//     int count = 0;
+int RedundantCodeChecker::countIdentifierOccurrences(TSNode node, const std::string& source, const std::string& name) {
+    int count = 0;
 
-//     if (std::string(ts_node_type(node)) == "identifier" && nodeText(node, source) == name) {
-//         count++;
-//     }
+    if (std::string(ts_node_type(node)) == "identifier" && nodeText(node, source) == name) {
+        count++;
+    }
 
-//     uint32_t childCount = ts_node_child_count(node);
-//     for (uint32_t i = 0; i < childCount; ++i) {
-//         TSNode child = ts_node_child(node, i);
-//         std::string childType = ts_node_type(child);
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(node, i);
+        std::string childType = ts_node_type(child);
 
-//         if (childType == "compound_statement" && blockRedeclares(child, source, name)) {
-//             continue;
-//         }
+        if (childType == "compound_statement" && blockRedeclares(child, source, name)) {
+            continue;
+        }
 
-//         count += countIdentifierOccurrences(child, source, name);
-//     }
+        count += countIdentifierOccurrences(child, source, name);
+    }
 
-//     return count;
-// }
+    return count;
+}
 
-// TSNode RedundantCodeChecker::findEnclosingScope(TSNode node) {
-//     TSNode parent = ts_node_parent(node);
-//     while (!ts_node_is_null(parent)) {
-//         if (std::string(ts_node_type(parent)) == "compound_statement") {
-//             return parent;
-//         }
-//         parent = ts_node_parent(parent);
-//     }
-//     return TSNode{};
-// }
+TSNode RedundantCodeChecker::findEnclosingScope(TSNode node) {
+    TSNode parent = ts_node_parent(node);
+    while (!ts_node_is_null(parent)) {
+        if (std::string(ts_node_type(parent)) == "compound_statement") {
+            return parent;
+        }
+        parent = ts_node_parent(parent);
+    }
+    return TSNode{};
+}
 
-// bool RedundantCodeChecker::blockRedeclares(TSNode blockNode, const std::string& source, const std::string& name) {
-//     uint32_t count = ts_node_child_count(blockNode);
-//     for (uint32_t i = 0; i < count; ++i) {
-//         TSNode child = ts_node_child(blockNode, i);
-//         if (std::string(ts_node_type(child)) == "declaration") {
-//             std::vector<std::pair<std::string, TSNode>> decls;
-//             collectDeclarations(child, source, decls);
-//             for (auto& [declName, declNode] : decls) {
-//                 if (declName == name) return true;
-//             }
-//         }
-//     }
-//     return false;
-// }
+bool RedundantCodeChecker::blockRedeclares(TSNode blockNode, const std::string& source, const std::string& name) {
+    uint32_t count = ts_node_child_count(blockNode);
+    for (uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(blockNode, i);
+        if (std::string(ts_node_type(child)) == "declaration") {
+            std::vector<std::pair<std::string, TSNode>> decls;
+            collectDeclarations(child, source, decls);
+            for (auto& [declName, declNode] : decls) {
+                if (declName == name) return true;
+            }
+        }
+    }
+    return false;
+}
 
-// void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
-//     const std::string& source = parsedSource.source;
+void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
+    const std::string& source = parsedSource.source;
 
-//     TSNode bodyNode = ts_node_child_by_field_name(functionDefNode, "body", strlen("body"));
-//     if (ts_node_is_null(bodyNode)) return;
+    TSNode bodyNode = ts_node_child_by_field_name(functionDefNode, "body", strlen("body"));
+    if (ts_node_is_null(bodyNode)) return;
 
-//     std::vector<std::pair<std::string, TSNode>> declarations;
+    std::vector<std::pair<std::string, TSNode>> declarations;
 
-//     std::vector<TSNode> stack = { bodyNode };
-//     while (!stack.empty()) {
-//         TSNode current = stack.back();
-//         stack.pop_back();
+    std::vector<TSNode> stack = { bodyNode };
+    while (!stack.empty()) {
+        TSNode current = stack.back();
+        stack.pop_back();
 
-//         if (std::string(ts_node_type(current)) == "declaration") {
-//             collectDeclarations(current, source, declarations);
-//         }
+        if (std::string(ts_node_type(current)) == "declaration") {
+            collectDeclarations(current, source, declarations);
+        }
 
-//         uint32_t currentChild = ts_node_child_count(current);
-//         for (uint32_t i = 0; i < currentChild; ++i) {
-//             stack.push_back(ts_node_child(current, i));
-//         }
-//     }
+        uint32_t currentChild = ts_node_child_count(current);
+        for (uint32_t i = 0; i < currentChild; ++i) {
+            stack.push_back(ts_node_child(current, i));
+        }
+    }
 
-//     for (auto& [name, declNode] : declarations) {
-//         TSNode scope = findEnclosingScope(declNode);
-//         if (ts_node_is_null(scope)) scope = bodyNode;
+    for (auto& [name, declNode] : declarations) {
+        TSNode scope = findEnclosingScope(declNode);
+        if (ts_node_is_null(scope)) scope = bodyNode;
 
-//         int occurrences = countIdentifierOccurrences(scope, source, name);
-//         if (occurrences <= 1) {
-//             int line = ts_node_start_point(declNode).row + 1;
-//             warnings.push_back({
-//                 line,
-//                 "Redundant dead/unused variable",
-//                 "The variable \"" + name + "\" is declared but never used."
-//             });
-//         }
-//     }
-// }
+        int occurrences = countIdentifierOccurrences(scope, source, name);
+        if (occurrences <= 1) {
+            int line = ts_node_start_point(declNode).row + 1;
+            warnings.push_back({
+                line,
+                "Redundant dead/unused variable",
+                "The variable \"" + name + "\" is declared but never used."
+            });
+        }
+    }
+}
 
 // ---------- Check 2: redundant boolean comparisons ----------
 

@@ -16,7 +16,7 @@ set(SOURCE_FILES
     poorNameTest.cpp
     SmellyCodeDetector.cpp
     redundantCodeChecker.cpp
-    deadCodeChecker.cpp
+    deadCodeChecker/deadCodeChecker.cpp
     repeatedCodeChecker.cpp
     commentChecker.cpp
     FunctionAnalyzer.cpp
