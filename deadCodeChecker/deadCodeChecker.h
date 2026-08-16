@@ -1,8 +1,8 @@
 #ifndef DEAD_CODE_CHECKER_H
 #define DEAD_CODE_CHECKER_H
 
-#include "./ParsedSource.h"
-#include "./Detector.h"
+#include "../ParsedSource.h"
+#include "../Detector.h"
 #include <string>
 #include <vector>
 #include <utility>
