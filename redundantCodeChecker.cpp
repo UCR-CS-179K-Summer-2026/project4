@@ -134,7 +134,7 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
             int line = ts_node_start_point(declNode).row + 1;
             warnings.push_back({
                 line,
-                "Redundant dead/unused variable",
+                "Unused/dead Variable",
                 "The variable \"" + name + "\" is declared but never used."
             });
         }
@@ -283,9 +283,10 @@ void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedS
 void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     std::string type = ts_node_type(node);
 
-    // if (type == "function_definition") {
-    //     checkUnusedVariables(node, parsedSource, warnings);
-    if (type == "binary_expression") {
+    if (type == "function_definition") {
+        checkUnusedVariables(node, parsedSource, warnings);
+    }
+    else if (type == "binary_expression") {
         checkBooleanComparison(node, parsedSource, warnings);
     }
     else if (type == "if_statement") {
@@ -358,64 +359,17 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
     flushChain();
 }
 
-// // ---------- Check 5: dead/unused code blocks  ----------
-
-// TSNode RedundantCodeChecker::getLastStatement(TSNode compoundStatement) {
-//     uint32_t count = ts_node_child_count(compoundStatement);
-//     TSNode last{};
-//     for (uint32_t i = 0; i < count; ++i) {
-//         TSNode child = ts_node_child(compoundStatement, i);
-//         std::string childType = ts_node_type(child);
-//         if (childType == "{" || childType == "}") continue;
-//         last = child;
-//     }
-//     return last;
-// }
-
-// bool RedundantCodeChecker::alwaysExits(TSNode statement) {
-//     if (ts_node_is_null(statement)) return false;
-//     std::string type = ts_node_type(statement);
-
-//     if (type == "return_statement" || type == "break_statement" ||
-//         type == "continue_statement" || type == "goto_statement") {
-//         return true;
-//     }
-//     if (type == "compound_statement") {
-//         return alwaysExits(getLastStatement(statement));
-//     }
-//     if (type == "else_clause") {
-//         uint32_t count = ts_node_child_count(statement);
-//         if (count == 0) return false;
-//         return alwaysExits(ts_node_child(statement, count - 1));
-//     }
-//     if (type == "if_statement") {
-//         TSNode consequence = ts_node_child_by_field_name(statement, "consequence", strlen("consequence"));
-//         TSNode alternative = ts_node_child_by_field_name(statement, "alternative", strlen("alternative"));
-//         if (ts_node_is_null(alternative)) return false;          // <-- must short-circuit here
-//         return alwaysExits(consequence) && alwaysExits(alternative); // <-- must require BOTH
-//     }
-//     return false;
-// }
-
-// void RedundantCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
-//     uint32_t count = ts_node_child_count(blockNode);
-//     bool exited = false;
-
-//     for (uint32_t i = 0; i < count; ++i) {
-//         TSNode child = ts_node_child(blockNode, i);
-//         std::string type = ts_node_type(child);
-//         if (type == "{" || type == "}" || type == "comment") continue;   // <-- add comment
-
-//         if (exited) {
-//             int line = ts_node_start_point(child).row + 1;
-//             warnings.push_back({line, "Unreachable Code",
-//                 "This code can never execute because a previous statement in this block "
-//                 "always exits via return/break/continue/goto."});
-//             break;
-//         }
-//         if (alwaysExits(child)) exited = true;
-//     }
-// }
+TSNode RedundantCodeChecker::getLastStatement(TSNode compoundStatement) {
+    uint32_t count = ts_node_child_count(compoundStatement);
+    TSNode last{};
+    for (uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(compoundStatement, i);
+        std::string childType = ts_node_type(child);
+        if (childType == "{" || childType == "}") continue;
+        last = child;
+    }
+    return last;
+}
 
 // ---------- Analyze Source ----------
 

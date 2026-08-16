@@ -173,13 +173,13 @@ void DeadCodeChecker::checkUnusedFunctions(const ParsedSource& parsedSource, std
         int line = ts_node_start_point(node).row + 1;
         warnings.push_back({
             line,
-            "Unused Function",
+            "Unused/Dead Function",
             "Function \"" + name + "\" is never called from main (directly or indirectly) and is dead code."
         });
     }
 }
-// ---------- Single traversal, dispatches by node type ----------
 
+// ---------- Single traversal, dispatches by node type ----------
 void DeadCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     std::string type = ts_node_type(node);
 
@@ -194,7 +194,6 @@ void DeadCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, s
 }
 
 // ---------- Analyze Source ----------
-
 std::vector<Warning> DeadCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
     std::vector<Warning> warnings;
     if (parsedSource.tree == nullptr) return warnings;

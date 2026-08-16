@@ -38,8 +38,8 @@ class RedundantCodeChecker : public Detector {
         // Check 5: dead/unused code blocks
 
         static TSNode getLastStatement(TSNode compoundStatement);
-        static bool alwaysExits(TSNode statement);
-        void checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+        // static bool alwaysExits(TSNode statement);
+        // void checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
 
     public:
         RedundantCodeChecker() = default;
