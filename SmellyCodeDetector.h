@@ -12,7 +12,6 @@
 #include "repeatedCodeChecker.h"
 #include "DeepIfDetector.h"
 #include "longParamList.h"
-
 class SmellyCodeDetector {
     private:
         PoorNameChecker poorNameChecker;
