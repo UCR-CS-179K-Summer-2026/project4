@@ -62,6 +62,14 @@ void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource&
     }
 }
 
+// ---------- Check 6: Unused/Dead Functions (unreachable from main) ----------
+
+std::string DeadCodeChecker::getFunctionName(TSNode functionDefNode, const std::string& source) {
+    TSNode declarator = ts_node_child_by_field_name(functionDefNode, "declarator", strlen("declarator"));
+    if (ts_node_is_null(declarator)) return "";
+    return extractIdentifierFromDeclarator(declarator, source);  // reuses your Check 1 helper
+}
+
 // ---------- Single traversal, dispatches by node type ----------
 
 void DeadCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {

@@ -12,6 +12,7 @@
 #include "repeatedCodeChecker.h"
 #include "DeepIfDetector.h"
 #include "longParamList.h"
+#include "./deadCodeChecker.h"
 
 class SmellyCodeDetector {
     private:
@@ -21,6 +22,7 @@ class SmellyCodeDetector {
         RepeatedCodeChecker repeatedCodeChecker;
         DeepIfDetector deepIfDetector;
         longParamList longParamListDetector;
+        DeadCodeChecker deadCodeChecker;
 
         std::vector<Detector*> detectors;
 
