@@ -4,6 +4,7 @@
 #include <cstring>
 #include <tree_sitter/api.h>
 
+//Walks through parse tree to search for class_specifier
 void InheritanceChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings){
     if (ts_node_is_null(node)){
         return;
@@ -19,12 +20,15 @@ void InheritanceChecker::visitNode(TSNode node, const ParsedSource& parsedSource
         visitNode(ts_node_child(node,i), parsedSource, warnings);
     }
 }
+
+//Extracts the raw text stored in a given node
 std::string InheritanceChecker::nodeText(TSNode node, const std::string& source) const{
     uint32_t startByte = ts_node_start_byte(node);
     uint32_t endByte = ts_node_end_byte(node);
     return source.substr(startByte, endByte - startByte);
 }
 
+//Finds the child of a given node
 TSNode InheritanceChecker::findChildByType(TSNode node, const char* type) const{
     uint32_t childCount = ts_node_child_count(node);
 
@@ -39,6 +43,7 @@ TSNode InheritanceChecker::findChildByType(TSNode node, const char* type) const{
     return{};
 }
 
+//Given a class node, finds and extracts the parent class if it inherits one, else returns an empty list
 std::vector<std::string> InheritanceChecker::extractBaseClasses(TSNode classDefNode, const std::string& source) const{
     std::vector <std::string> baseNames;
 
@@ -63,6 +68,7 @@ std::vector<std::string> InheritanceChecker::extractBaseClasses(TSNode classDefN
     return baseNames;
 }
 
+//Given the classDefNode, scans labels to find whether or not the node is using its inherited parent class functions
 void InheritanceChecker::scanForInheritance(TSNode classDefNode, const std::string& source, const std::vector<std::string>& baseNames, std::vector<bool> baseUsed, bool& overrideFound) const{
     if (ts_node_is_null(classDefNode)) {
         return;
@@ -100,6 +106,7 @@ void InheritanceChecker::scanForInheritance(TSNode classDefNode, const std::stri
     }
 }
 
+//Puts extractBaseClasses and scanForInheritance together to determine whether or not a specific class' inheritance is necessary 
 void InheritanceChecker::checkClass(TSNode classNode, const ParsedSource& parsedSource, std::vector<Warning>& warnIngs) const{
 std::vector<std::string> baseNames = extractBaseClasses(classNode, parsedSource.source);
     if (baseNames.empty()) {
@@ -146,6 +153,7 @@ std::vector<std::string> baseNames = extractBaseClasses(classNode, parsedSource.
     warnIngs.push_back(Warning{line, "unused-inheritance", message.str()});
 }
 
+//Grabs the root of the syntax tree and then runs visitNode to start the traversal
 std::vector<Warning> InheritanceChecker::analyzeSource(const ParsedSource& parsedSource) {
     std::vector<Warning> warnings;
 
