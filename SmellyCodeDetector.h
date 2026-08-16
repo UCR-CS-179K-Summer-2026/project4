@@ -7,7 +7,7 @@
 #include "Parser.h"
 #include "Detector.h"
 #include "poorNameChecker.h"
-#include "redundantCodeChecker.h"
+#include "redundantCodeChecker/redundantCodeChecker.h"
 #include "commentChecker.h"
 #include "repeatedCodeChecker.h"
 #include "DeepIfDetector.h"
