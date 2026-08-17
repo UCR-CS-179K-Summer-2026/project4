@@ -137,13 +137,13 @@ int getStatus(int code) {
 }
 ```
 
-**Unused functions** — functions defined in the file but never reachable from main,
-whether directly or transitively through other calls (self-recursion and mutual recursion
-are both handled correctly and won't cause a false flag on their own).
-
 ```
 Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
 ```
+
+**Unused functions** — functions defined in the file but never reachable from main,
+whether directly or transitively through other calls (self-recursion and mutual recursion
+are both handled correctly and won't cause a false flag on their own).
 
 ```cpp
 int square(int x) {
