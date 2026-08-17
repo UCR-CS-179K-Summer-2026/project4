@@ -126,15 +126,43 @@ a { color: inherit; }
   display: block;
 }
 
+/* ---------------------------------------------
+   CTA button
+--------------------------------------------- */
+
+/* Dedicated wrapper for the hero's call-to-action — kept separate from
+   .hero (the section) so the button doesn't inherit the section's
+   6rem top padding and full-width box model. */
+.hero-cta {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+}
+
 .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   font-family: var(--font-display);
-  font-size: 1.25rem;
-  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--bg);
   background: var(--accent-warn);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1rem 1rem;
+  border: 1px solid var(--accent-warn);
+  border-radius: 6px;
+  padding: 0.85rem 1.5rem;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  background: #f0b354;
+  border-color: #f0b354;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px -14px rgba(232, 163, 61, 0.6);
 }
 
 /* ---------------------------------------------
@@ -203,7 +231,7 @@ h2 {
 .terminal {
   text-align: left;
   max-width: 640px;
-  margin: 0 auto;
+  margin: 2.5rem auto 0;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -249,14 +277,39 @@ h2 {
 .t-dim { color: var(--text-muted); }
 
 /* ---------------------------------------------
-  Build (diagram)
+  Build instructions
 --------------------------------------------- */
+
+.build-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.25rem;
+  text-align: left;
+}
 
 .figure-build-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem 1.4rem;
+  margin: 0;
+}
+
+.figure-build-card h3 {
+  margin: 0 0 0.9rem;
+  font-size: 0.95rem;
+  color: var(--accent-warn);
+}
+
+.figure-build-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.figure-build-card li + li {
+  margin-top: 0.6rem;
 }
 
 /* ---------------------------------------------
@@ -264,7 +317,7 @@ h2 {
 --------------------------------------------- */
 .figure-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(700px, 10fr));
+  grid-template-columns: repeat(auto-fit, minmax(900px, 15fr));
   gap: 1.5rem;
   text-align: left;
 }
