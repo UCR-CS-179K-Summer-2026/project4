@@ -22,6 +22,7 @@ set(SOURCE_FILES
     FunctionAnalyzer.cpp
     NameAnalyzer.cpp
     DeepIfDetector.cpp
+    memoryChecker.cpp
     longParamList.cpp
     inheritanceChecker.cpp
     inheritanceTest.cpp

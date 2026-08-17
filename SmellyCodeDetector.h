@@ -11,6 +11,7 @@
 #include "commentChecker.h"
 #include "repeatedCodeChecker.h"
 #include "DeepIfDetector.h"
+#include "memoryChecker.h"
 #include "longParamList.h"
 #include "deadCodeChecker/deadCodeChecker.h"
 #include "inheritanceChecker.h"
@@ -22,6 +23,7 @@ class SmellyCodeDetector {
         commentChecker commentChecker;
         RepeatedCodeChecker repeatedCodeChecker;
         DeepIfDetector deepIfDetector;
+        memoryChecker memoryChecker;
         longParamList longParamListDetector;
         DeadCodeChecker deadCodeChecker;
         InheritanceChecker inheritanceChecker;
