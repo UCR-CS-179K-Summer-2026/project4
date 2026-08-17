@@ -7,11 +7,15 @@
 #include "Parser.h"
 #include "Detector.h"
 #include "poorNameChecker.h"
-#include "redundantCodeChecker.h"
+#include "redundantCodeChecker/redundantCodeChecker.h"
 #include "commentChecker.h"
 #include "repeatedCodeChecker.h"
 #include "DeepIfDetector.h"
 #include "DataClumpDetector.h"
+#include "memoryChecker.h"
+#include "longParamList.h"
+#include "deadCodeChecker/deadCodeChecker.h"
+#include "inheritanceChecker.h"
 
 class SmellyCodeDetector {
     private:
@@ -21,6 +25,10 @@ class SmellyCodeDetector {
         RepeatedCodeChecker repeatedCodeChecker;
         DeepIfDetector deepIfDetector;
         DataClumpDetector dataClumpDetector;
+        memoryChecker memoryChecker;
+        longParamList longParamListDetector;
+        DeadCodeChecker deadCodeChecker;
+        InheritanceChecker inheritanceChecker;
 
         std::vector<Detector*> detectors;
 

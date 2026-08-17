@@ -126,9 +126,21 @@ a { color: inherit; }
   display: block;
 }
 
+.button {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--text);
+  background: var(--accent-warn);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem 1rem;
+  cursor: pointer;
+}
+
 /* ---------------------------------------------
    Layout helpers
 --------------------------------------------- */
+
 main {
   display: flex;
   flex-direction: column;
@@ -235,6 +247,17 @@ h2 {
 .t-smell { color: var(--accent-smell); }
 .t-pass { color: var(--accent-pass); }
 .t-dim { color: var(--text-muted); }
+
+/* ---------------------------------------------
+  Build (diagram)
+--------------------------------------------- */
+
+.figure-build-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.4rem;
+}
 
 /* ---------------------------------------------
    Figures (architecture / flow / uml)

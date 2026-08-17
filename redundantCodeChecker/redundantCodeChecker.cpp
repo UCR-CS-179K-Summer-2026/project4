@@ -134,7 +134,7 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
             int line = ts_node_start_point(declNode).row + 1;
             warnings.push_back({
                 line,
-                "Redundant dead/unused variable",
+                "Unused/dead Variable",
                 "The variable \"" + name + "\" is declared but never used."
             });
         }
@@ -285,7 +285,8 @@ void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSour
 
     if (type == "function_definition") {
         checkUnusedVariables(node, parsedSource, warnings);
-    } else if (type == "binary_expression") {
+    }
+    else if (type == "binary_expression") {
         checkBooleanComparison(node, parsedSource, warnings);
     }
     else if (type == "if_statement") {
@@ -293,6 +294,7 @@ void RedundantCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSour
     }
     else if (type == "compound_statement") {
         checkChainedReturnIfs(node, parsedSource, warnings);
+        // checkUnreachableCode(node, parsedSource, warnings);
     }
 
     uint32_t childCount = ts_node_child_count(node);
@@ -307,19 +309,8 @@ bool RedundantCodeChecker::alwaysReturns(TSNode statement) {
     if (ts_node_is_null(statement)) return false;
     std::string type = ts_node_type(statement);
 
-    if (type == "return_statement") { return true; }
-
-    else if (type == "compound_statement") {
-        uint32_t count = ts_node_child_count(statement);
-        TSNode lastStatement{};
-        for (uint32_t i = 0; i < count; ++i) {
-            TSNode child = ts_node_child(statement, i);
-            std::string childType = ts_node_type(child);
-            if (childType == "{" || childType == "}") continue;
-            lastStatement = child;
-        }
-        return alwaysReturns(lastStatement);
-    }
+    if (type == "return_statement") return true;
+    if (type == "compound_statement") return alwaysReturns(getLastStatement(statement));
 
     return false;
 }
@@ -347,6 +338,8 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
         TSNode child = ts_node_child(blockNode, i);
         std::string type = ts_node_type(child);
 
+        if (type == "comment") continue;
+        
         if (type == "if_statement") {
             TSNode alternative = ts_node_child_by_field_name(child, "alternative", strlen("alternative"));
             TSNode consequence = ts_node_child_by_field_name(child, "consequence", strlen("consequence"));
@@ -364,6 +357,18 @@ void RedundantCodeChecker::checkChainedReturnIfs(TSNode blockNode, const ParsedS
         flushChain();
     }
     flushChain();
+}
+
+TSNode RedundantCodeChecker::getLastStatement(TSNode compoundStatement) {
+    uint32_t count = ts_node_child_count(compoundStatement);
+    TSNode last{};
+    for (uint32_t i = 0; i < count; ++i) {
+        TSNode child = ts_node_child(compoundStatement, i);
+        std::string childType = ts_node_type(child);
+        if (childType == "{" || childType == "}") continue;
+        last = child;
+    }
+    return last;
 }
 
 // ---------- Analyze Source ----------

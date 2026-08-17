@@ -1,8 +1,8 @@
 #ifndef REDUNDANT_CODE_CHECKER_H
 #define REDUNDANT_CODE_CHECKER_H
 
-#include "ParsedSource.h"
-#include "Detector.h"
+#include "../ParsedSource.h"
+#include "../Detector.h"
 #include <string>
 #include <vector>
 #include <utility>
@@ -34,6 +34,12 @@ class RedundantCodeChecker : public Detector {
         // Check 4: redundant if/else if/else statements
         bool alwaysReturns(TSNode statement);
         void checkChainedReturnIfs(TSNode compoundStatementNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+
+        // Check 5: dead/unused code blocks
+
+        static TSNode getLastStatement(TSNode compoundStatement);
+        // static bool alwaysExits(TSNode statement);
+        // void checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
 
     public:
         RedundantCodeChecker() = default;
