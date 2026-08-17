@@ -30,6 +30,19 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
     }
 }
 
+void DataClumpDetector::storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines) {
+    if(currentVariables.size() > 1) {
+        currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
+        currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
+        std::vector<std::string> sortedVariables = currentVariables;
+        std::sort(sortedVariables.begin(), sortedVariables.end());
+
+        ClumpInfo& clumpInfo = variableClumps[sortedVariables];
+        clumpInfo.lineNumbers.insert(clumpInfo.lineNumbers.end(), currentLines.begin(), currentLines.end());
+        clumpInfo.counter++;
+    }
+}
+
 void DataClumpDetector::checkFunctionParams(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     TSNode functionDeclarator = ts_node_child_by_field_name(node, "declarator", 10);
 
@@ -55,12 +68,8 @@ void DataClumpDetector::checkFunctionParams(TSNode node, const ParsedSource& par
             }
         }
 
-        if(!paramNames.empty()) {
-            std::sort(paramNames.begin(), paramNames.end());
-            ClumpInfo& clumpInfo = variableClumps[paramNames];
-            clumpInfo.lineNumbers.push_back(nameAnalyzer.getLineNumber(parsedSource, functionDeclarator));
-            clumpInfo.counter++;
-        }
+        std::vector<int> lineNumbers = {nameAnalyzer.getLineNumber(parsedSource, node)};
+        storeClumpInfo(paramNames, lineNumbers);
     }
 }
 
@@ -83,13 +92,8 @@ void DataClumpDetector::checkCallExpression(TSNode node, const ParsedSource& par
                 }
             }
 
-            if(!argNames.empty()) {
-                std::sort(argNames.begin(), argNames.end());
-
-                ClumpInfo& clumpInfo = variableClumps[argNames];
-                clumpInfo.lineNumbers.push_back(nameAnalyzer.getLineNumber(parsedSource, node));
-                clumpInfo.counter++;
-            }
+            std::vector<int> lineNumbers = {nameAnalyzer.getLineNumber(parsedSource, node)};
+            storeClumpInfo(argNames, lineNumbers);
         }
     }
 }
@@ -120,29 +124,13 @@ void DataClumpDetector::checkInsideFunction(TSNode node, const ParsedSource& par
             TSNode expressionNode = ts_node_child(childNode, 0);
             checkCallExpression(expressionNode, parsedSource, warnings);
 
-            if(currentVariables.size() > 1) {
-                std::sort(currentVariables.begin(), currentVariables.end());
-                currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
-                currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
-                
-                ClumpInfo& clumpInfo = variableClumps[currentVariables];
-                clumpInfo.lineNumbers.insert(clumpInfo.lineNumbers.end(), currentLines.begin(), currentLines.end());
-                clumpInfo.counter++;
-            }
+            storeClumpInfo(currentVariables, currentLines);
             
             currentVariables.clear();
             currentLines.clear();
         }
         else {
-            if(currentVariables.size() > 1) {
-                std::sort(currentVariables.begin(), currentVariables.end());
-                currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
-                currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
-
-                ClumpInfo& clumpInfo = variableClumps[currentVariables];
-                clumpInfo.lineNumbers.insert(clumpInfo.lineNumbers.end(), currentLines.begin(), currentLines.end());
-                clumpInfo.counter++;
-            }
+            storeClumpInfo(currentVariables, currentLines);
             
             currentVariables.clear();
             currentLines.clear();
@@ -150,15 +138,8 @@ void DataClumpDetector::checkInsideFunction(TSNode node, const ParsedSource& par
         }
     }
 
-    if(currentVariables.size() > 1) {
-        std::sort(currentVariables.begin(), currentVariables.end());
-        currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
-        currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
+    storeClumpInfo(currentVariables, currentLines);
 
-        ClumpInfo& clumpInfo = variableClumps[currentVariables];
-        clumpInfo.lineNumbers.insert(clumpInfo.lineNumbers.end(), currentLines.begin(), currentLines.end());
-        clumpInfo.counter++;
-    }
     currentVariables.clear();
     currentLines.clear();
 }
