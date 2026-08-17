@@ -15,6 +15,7 @@ off the source's syntax tree rather than pattern-matching raw text.
   - [Poor Naming](#poor-naming)
   - [Redundant Code](#redundant-code)
   - [Repeated Code](#repeated-code)
+  - [Dead Code Blocks](#dead-code-blocks)
   - [Missing Comments](#missing-comments)
   - [Deeply Nested Conditionals](#deeply-nested-conditionals)
 - [Warning Output Format](#warning-output-format)
@@ -121,7 +122,7 @@ std::string roleAssign(int number) {
 Warning: [Redundant Chained-If Statement]. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead.(line 2)
 ```
 
-### Dead Code
+### Dead Code Blocks
 
 Covers two related checks in a single traversal:
 
@@ -149,6 +150,10 @@ int square(int x) {
     return x * x;
 }
 
+int cube(int x) {
+    return x * x * x;
+}
+
 int main() {
     std::cout << square(4) << "\n";
     return 0;
@@ -156,7 +161,7 @@ int main() {
 ```
 
 ```
-Warning: [Unused Function]. Function "square" is never called from main (directly or indirectly) and is dead code.(line 1)
+Warning: [Unused Function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
 ```
 
 ### Repeated Code
