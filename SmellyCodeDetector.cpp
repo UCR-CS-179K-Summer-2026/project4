@@ -13,6 +13,7 @@ SmellyCodeDetector::SmellyCodeDetector(const std::ifstream& inputFile) {
     detectors.push_back(&commentChecker);
     detectors.push_back(&deepIfDetector);
     detectors.push_back(&longParamListDetector);
+    detectors.push_back(&inheritanceChecker);
 }
 
 int SmellyCodeDetector::runDetectors() {
