@@ -13,6 +13,8 @@
 #include "DeepIfDetector.h"
 #include "longParamList.h"
 #include "deadCodeChecker/deadCodeChecker.h"
+#include "inheritanceChecker.h"
+
 class SmellyCodeDetector {
     private:
         PoorNameChecker poorNameChecker;
@@ -22,6 +24,7 @@ class SmellyCodeDetector {
         DeepIfDetector deepIfDetector;
         longParamList longParamListDetector;
         DeadCodeChecker deadCodeChecker;
+        InheritanceChecker inheritanceChecker;
 
         std::vector<Detector*> detectors;
 

@@ -23,6 +23,8 @@ set(SOURCE_FILES
     NameAnalyzer.cpp
     DeepIfDetector.cpp
     longParamList.cpp
+    inheritanceChecker.cpp
+    inheritanceTest.cpp
 )
 add_executable(project4 ${SOURCE_FILES})
 
