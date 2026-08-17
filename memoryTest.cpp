@@ -1,3 +1,9 @@
+int passingTest(){
+    int* exampleptr = new int;
+    delete exampleptr;
+    return 1;
+}
+
 int basicTest(){
     int* exampleptr = new int;
     return 2;
