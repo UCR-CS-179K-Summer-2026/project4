@@ -9,10 +9,13 @@ SmellyCodeDetector::SmellyCodeDetector(const std::ifstream& inputFile) {
 
     detectors.push_back(&poorNameChecker);
     detectors.push_back(&redundantCodeChecker);
+    detectors.push_back(&deadCodeChecker);
     detectors.push_back(&repeatedCodeChecker);
     detectors.push_back(&commentChecker);
     detectors.push_back(&deepIfDetector);
     detectors.push_back(&memoryChecker);
+    detectors.push_back(&longParamListDetector);
+    detectors.push_back(&inheritanceChecker);
 }
 
 int SmellyCodeDetector::runDetectors() {
