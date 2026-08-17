@@ -21,6 +21,7 @@ set(SOURCE_FILES
     FunctionAnalyzer.cpp
     NameAnalyzer.cpp
     DeepIfDetector.cpp
+    memoryChecker.cpp
 )
 add_executable(project4 ${SOURCE_FILES})
 
