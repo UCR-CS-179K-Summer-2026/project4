@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <unordered_set>
 #include "ParsedSource.h"
 #include "Detector.h"
 #include "NameAnalyzer.h"
@@ -16,13 +17,14 @@ class DataClumpDetector : public Detector {
         };
         NameAnalyzer nameAnalyzer;
         std::map<std::vector<std::string>, ClumpInfo> variableClumps;
+        std::vector<std::unordered_set<std::string>> variableGroups;
 
         void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
         void checkFunctionParams(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkInsideFunction(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkCallExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkForDataClumps(std::vector<Warning>& warnings);
-        void storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines);
+        void storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
     public:
         DataClumpDetector() = default;
         std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
