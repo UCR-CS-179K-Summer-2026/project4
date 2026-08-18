@@ -83,12 +83,25 @@ void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource&
 
     auto emitRange = [&]() {
         if (rangeStart == -1) return;
+
+        std::string message;
+        if (rangeStart == rangeEnd) {
+            message =
+                "This code can never execute because a previous statement in this block "
+                "always exits via return/break/continue/goto. "
+                "Unreachable line: " + std::to_string(rangeStart) + ".";
+        } else {
+            message =
+                "This code can never execute because a previous statement in this block "
+                "always exits via return/break/continue/goto. "
+                "Unreachable lines: " + std::to_string(rangeStart) + "-" +
+                std::to_string(rangeEnd) + ".";
+        }
+
         warnings.push_back({
             rangeStart,
             "Unreachable Code",
-            "This code can never execute because a previous statement in this block "
-            "always exits via return/break/continue/goto. "
-            "Unreachable lines: " + std::to_string(rangeStart) + "-" + std::to_string(rangeEnd) + "."
+            message
         });
         rangeStart = -1;
         rangeEnd = -1;
@@ -115,26 +128,6 @@ void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource&
 
     emitRange();
 }
-
-// void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
-//     uint32_t count = ts_node_child_count(blockNode);
-//     bool exited = false;
-
-//     for (uint32_t i = 0; i < count; ++i) {
-//         TSNode child = ts_node_child(blockNode, i);
-//         std::string type = ts_node_type(child);
-//         if (type == "{" || type == "}" || type == "comment") continue;
-
-//         if (exited) {
-//             int line = ts_node_start_point(child).row + 1;
-//             warnings.push_back({line, "Unreachable Code",
-//                 "This code can never execute because a previous statement in this block "
-//                 "always exits via return/break/continue/goto."});
-//             // break;
-//         }
-//         if (alwaysExits(child)) exited = true;
-//     }
-// }
 
 // ---------- Check 6: Unused/Dead Functions (unreachable from main) ----------
 
