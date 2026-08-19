@@ -27,6 +27,7 @@ set(SOURCE_FILES
     longParamList.cpp
     inheritanceChecker.cpp
     inheritanceTest.cpp
+    FixApplier.cpp
 )
 add_executable(project4 ${SOURCE_FILES})
 
