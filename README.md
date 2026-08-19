@@ -8,6 +8,45 @@ off the source's syntax tree rather than pattern-matching raw text.
 > **Scope note:** due to complexity and limited time, this tool does not support every
 > possible C++ use case. It focuses on detecting the code smells described below.
 
+## Known Limitations
+
+Quick early notice on each detector's blind spots — see the full documentation for details.
+
+### RedundantCodeChecker
+Only catches the specific patterns it's built for (e.g. `x == true`/`!= false`, an if/else
+returning literal booleans, unconditional chained ifs) — logically equivalent code written
+differently may not be flagged. Usage tracking can also misflag variables only touched through
+aliasing or macros.
+
+### DeadCodeChecker
+Unreachable-code detection doesn't account for `throw` or infinite loops as exit paths. Unused-
+function detection only tracks plain function calls (not member calls, namespaced calls, or
+function pointers), is skipped if there's no `main()`, and is single-file only.
+
+### PoorNameChecker / NameAnalyzer / FunctionAnalyzer
+*(limitations TBD)*
+
+### RepeatedCodeChecker
+*(limitations TBD)*
+
+### CommentChecker
+*(limitations TBD)*
+
+### DeepIfDetector
+*(limitations TBD)*
+
+### LongParamList
+*(limitations TBD)*
+
+### DataClumpDetector
+*(limitations TBD)*
+
+### InheritanceChecker
+*(limitations TBD)*
+
+### MemoryChecker
+*(limitations TBD)*
+
 ## Table of Contents
 
 - [Team Members](#team-members)
@@ -15,9 +54,13 @@ off the source's syntax tree rather than pattern-matching raw text.
   - [Poor Naming](#poor-naming)
   - [Redundant Code](#redundant-code)
   - [Repeated Code](#repeated-code)
-  - [Dead Code Blocks](#dead-code-blocks)
   - [Missing Comments](#missing-comments)
   - [Deeply Nested Conditionals](#deeply-nested-conditionals)
+  - [Data Clumps](#data-clumps)
+  - [Inheritance](#inheritance)
+  - [Memory Leaks](#memory-leaks)
+  - [Dead Code Blocks](#dead-code-blocks)
+
 - [Warning Output Format](#warning-output-format)
 - [Setup](#setup)
 - [Building](#building)
@@ -122,48 +165,6 @@ std::string roleAssign(int number) {
 Warning: [Redundant Chained-If Statement]. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead.(line 2)
 ```
 
-### Dead Code Blocks
-
-Covers two related checks in a single traversal:
-
-**Unreachable code** — any statement that appears after a previous statement in the same
-block has already unconditionally exited via return, break, continue, or goto (an
-if/else only counts as exiting when both branches do).
-
-```cpp
-int getStatus(int code) {
-    return code;
-    std::cout << "logging: " << code << "\n";   // never runs
-}
-```
-
-```
-Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
-```
-
-**Unused functions** — functions defined in the file but never reachable from main,
-whether directly or transitively through other calls (self-recursion and mutual recursion
-are both handled correctly and won't cause a false flag on their own).
-
-```cpp
-int square(int x) {
-    return x * x;
-}
-
-int cube(int x) {
-    return x * x * x;
-}
-
-int main() {
-    std::cout << square(4) << "\n";
-    return 0;
-}
-```
-
-```
-Warning: [Unused Function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
-```
-
 ### Repeated Code
 
 Detects runs of consecutive statements repeated elsewhere within the same block. Each
@@ -237,6 +238,118 @@ void classify(int a, int b, int c, int d) {
 
 ```
 Warning: [deep-if]. Deeply nested if statement(line 5)
+```
+
+### Data Clumps
+
+Tracks function lines that share the same set of variables and recommends
+grouping these sets into a class or structure rather than writing each 
+field individually.
+
+
+```cpp
+void address(std::string streetName, std::string city, std::string state, std::string zip) {
+	std::cout << streetName << std::endl;
+    if(true) {
+        std::string firstName;
+        std::string lastName;
+        std::string middleName;
+        std::cout << firstName << " " << middleName << " " << lastName << std::endl;
+    }
+}
+
+void getAddress(std::string streetName, std::string city, std::string state, std::string zip) {
+	std::cout << streetName << std::endl;
+    std::string firstName;
+    std::string lastName;
+    std::string middleName;
+
+    std::cout << firstName << " " << middleName << " " << lastName << std::endl;
+}
+```
+
+```
+Warning: Warning: [Data Clump]. The following lines share the same set of variables: 1, 11 Variables: city, state, streetName, zip. Consider using a struct or class to reduce code duplication.(line 7)
+```
+
+### Memory Leaks
+
+Tracks a list of unfreed memory allocation locations and variable names found.
+
+```cpp
+int basicTest(){
+    int* exampleptr = new int;
+    return 2;
+}
+```
+
+```
+Warning: [memory-leak]. Unreleased memory allocated at  at line 2 does not reach a destructor.(line 3)
+```
+
+### Inheritance
+
+Determines if functions or other classes with inheritance are redudant or not being used.
+
+```cpp
+class Base {
+public:
+    virtual void greet();
+    void helper();
+    int baseField;
+};
+
+class UsesBaseConstructor : public Base {
+public:
+    UsesBaseConstructor(int x) : Base(), memberField(x) {}
+    int memberField;
+};
+```
+
+```
+Warning: [unused-inheritance]. Class 'UsesBaseConstructor' inherits from 'Base' but shows no using it (no qualified Base::member calls, no explicit base constructor call, no override/final specifier). Consider removing the inheritance.(line 7)
+```
+
+### Dead Code Blocks
+
+Covers two related checks in a single traversal:
+
+**Unreachable code** — any statement that appears after a previous statement in the same
+block has already unconditionally exited via return, break, continue, or goto (an
+if/else only counts as exiting when both branches do).
+
+```cpp
+int getStatus(int code) {
+    return code;
+    std::cout << "logging: " << code << "\n";   // never runs
+}
+```
+
+```
+Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
+```
+
+**Unused functions** — functions defined in the file but never reachable from main,
+whether directly or transitively through other calls (self-recursion and mutual recursion
+are both handled correctly and won't cause a false flag on their own).
+
+```cpp
+int square(int x) {
+    return x * x;
+}
+
+int cube(int x) {
+    return x * x * x;
+}
+
+int main() {
+    std::cout << square(4) << "\n";
+    return 0;
+}
+```
+
+```
+Warning: [Unused Function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
 ```
 
 ## Warning Output Format
@@ -323,7 +436,8 @@ one per detected smell, with the offending line number in the original source fi
   anything themselves — they just collect and return warnings.
 - **`SmellyCodeDetector`** owns the `Parser` and one instance of each detector
   (`PoorNameChecker`, `RedundantCodeChecker`, `RepeatedCodeChecker`, `CommentChecker`,
-  `DeepIfDetector`). `runDetectors()` runs `analyzeSource()` on all of them, merges the
+  `DeepIfDetector`, `InheritanceChecker`,`LongParamList`, `MemoryChecker`, `DeadCodeChecker`, 
+  `DataClumpDetector`). `runDetectors()` runs `analyzeSource()` on all of them, merges the
   results, sorts by line (then category), prints the report, and returns the total warning
   count.
 - Each detector walks the shared `TSTree` directly via a recursive `visitNode`, matching on
@@ -342,11 +456,7 @@ The following was part of the original project scope but is not currently implem
 any detector in this repository. Listed here so the gap is visible rather than silently
 dropped.
 
-**Memory leak detection** — flagging a dynamically allocated variable (`new`) that is never `delete`d before going out of scope.
-
-**Date Clumps** - flagging individually writen fields of data that can be grouped into a set.
-
-**Uneccessary/Unused Links Between Files** - flagging if another file inherits items from another file but does not implement.
+**TBD**
 
 
 
