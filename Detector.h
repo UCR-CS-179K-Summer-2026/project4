@@ -22,8 +22,7 @@ struct Warning {
 };
 
 // Declared here, defined in FixApplier.cpp (see below)
-std::string applyFixes(const std::string& source, std::vector<Warning>& warnings);
-
+std::string applyFixes(const std::string& source, const std::vector<Warning>& warnings);
 class Detector {
     private:
         virtual void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) = 0;

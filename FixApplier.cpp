@@ -1,7 +1,7 @@
 #include "Detector.h"
 #include <algorithm>
 
-std::string applyFixes(const std::string& source, std::vector<Warning>& warnings) {
+std::string applyFixes(const std::string& source, const std::vector<Warning>& warnings) {
     std::vector<Edit> edits;
     for (auto& w : warnings) {
         if (w.fix) edits.push_back(*w.fix);
