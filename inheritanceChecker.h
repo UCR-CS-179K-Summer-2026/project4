@@ -23,6 +23,16 @@ class InheritanceChecker : public Detector {
 
         void checkClass(TSNode classNode, const ParsedSource& parsedSource, std::vector<Warning>& warnIngs) const;
 
+        TSNode findClassByName(TSNode node, const std::string& name, const std::string& source) const;
+
+        bool isBaseUsedExternally(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, TSNode derivedBodyNode, const std::string& baseName) const;
+        
+        void collectInstanceOfType(TSNode node, const std::string& source, const std::string& typeName, std::string& typeName, std::vector<std::string>& instanceNames) const;
+
+        std::vector<std::string> collectMemberNames(TSNode classBodyNode, const std::string& source) const;
+
+        void checkExternalMemberUsage(TSNode node, const std::string& source, const std::vector<std::string>& instanceNames, const std::vector<std::string>& memberNames, bool& found) const;
+
 };
 
 #endif

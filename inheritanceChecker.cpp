@@ -166,3 +166,27 @@ std::vector<Warning> InheritanceChecker::analyzeSource(const ParsedSource& parse
 
     return warnings;
 }
+
+void InheritanceChecker::checkClass(TSNode classNode, const ParsedSource& parsedSource, std::vector<Warning>& warnIngs) const{
+
+}
+
+TSNode InheritanceChecker::findClassByName(TSNode node, const std::string& name, const std::string& source) const{
+
+}
+
+bool InheritanceChecker::isBaseUsedExternally(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, TSNode derivedBodyNode, const std::string& baseName) const{
+
+}
+        
+void InheritanceChecker::collectInstanceOfType(TSNode node, const std::string& source, const std::string& typeName, std::string& typeName, std::vector<std::string>& instanceNames) const{
+
+}
+
+std::vector<std::string> InheritanceChecker::collectMemberNames(TSNode classBodyNode, const std::string& source) const{
+
+}
+
+void InheritanceChecker::checkExternalMemberUsage(TSNode node, const std::string& source, const std::vector<std::string>& instanceNames, const std::vector<std::string>& memberNames, bool& found) const{
+    
+}
