@@ -74,24 +74,59 @@ bool DeadCodeChecker::alwaysExits(TSNode statement) {
     return false;
 }
 
+// ...existing code...
 void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     uint32_t count = ts_node_child_count(blockNode);
     bool exited = false;
+    int rangeStart = -1;
+    int rangeEnd = -1;
+
+    auto emitRange = [&]() {
+        if (rangeStart == -1) return;
+
+        std::string message;
+        if (rangeStart == rangeEnd) {
+            message =
+                "This code can never execute because a previous statement in this block "
+                "always exits via return/break/continue/goto. "
+                "Unreachable line: " + std::to_string(rangeStart) + ".";
+        } else {
+            message =
+                "This code can never execute because a previous statement in this block "
+                "always exits via return/break/continue/goto. "
+                "Unreachable lines: " + std::to_string(rangeStart) + "-" +
+                std::to_string(rangeEnd) + ".";
+        }
+
+        warnings.push_back({
+            rangeStart,
+            "Unreachable Code",
+            message
+        });
+        rangeStart = -1;
+        rangeEnd = -1;
+    };
 
     for (uint32_t i = 0; i < count; ++i) {
         TSNode child = ts_node_child(blockNode, i);
         std::string type = ts_node_type(child);
-        if (type == "{" || type == "}" || type == "comment") continue;   // <-- add comment
+        if (type == "{" || type == "}" || type == "comment") continue;
+
+        int line = ts_node_start_point(child).row + 1;
 
         if (exited) {
-            int line = ts_node_start_point(child).row + 1;
-            warnings.push_back({line, "Unreachable Code",
-                "This code can never execute because a previous statement in this block "
-                "always exits via return/break/continue/goto."});
-            break;
+            if (rangeStart == -1) rangeStart = line;
+            rangeEnd = line;
         }
-        if (alwaysExits(child)) exited = true;
+
+        if (alwaysExits(child)) {
+            exited = true;
+        } else if (rangeStart != -1 && !exited) {
+            emitRange();
+        }
     }
+
+    emitRange();
 }
 
 // ---------- Check 6: Unused/Dead Functions (unreachable from main) ----------
