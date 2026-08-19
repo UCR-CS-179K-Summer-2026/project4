@@ -18,7 +18,9 @@ void address(std::string streetName, std::string city, std::string state, std::s
 void getPersonAddress(std::string streetName, std::string city, std::string state, std::string zip, std::string firstName, std::string lastName, std::string middleName) {
     std::cout << streetName << std::endl;
     std::cout << firstName << " " << middleName << " " << lastName << std::endl;
-    
+    std::cout << city << ", " << state << " " << firstName << std::endl;
+    std::cout << city << ", " << state << " " << firstName << std::endl;
+    std::cout << city << ", " << state << " " << firstName << std::endl;
 }
 
 // Holds duplicates of the same data: streetName, city, state, zip. Also has a declaration

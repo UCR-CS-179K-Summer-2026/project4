@@ -91,7 +91,7 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
 }
 
 void DataClumpDetector::storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope) {
-    if(currentVariables.size() > 1) {
+    if(variablesInScope.size() > 1) {
         currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
         currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
         std::vector<std::string> sortedVariables = currentVariables;
@@ -102,12 +102,6 @@ void DataClumpDetector::storeClumpInfo(std::vector<std::string>& currentVariable
         clumpInfo.counter++;
 
         variableGroups.push_back(variablesInScope);
-        // output what was stored in variableGroups
-        std::cout << "Stored clump info for variables: ";
-        for (const auto& var : variablesInScope) {
-            std::cout << var << " ";
-        }
-        std::cout << std::endl;
     }
 }
 
@@ -170,6 +164,28 @@ void DataClumpDetector::checkCallExpression(TSNode node, const ParsedSource& par
     }
 }
 
+std::unordered_set<std::string> DataClumpDetector::checkBinaryExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
+    if(ts_node_is_null(node)) {
+        return {};
+    }
+
+    std::unordered_set<std::string> variablesInScope;
+
+    uint32_t childCount = ts_node_child_count(node);
+    for(uint32_t i = 0; i < childCount; ++i) {
+        TSNode childNode = ts_node_child(node, i);
+        if(strcmp(ts_node_type(childNode), "identifier") == 0) {
+            std::string name = nameAnalyzer.extractIdentifierName(parsedSource, childNode);
+            variablesInScope.insert(name);
+        } else if(strcmp(ts_node_type(childNode), "binary_expression") == 0) {
+            std::unordered_set<std::string> nestedVariables = checkBinaryExpression(childNode, parsedSource, warnings);
+            variablesInScope.insert(nestedVariables.begin(), nestedVariables.end());
+        }
+    }
+
+    return variablesInScope;
+}
+
 void DataClumpDetector::checkInsideFunction(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     if(ts_node_is_null(node)) {
         return;
@@ -196,7 +212,12 @@ void DataClumpDetector::checkInsideFunction(TSNode node, const ParsedSource& par
             // }
         } else if(strcmp(ts_node_type(childNode), "expression_statement") == 0) {
             TSNode expressionNode = ts_node_child(childNode, 0);
-            checkCallExpression(expressionNode, parsedSource, warnings);
+            if(strcmp(ts_node_type(expressionNode), "call_expression") == 0) {
+                checkCallExpression(expressionNode, parsedSource, warnings);
+            } else if(strcmp(ts_node_type(expressionNode), "binary_expression") == 0) {
+                variablesInScope = checkBinaryExpression(expressionNode, parsedSource, warnings);
+                currentLines = {nameAnalyzer.getLineNumber(parsedSource, expressionNode)};
+            }
 
             storeClumpInfo(currentVariables, currentLines, variablesInScope);
             

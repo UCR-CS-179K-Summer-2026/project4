@@ -23,6 +23,7 @@ class DataClumpDetector : public Detector {
         void checkFunctionParams(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkInsideFunction(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkCallExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+        std::unordered_set<std::string> checkBinaryExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkForDataClumps(std::vector<Warning>& warnings);
         void storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
     public:
