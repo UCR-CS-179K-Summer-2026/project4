@@ -345,16 +345,38 @@ void InheritanceChecker::checkExternalMemberUsage(TSNode node, const std::string
 
 }
 
-void InheritanceChecker::checkExternalMemberUsage(TSNode node, const std::string& source, const std::vector<std::string>& instanceNames, const std::vector<std::string>& memberNames, bool& found) const{
-
-}
-
 TSNode InheritanceChecker::findFunctionByName(TSNode node, const std::string& name, const std::string& source) const{
+    if(ts_node_is_null(node) || found){
+        return;
+    }
 
+    if(strcmp(ts_node_type(node), "function_definition") == 0){
+        TSNode declaratorNode = ts_node_child_by_field_name(node, "declarator",strlen("declarator"))l
+        if(!ts_node_is_null(declaratorNode)){
+            TSNode identifierNode = ts_node_child_by_field_name(declaratorNode, "declarator", strlen("declarator"));
+
+            if (!ts_node_is_null(identifierNode) && strcmp(ts_node_type(identifierNode), "identifier") == 0 && nodeText(identifierNode, source) == name){
+                return node;
+            }                
+        }
+    }
+
+  uint32_t childCount = ts_node_child_count(node);
+        for(uint32_t i = 0; i <childCount; ++i){
+            findFunctionByName(ts_node_child(node,i), source, instanceNames, memberNames, found);
+
+            if(found){
+                return;
+            }
+    }
+
+    return {};
 }
 
 void InheritanceChecker::scanForSlicingUsage(TSNode node, TSNode root, const std::string& source, const std::string& baseName, const std::vector<std::string>& derivedInstanceNames,const std::vector<std::string>& baseInstanceNames, bool& found) const{
-    
+
 } 
 
-bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, const std::string& baseName) const;
+bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, const std::string& baseName) const{
+
+}
