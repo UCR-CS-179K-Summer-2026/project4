@@ -41,3 +41,24 @@ class NoInheritance {
 public:
     void doSomething();
 };
+
+//----------------------------
+
+//------SHOULD NOT DETECT, subclass does not explicitly use baseclass but the object calls baseclass member
+class Walker{
+    public: 
+        void takeStep();
+};
+
+class Robot: public Walker {
+    public:
+        void speak();
+};
+
+void useRobotExternally(){
+    Robot android;
+    android.takeStep();
+}
+
+//----------------------------
+

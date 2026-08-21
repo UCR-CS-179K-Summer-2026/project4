@@ -137,6 +137,24 @@ std::vector<std::string> baseNames = extractBaseClasses(classNode, parsedSource.
  
     TSNode nameNode = ts_node_child_by_field_name(classNode, "name", strlen("name"));
     std::string className = ts_node_is_null(nameNode) ? "<unnamed class>" : nodeText(nameNode, parsedSource.source);
+    
+    if(!className.empty() && className != "<unnamed class>") {
+        TSNode root = ts_tree_root_node(parsedSource.tree);
+        std::vector<std::string> stillUnused;
+
+        for(const auto& baseName : unusedBases){
+            if(!isBaseUsedExternally(root, parsedSource, className, bodyNode, baseName)){
+                stillUnused.push_back(baseName);
+            }
+        }
+
+        unusedBases = stillUnused;
+    }
+
+    if(unusedBases.empty()){
+        return;
+    }
+    
     int line = static_cast<int>(ts_node_start_point(classNode).row) + 1;
  
     std::ostringstream message;
@@ -148,7 +166,7 @@ std::vector<std::string> baseNames = extractBaseClasses(classNode, parsedSource.
     }
     message << " but shows no using " << (unusedBases.size() > 1 ? "them" : "it")
             << " (no qualified Base::member calls, no explicit base constructor call, "
-            << "no override/final specifier). Consider removing the inheritance.";
+            << "no override/final specifier), and no outside object access to base-only member. Consider removing the inheritance.";
  
     warnIngs.push_back(Warning{line, "unused-inheritance", message.str()});
 }
@@ -165,4 +183,164 @@ std::vector<Warning> InheritanceChecker::analyzeSource(const ParsedSource& parse
     visitNode(rootNode, parsedSource, warnings);
 
     return warnings;
+}
+
+TSNode InheritanceChecker::findClassByName(TSNode node, const std::string& name, const std::string& source) const{
+    if(ts_node_is_null(node)){
+        return node;
+    }
+
+    if(strcmp(ts_node_type(node), "class_specifier")==0){
+        TSNode nameNode = ts_node_child_by_field_name(node, "name", strlen("name"));
+
+        if(!ts_node_is_null(nameNode) && nodeText(nameNode, source) == name){
+            return node;
+        }
+    }
+
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i){
+        TSNode result = findClassByName(ts_node_child(node, i), name, source);
+        if(!ts_node_is_null(result)){
+            return result;
+        }
+    }
+    return{};
+
+}
+
+//Checks if a base class is used outside the scope of the subclass 
+bool InheritanceChecker::isBaseUsedExternally(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, TSNode derivedBodyNode, const std::string& baseName) const{
+    TSNode baseClassNode = findClassByName(root, baseName, parsedSource.source);
+
+    if(ts_node_is_null(baseClassNode)){
+        return false;
+    }
+
+    TSNode baseBodyNode = ts_node_child_by_field_name(baseClassNode, "body", strlen("body"));
+
+    if(ts_node_is_null(baseBodyNode)){
+        return false;
+    }
+
+    std::vector<std::string> baseMemberNames = collectMemberNames(baseBodyNode, parsedSource.source);
+    std::vector<std::string> derivedMemberNames = collectMemberNames(derivedBodyNode, parsedSource.source);
+
+    std::vector<std::string> baseOnlyMemberNames;
+
+    for(const auto& name : baseMemberNames){
+        if (std::find(derivedMemberNames.begin(), derivedMemberNames.end(), name) == derivedMemberNames.end()){            
+            baseOnlyMemberNames.push_back(name);
+        }
+    }
+
+    if(baseOnlyMemberNames.empty()){
+        return false;
+    }
+    std::vector<std::string> instanceNames;
+    collectInstanceOfType(root, parsedSource.source, derivedClassName, instanceNames);
+
+    if(instanceNames.empty()){
+        return false;
+    }
+
+    bool found = false;
+    checkExternalMemberUsage(root, parsedSource.source, instanceNames, baseOnlyMemberNames, found);
+
+    return found;
+}
+
+//Build a list of variable declarations whose type matches the subclass name       
+void InheritanceChecker::collectInstanceOfType(TSNode node, const std::string& source, const std::string& typeName, std::vector<std::string>& instanceNames) const{
+    if(ts_node_is_null(node)){
+        return;
+    }
+
+    if (strcmp(ts_node_type(node),"declaration") == 0){
+        TSNode typeNode = ts_node_child_by_field_name(node, "type", strlen("type"));
+
+        if(!ts_node_is_null(typeNode) && nodeText(typeNode, source) == typeName){
+            TSNode declaratorNode = ts_node_child_by_field_name(node, "declarator", strlen("declarator"));
+            
+            if(!ts_node_is_null(declaratorNode)){
+                TSNode identifierNode = declaratorNode;
+                if(strcmp(ts_node_type(declaratorNode), "identifier") != 0){
+                    TSNode inner = ts_node_child_by_field_name(declaratorNode, "declarator", strlen("declarator"));
+
+                    if(!ts_node_is_null(inner)){
+                        identifierNode = inner;
+                    }
+                }
+
+                if(strcmp(ts_node_type(identifierNode), "identifier") == 0){
+                    instanceNames.push_back(nodeText(identifierNode, source));
+                }
+
+            }
+        }
+    }
+
+    uint32_t childCOunt = ts_node_child_count(node);
+
+    for(uint32_t i = 0; i < childCOunt; ++i){
+        collectInstanceOfType(ts_node_child(node,i), source, typeName, instanceNames);
+    }
+
+}
+
+//Collects names of all the members of a class body, uses the text from field_identifier node
+std::vector<std::string> InheritanceChecker::collectMemberNames(TSNode classBodyNode, const std::string& source) const{
+    std::vector<std::string> names;
+
+    if(ts_node_is_null(classBodyNode)){
+        return names;
+    }
+
+    if(strcmp(ts_node_type(classBodyNode), "field_identifier") == 0){
+        names.push_back(nodeText(classBodyNode, source));
+    }
+
+    uint32_t childCount = ts_node_child_count(classBodyNode);
+
+    for(uint32_t i =0; i<childCount; ++i){
+        std::vector<std::string> childNames = collectMemberNames(ts_node_child(classBodyNode, i),source);
+        names.insert(names.end(), childNames.begin(), childNames.end());
+    }
+
+    return names;
+}
+
+//Walks the entire file looking for variable.member where variable matches an instanceName and member is a memberName
+void InheritanceChecker::checkExternalMemberUsage(TSNode node, const std::string& source, const std::vector<std::string>& instanceNames, const std::vector<std::string>& memberNames, bool& found) const{
+    if(ts_node_is_null(node) || found ){
+        return;
+    }
+
+    if(strcmp(ts_node_type(node), "field_expression") == 0){
+        TSNode argumentNode = ts_node_child_by_field_name(node, "argument",strlen("argument"));
+        TSNode fieldNode = ts_node_child_by_field_name(node, "field", strlen("field"));
+
+        if(!ts_node_is_null(argumentNode) && !ts_node_is_null(fieldNode) && strcmp(ts_node_type(argumentNode), "identifier") == 0){
+            std::string argumentText = nodeText(argumentNode, source);
+            std::string fieldText = nodeText(fieldNode, source);
+
+            bool isInstance = std::find(instanceNames.begin(), instanceNames.end(), argumentText) != instanceNames.end();
+            bool isBaseMember  = std::find(memberNames.begin(), memberNames.end(), fieldText) != memberNames.end();
+
+            if(isInstance && isBaseMember){
+                found = true;
+                return;
+            }
+        }
+    }
+
+    uint32_t childCount = ts_node_child_count(node);
+    for(uint32_t i = 0; i <childCount; ++i){
+        checkExternalMemberUsage(ts_node_child(node,i), source, instanceNames, memberNames, found);
+
+        if(found){
+            return;
+        }
+    }
+
 }
