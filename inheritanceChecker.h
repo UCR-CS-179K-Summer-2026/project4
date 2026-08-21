@@ -33,6 +33,11 @@ class InheritanceChecker : public Detector {
 
         void checkExternalMemberUsage(TSNode node, const std::string& source, const std::vector<std::string>& instanceNames, const std::vector<std::string>& memberNames, bool& found) const;
 
+        TSNode findFunctionByName(TSNode node, const std::string& name, const std::string& source) const;
+        void scanForSlicingUsage(TSNode node, TSNode root, const std::string& source, const std::string& baseName, const std::vector<std::string>& derivedInstanceNames,const std::vector<std::string>& baseInstanceNames, bool& found) const; 
+
+        bool isBaseUsedViaSlicing(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, const std::string& baseName) const;
+
 };
 
 #endif

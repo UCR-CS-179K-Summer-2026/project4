@@ -62,3 +62,18 @@ void useRobotExternally(){
 
 //----------------------------
 
+//------SHOULD NOT DETECT, bird doesn't 'use' its baseClass but external function named useBirdViaAssignment() does
+class Creature{
+    public:
+        int speed;
+};
+
+class Bird : public Creature{};
+
+void useBirdViaAssignment() {
+    Bird b;
+    Creature creatureVar;
+    creatureVar = b;
+}
+
+//----------------------------
