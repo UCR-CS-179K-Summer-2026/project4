@@ -374,9 +374,100 @@ TSNode InheritanceChecker::findFunctionByName(TSNode node, const std::string& na
 }
 
 void InheritanceChecker::scanForSlicingUsage(TSNode node, TSNode root, const std::string& source, const std::string& baseName, const std::vector<std::string>& derivedInstanceNames,const std::vector<std::string>& baseInstanceNames, bool& found) const{
+    if (ts_node_is_null(node) || found) {
+        return;
+    }
 
-} 
+    const char* type = ts_node_type(node);
+
+    if(strcmp(type, "call_expression") == 0){
+        TSNode functionNode = ts_node_child_by_field_name(node, "function", strlen("function"));
+        TSNode argsNode = ts_node_child_by_field_name(node, "arguments", strlen("arguments"));
+
+        if(!ts_node_is_null(functionNode) && strcmp(ts_node_type(functionNode),("identifier") == 0) && !ts_node_is_null(argsNode)){
+            std::string calleeName = nodeText(functionNode, source);
+            TSNode calleeDef = findFunctionByName(root, calleeName, source);
+
+            if(!ts_node_is_null(calleeDef)){
+                TSNode calleeDeclarator = ts_node_child_by_field_name(calleeDef, "declarator", strlen("declarator"));
+                TSNode paramListNode = ts_node_is_null(calleeDeclarator) ? TSNode{} :
+                ts_node_child_by_field_name(calleeDeclarator, "parameters", strlen("parameters"));
+ 
+                if (!ts_node_is_null(paramListNode)){
+                    uint32_t paramCount = ts_node_named_child_count(paramListNode);
+                    uint32_t argCount = ts_node_named_child_count(argsNode);
+                    uint32_t n = std::min(paramCount, argCount);
+ 
+                    for (uint32_t i = 0; i< n; ++i) {
+                        TSNode paramNode = ts_node_named_child(paramListNode, i);
+                        TSNode paramTypeNode = ts_node_child_by_field_name(paramNode, "type", strlen("type"));
+ 
+                        if (!ts_node_is_null(paramTypeNode) && nodeText(paramTypeNode, source) == baseName){
+                            TSNode argNode = ts_node_named_child(argsNode, i);
+                            if (strcmp(ts_node_type(argNode), "identifier") == 0){
+                                std::string argText = nodeText(argNode, source);
+                                if (std::find(derivedInstanceNames.begin(), derivedInstanceNames.end(), argText) != derivedInstanceNames.end()){
+                                    found = true;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } 
+    
+    else if (strcmp(type, "declaration") == 0){
+        TSNode typeNode = ts_node_child_by_field_name(node, "type", strlen("type"));
+        if (!ts_node_is_null(typeNode) && nodeText(typeNode, source) == baseName){
+            TSNode declaratorNode = ts_node_child_by_field_name(node,"declarator", strlen("declarator"));
+
+            if (!ts_node_is_null(declaratorNode) && strcmp(ts_node_type(declaratorNode),"init_declarator") == 0){
+                TSNode valueNode = ts_node_child_by_field_name(declaratorNode, "value", strlen("value"));
+
+                if (!ts_node_is_null(valueNode) && strcmp(ts_node_type(valueNode), "identifier") == 0){
+                    std::string valueText = nodeText(valueNode, source);
+
+                    if (std::find(derivedInstanceNames.begin(), derivedInstanceNames.end(), valueText) != derivedInstanceNames.end()) {
+                        found = true;
+                        return;
+                    }
+                }
+            }
+        }
+    } 
+    
+    else if (strcmp(type, "assignment_expression") == 0) {
+        TSNode leftNode = ts_node_child_by_field_name(node, "left", strlen("left"));
+        TSNode rightNode = ts_node_child_by_field_name(node, "right", strlen("right"));
+ 
+        if (!ts_node_is_null(leftNode) && !ts_node_is_null(rightNode) && strcmp(ts_node_type(leftNode), "identifier") == 0 && strcmp(ts_node_type(rightNode), "identifier") == 0){
+            std::string leftText = nodeText(leftNode, source);
+            std::string rightText = nodeText(rightNode, source);
+ 
+            bool leftIsBaseInstance = std::find(baseInstanceNames.begin(), baseInstanceNames.end(), leftText) != baseInstanceNames.end();
+            bool rightIsDerivedInstance = std::find(derivedInstanceNames.begin(), derivedInstanceNames.end(), rightText) != derivedInstanceNames.end();
+ 
+            if (leftIsBaseInstance && rightIsDerivedInstance){
+                found = true;
+                return;
+            }
+        }
+}
+
+
+
+    uint32_t childCount = ts_node_child_count(node);
+        for(uint32_t i = 0; i <childCount; ++i){
+            scanForSlicingUsage(ts_node_child(node, i), root, source, baseName, derivedInstanceNames, baseInstanceNames, found);
+            
+            if(found){
+                return;
+            }
+        }
+}         
 
 bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, const std::string& baseName) const{
-
+    
 }
