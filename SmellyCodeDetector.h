@@ -34,9 +34,14 @@ class SmellyCodeDetector {
 
         Parser parser;
         ParsedSource parsedSource;
+        std::vector<Warning> allWarnings;
     public:
         SmellyCodeDetector(const std::ifstream& inputFile);
         int runDetectors();
+
+        // accessors so main.cpp can apply fixes after the fact
+        const std::vector<Warning>& getWarnings() const { return allWarnings; }
+        const ParsedSource& getParsedSource() const { return parsedSource; }
 };
 
 #endif
