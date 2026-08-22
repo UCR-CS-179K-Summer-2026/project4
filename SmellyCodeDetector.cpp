@@ -20,22 +20,24 @@ SmellyCodeDetector::SmellyCodeDetector(const std::ifstream& inputFile) {
 }
 
 int SmellyCodeDetector::runDetectors() {
-    std::vector<Warning> allWarnings;
+    std::vector<Warning> foundWarnings;   // renamed to avoid shadowing the member
 
     for (Detector* detector : detectors) {
         std::vector<Warning> found = detector->analyzeSource(parsedSource);
-        allWarnings.insert(allWarnings.end(), found.begin(), found.end());
+        foundWarnings.insert(foundWarnings.end(), found.begin(), found.end());
     }
 
-    std::sort(allWarnings.begin(), allWarnings.end(),
+    std::sort(foundWarnings.begin(), foundWarnings.end(),
         [](const Warning& a, const Warning& b) {
             if (a.line != b.line) return a.line < b.line;
-            return a.category < b.category; // tie-break: which check found it
+            return a.category < b.category;
         });
 
-    for (const auto& w : allWarnings) {
-        std::cout << "Warning: [" << w.category << "]. " << w.message << "(line " << w.line <<")" <<  "\n";
+    for (const auto& w : foundWarnings) {
+        std::cout << "Warning: [" << w.category << "]. " << w.message << "(line " << w.line << ")" << "\n";
     }
+
+    allWarnings = foundWarnings;   // now actually populates the member
 
     int totalWarnings = static_cast<int>(allWarnings.size());
 
