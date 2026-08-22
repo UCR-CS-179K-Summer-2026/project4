@@ -74,7 +74,6 @@ bool DeadCodeChecker::alwaysExits(TSNode statement) {
     return false;
 }
 
-// ...existing code...
 void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     const std::string& source = parsedSource.source;
     uint32_t count = ts_node_child_count(blockNode);
@@ -145,6 +144,32 @@ void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource&
 
     emitRange();
 }
+
+// New helper: recursively check if a subtree contains a goto or a label
+bool DeadCodeChecker::containsGotoOrLabel(TSNode node) {
+    std::string type = ts_node_type(node);
+    if (type == "goto_statement" || type == "labeled_statement") {
+        return true;
+    }
+    uint32_t count = ts_node_child_count(node);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (containsGotoOrLabel(ts_node_child(node, i))) return true;
+    }
+    return false;
+}
+
+// New helper: walk up from any node to its enclosing function_definition
+TSNode DeadCodeChecker::findEnclosingFunction(TSNode node) {
+    TSNode parent = ts_node_parent(node);
+    while (!ts_node_is_null(parent)) {
+        if (std::string(ts_node_type(parent)) == "function_definition") {
+            return parent;
+        }
+        parent = ts_node_parent(parent);
+    }
+    return TSNode{};
+}
+
 
 // ---------- Check 6: Unused/Dead Functions (unreachable from main) ----------
 
