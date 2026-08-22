@@ -19,7 +19,7 @@ class InheritanceChecker : public Detector {
 
         std::vector<std::string> extractBaseClasses(TSNode classDefNode, const std::string& source) const;
 
-        void scanForInheritance(TSNode classDefNode, const std::string& source, const std::vector<std::string>& baseNames, std::vector<bool> baseUsed, bool& overrideFound) const;
+        void scanForInheritance(TSNode classDefNode, const std::string& source, const std::vector<std::string>& baseNames, std::vector<bool>& baseUsed, bool& overrideFound) const;
 
         void checkClass(TSNode classNode, const ParsedSource& parsedSource, std::vector<Warning>& warnIngs) const;
 
