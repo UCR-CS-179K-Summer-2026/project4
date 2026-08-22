@@ -489,3 +489,7 @@ bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& p
     scanForSlicingUsage(root, root, parsedSource.source, baseName, derivedInstanceNames, baseInstanceNames, found);
     return found;
 }
+
+void InheritanceChecker::offerRefactoring(TSNode classNode, TSNode baseClauseNode, const std::string& className,const std::vector<std::string>& unusedBases, const std::string& source) const{
+    
+}
