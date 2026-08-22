@@ -29,14 +29,16 @@ public:
 //----------------------------
 
 //------SHOULD DETECT as it inherits Base but doesnt use anything from it-----
-class UnusedInheritance : public Base {
+class UnusedInheritance : public Parent {
 public:
     void doOwnThing() {
         int local = 5;
     }
 };
 
-//SHould be skipped as there is no inheritance
+//----------------------------
+
+//SHOULD NOT DETECT, there is no inheritance
 class NoInheritance {
 public:
     void doSomething();

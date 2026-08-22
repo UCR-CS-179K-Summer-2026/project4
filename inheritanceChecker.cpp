@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <cstring>
+#include <algorithm>
 #include <tree_sitter/api.h>
 
 //Walks through parse tree to search for class_specifier. If a class_specifier is found, we have a class and we call checkClass to continue.
@@ -143,6 +144,9 @@ std::vector<std::string> baseNames = extractBaseClasses(classNode, parsedSource.
         std::vector<std::string> stillUnused;
 
         for(const auto& baseName : unusedBases){
+            bool usedExternally = isBaseUsedExternally(root, parsedSource, className, bodyNode, baseName);
+            bool usedViaSlicing = usedExternally ? false : isBaseUsedViaSlicing(root, parsedSource, className, baseName);
+
             if(!isBaseUsedExternally(root, parsedSource, className, bodyNode, baseName)){
                 stillUnused.push_back(baseName);
             }
@@ -166,7 +170,9 @@ std::vector<std::string> baseNames = extractBaseClasses(classNode, parsedSource.
     }
     message << " but shows no using " << (unusedBases.size() > 1 ? "them" : "it")
             << " (no qualified Base::member calls, no explicit base constructor call, "
-            << "no override/final specifier), and no outside object access to base-only member. Consider removing the inheritance.";
+            << "no override/final specifier), and no outside object access to base-only member, "
+            << "no assignment or passing subclass object into baseclass function"
+            << ". Consider removing the inheritance. ";
  
     warnIngs.push_back(Warning{line, "unused-inheritance", message.str()});
 }
@@ -345,13 +351,14 @@ void InheritanceChecker::checkExternalMemberUsage(TSNode node, const std::string
 
 }
 
+//Uses the tree to search for function_definition matching the passed in variable "name"
 TSNode InheritanceChecker::findFunctionByName(TSNode node, const std::string& name, const std::string& source) const{
-    if(ts_node_is_null(node) || found){
-        return;
+    if(ts_node_is_null(node)){
+        return node;
     }
 
     if(strcmp(ts_node_type(node), "function_definition") == 0){
-        TSNode declaratorNode = ts_node_child_by_field_name(node, "declarator",strlen("declarator"))l
+        TSNode declaratorNode = ts_node_child_by_field_name(node, "declarator",strlen("declarator"));
         if(!ts_node_is_null(declaratorNode)){
             TSNode identifierNode = ts_node_child_by_field_name(declaratorNode, "declarator", strlen("declarator"));
 
@@ -363,16 +370,17 @@ TSNode InheritanceChecker::findFunctionByName(TSNode node, const std::string& na
 
   uint32_t childCount = ts_node_child_count(node);
         for(uint32_t i = 0; i <childCount; ++i){
-            findFunctionByName(ts_node_child(node,i), source, instanceNames, memberNames, found);
+            TSNode result = findFunctionByName(ts_node_child(node,i),name , source);
 
-            if(found){
-                return;
+            if(!ts_node_is_null(result)){
+                return result;
             }
     }
 
     return {};
 }
 
+//Walks the file and looks for either assignability using operator or passing into a function a subclass object via function parameter
 void InheritanceChecker::scanForSlicingUsage(TSNode node, TSNode root, const std::string& source, const std::string& baseName, const std::vector<std::string>& derivedInstanceNames,const std::vector<std::string>& baseInstanceNames, bool& found) const{
     if (ts_node_is_null(node) || found) {
         return;
@@ -384,7 +392,7 @@ void InheritanceChecker::scanForSlicingUsage(TSNode node, TSNode root, const std
         TSNode functionNode = ts_node_child_by_field_name(node, "function", strlen("function"));
         TSNode argsNode = ts_node_child_by_field_name(node, "arguments", strlen("arguments"));
 
-        if(!ts_node_is_null(functionNode) && strcmp(ts_node_type(functionNode),("identifier") == 0) && !ts_node_is_null(argsNode)){
+        if (!ts_node_is_null(functionNode) && strcmp(ts_node_type(functionNode), "identifier") == 0 && !ts_node_is_null(argsNode)){            
             std::string calleeName = nodeText(functionNode, source);
             TSNode calleeDef = findFunctionByName(root, calleeName, source);
 
@@ -468,6 +476,20 @@ void InheritanceChecker::scanForSlicingUsage(TSNode node, TSNode root, const std
         }
 }         
 
+//Checks if an object of the sub class is assigned using base class member
 bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, const std::string& baseName) const{
-    
+    std::vector<std::string> derivedInstanceNames;
+    collectInstanceOfType(root, parsedSource.source, derivedClassName, derivedInstanceNames);
+
+    if(derivedInstanceNames.empty()){
+        return false;//No such object for subclass? return false
+    }
+
+    std::vector<std::string> baseInstanceNames;
+    collectInstanceOfType(root, parsedSource.source, baseName, baseInstanceNames);
+
+    bool found = false;
+    scanForSlicingUsage(root, root, parsedSource.source, baseName, derivedInstanceNames, baseInstanceNames, found);
+
+    return found;
 }
