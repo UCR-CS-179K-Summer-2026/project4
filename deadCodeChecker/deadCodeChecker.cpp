@@ -76,6 +76,13 @@ bool DeadCodeChecker::alwaysExits(TSNode statement) {
 
 void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     const std::string& source = parsedSource.source;
+
+    // If this block's enclosing function uses goto/labels anywhere,
+    // our reachability model can't account for jump targets, so never
+    // auto-fix in this function -- warnings only.
+    TSNode enclosingFunc = findEnclosingFunction(blockNode);
+    bool suppressFix = !ts_node_is_null(enclosingFunc) && containsGotoOrLabel(enclosingFunc);
+
     uint32_t count = ts_node_child_count(blockNode);
     bool exited = false;
     int rangeStart = -1;
@@ -102,19 +109,20 @@ void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource&
 
         Warning w{ rangeStart, "Unreachable Code", message };
 
-        uint32_t start = ts_node_start_byte(rangeStartNode);
-        uint32_t end = ts_node_end_byte(rangeEndNode);
+        if (!suppressFix) {
+            uint32_t start = ts_node_start_byte(rangeStartNode);
+            uint32_t end = ts_node_end_byte(rangeEndNode);
 
-        // consume a single trailing newline so we don't leave a blank line behind
-        if (end < source.size() && source[end] == '\n') {
-            end += 1;
-        } else if (end + 1 < source.size() && source[end] == '\r' && source[end + 1] == '\n') {
-            end += 2;
+            if (end < source.size() && source[end] == '\n') {
+                end += 1;
+            } else if (end + 1 < source.size() && source[end] == '\r' && source[end + 1] == '\n') {
+                end += 2;
+            }
+
+            w.fix = Edit{ start, end, "" };
         }
 
-        w.fix = Edit{ start, end, "" };
         warnings.push_back(w);
-
         rangeStart = -1;
         rangeEnd = -1;
     };
