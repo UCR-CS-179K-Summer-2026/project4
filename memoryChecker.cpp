@@ -40,22 +40,27 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
         }
     }
 
-    // check for deletes
-    else if (nodeType == "delete_expression") {
+    // check for deletes UPDATE: added support for free(), fixed errors with variable recognition
+    if (nodeType == "delete_expression" || nodeType == "call_expression") {
 
         std::string text = getNode(node, parsedSource.source);
-        //search for matching variable in trackedAllocations
-        for (auto it = trackedAllocations.begin(); it != trackedAllocations.end(); ) {
-            if (text.find(it->first) != std::string::npos) {
-                it = trackedAllocations.erase(it);//if found, remove the name and its associated location
-            } else {
-                ++it;
+        std::string VarName ="";
+        
+        // only proceed if it is a delete statement/function call to free
+        if (nodeType == "delete_expression" || text.find("free(") != std::string::npos) {
+            //search for matching variable in trackedAllocations
+            for (auto it = trackedAllocations.begin(); it != trackedAllocations.end(); ) {
+                if (text.find(it->first) != std::string::npos) {
+                    it = trackedAllocations.erase(it); //if found, remove the name and its associated location
+                } else {
+                    ++it;
+                }
             }
         }
     }
 
     //if a return statement is reached and trackedAllocations is not empty, print warning
-    else if (nodeType == "return_statement") {
+    if (nodeType == "return_statement") {
         for (const auto& alloc : trackedAllocations) {
             warnings.push_back({
                 static_cast<int>(ts_node_start_point(node).row + 1),

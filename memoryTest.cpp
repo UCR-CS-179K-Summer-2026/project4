@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 int basicPassingTest(){
     int* exampleptr = new int;
     delete exampleptr;
@@ -9,7 +11,33 @@ int basicTest(){
     return 2;
 }
 
-conditionalPassingTest(int input){
+int freePassingTest(){
+    int* exampleptr = (int*) std::malloc(5);
+    std::free(exampleptr);
+    return 1;
+}
+
+int multiplePassingTest(){
+    int* exampleptr = new int;
+    int* exampleptrTwo = new int;
+    int* exampleptrThree = new int;
+    delete exampleptr;
+    delete exampleptrTwo;
+    delete exampleptrThree;
+    return 2;
+}
+
+int multipleTest(){//also tests substring issue
+    int* exampleptr = new int;
+    int* exampleptrTwo = new int;
+    int* exampleptrThree = new int;
+    delete exampleptr;
+    delete exampleptr;
+    delete exampleptr;
+    return 2;
+}
+
+int conditionalPassingTest(int input){
     int* exampleptr = new int;
     if(input == 1){
         delete exampleptr;
@@ -37,7 +65,7 @@ int conditionalTestTwo(int input){
     return 1;
 }
 
-void functionCallTest(){
+void functionCallPassingTest(){
     int* exampleptr = new int;
     deleterFunction(exampleptr);
     return;
