@@ -277,40 +277,79 @@ h2 {
 .t-dim { color: var(--text-muted); }
 
 /* ---------------------------------------------
-  Build instructions
+   Build steps
 --------------------------------------------- */
-
-.build-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
+.build-steps {
+  position: relative;
   text-align: left;
+  max-width: 700px;
+  margin: 0 auto;
+  padding-left: 2.75rem;
+  list-style: none;
 }
 
-.figure-build-card {
+.build-steps::before {
+  content: "";
+  position: absolute;
+  left: 1.05rem;
+  top: 0.3rem;
+  bottom: 0.3rem;
+  width: 2px;
+  background: var(--border);
+}
+
+.build-step {
+  position: relative;
+  margin-bottom: 1.75rem;
+}
+.build-step:last-child { margin-bottom: 0; }
+
+.build-step-marker {
+  position: absolute;
+  left: -2.75rem;
+  top: 0;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-warn);
+  color: var(--accent-warn);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.build-step-body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem 1.4rem;
-  margin: 0;
 }
 
-.figure-build-card h3 {
+.build-step-body h3 {
   margin: 0 0 0.9rem;
-  font-size: 0.95rem;
-  color: var(--accent-warn);
+  font-size: 1rem;
+  color: var(--accent-pass);
 }
 
-.figure-build-card ul {
+.build-step-body ul {
   margin: 0;
   padding-left: 1.1rem;
   font-size: 0.88rem;
   color: var(--text-muted);
 }
 
-.figure-build-card li + li {
-  margin-top: 0.6rem;
+.build-step-body li + li { margin-top: 0.55rem; }
+
+.build-step-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
+
+.build-step-note + ul { margin-top: 0.6rem; }
 
 /* ---------------------------------------------
    Figures (architecture / flow / uml)
@@ -323,7 +362,7 @@ h2 {
   text-align: left;
 }
 
-.figure-card { margin: 0 auto; width: 100%; max-width: 600px; }
+.figure-card { margin: 0 auto; width: 100%; max-width: 700px; }
 
 .figure-frame {
   border: 1px solid var(--border);

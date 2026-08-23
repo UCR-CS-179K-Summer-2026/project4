@@ -73,59 +73,74 @@
     </div>
   </section>
 
-  <!-- BUILD -->
+   <!-- BUILD -->
   <section class="section" id="build">
-    <p class = "section-label">//00 &nbsp;how to build</p>
+    <p class="section-label">//00 &nbsp;how to build</p>
     <h2>How to Build</h2>
 
-    <div class="build-grid">
+    <ol class="build-steps">
 
-    <figure class = "figure-build-card">
-    <h3>Prerequisites</h3>
-    <ul>
-      <li>CMake (3.10+) — cmake.org/download, or <code>winget install Kitware.CMake</code> on Windows. Confirm with <code>cmake --version</code>.</li>
-      <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
-      <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/.</code>.</li>
-      <li></li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">01</div>
+        <div class="build-step-body">
+          <h3>Prerequisites</h3>
+          <ul>
+            <li>CMake (3.10+) — cmake.org/download, or <code>winget install Kitware.CMake</code> on Windows. Confirm with <code>cmake --version</code>.</li>
+            <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
+            <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code>.</li>
+          </ul>
+        </div>
+      </li>
 
-    <figure class = "figure-build-card">
-    <h3>Cloning and Setting up the Repo</h3>
-    <ul>
-      <li><code>git clone "repo-url"</code></li>
-      <li><code>cd project4</code></li>
-      <li><code>git submodule update --init --recursive</code></li>
-      <li>The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">02</div>
+        <div class="build-step-body">
+          <h3>Clone and Set Up the Repo</h3>
+          <ul>
+            <li><code>git clone "repo-url"</code></li>
+            <li><code>cd project4</code></li>
+            <li><code>git submodule update --init --recursive</code></li>
+          </ul>
+          <p class="build-step-note">The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</p>
+        </div>
+      </li>
 
-    <figure class = "figure-build-card">
-    <h3>Building</h3>
-    <ul>
-      <li><code>mkdir build</code></li>
-      <li><code>cd build</code></li>
-      <li><code>cmake .. -DBUILD_SHARED_LIBS=OFF</code></li>
-      <li><code>cmake --build .</code></li>
-      <li>This builds the tree-sitter runtime, the C++ grammar, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">03</div>
+        <div class="build-step-body">
+          <h3>Build</h3>
+          <ul>
+            <li><code>mkdir build</code></li>
+            <li><code>cd build</code></li>
+            <li><code>cmake .. -DBUILD_SHARED_LIBS=OFF</code></li>
+            <li><code>cmake --build .</code></li>
+          </ul>
+          <p class="build-step-note">This builds the tree-sitter runtime, the C++ grammar, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</p>
+        </div>
+      </li>
 
-    <figure class = "figure-build-card">
-    <h3>Running</h3>
-    <ul>
-      <li><code>cd Debug</code></li>
-      <li><code>./project4.exe</code></li>
-      <li>The program prompts for one or more file names to analyze:</li>
-      <li><code>Enter the name(s) of the file(s) to read: myFile.cpp</code></li>
-      <li>Paths are resolved relative to the directory you launch the executable from — since the build places the <code>.exe</code> in build/Debug, either give a relative path back up to your source files (e.g. <code>../../myFile.cpp</code>), or run the executable from the project root instead:</li>
-      <li><code>cd project4</code></li>
-      <li><code>./build/Debug/project4.exe</code></li>
-      <li>Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file.</li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">04</div>
+        <div class="build-step-body">
+          <h3>Run</h3>
+          <ul>
+            <li><code>cd Debug</code></li>
+            <li><code>./project4.exe</code></li>
+          </ul>
+          <p class="build-step-note">The program prompts for one or more file names to analyze:</p>
+          <ul>
+            <li><code>Enter the name(s) of the file(s) to read: myFile.cpp</code></li>
+          </ul>
+          <p class="build-step-note">Paths are resolved relative to the directory you launch the executable from. Since the build places the <code>.exe</code> in <code>build/Debug</code>, either give a relative path back up to your source files (e.g. <code>../../myFile.cpp</code>), or run from the project root instead:</p>
+          <ul>
+            <li><code>cd project4</code></li>
+            <li><code>./build/Debug/project4.exe</code></li>
+          </ul>
+          <p class="build-step-note">Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file.</p>
+        </div>
+      </li>
 
-    </div>
+    </ol>
   </section>
 
   <!-- ARCHITECTURE -->
@@ -142,56 +157,63 @@
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-horizontal">
-          <img src="/images/CS179K Flow Diagram.png" alt="Flow diagram of the code smell detector">
+          <img src="/images/CS179KFlowDiagram.png" alt="Flow diagram of the code smell detector">
         </div>
         <figcaption>Flow Diagram</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-horizontal">
-          <img src="/images/CS179K UML Diagram.png" alt="UML diagram of the code smell detector">
+          <img src="/images/CS179KUMLDiagram.png" alt="UML diagram of the code smell detector">
         </div>
         <figcaption>UML Diagram</figcaption>
       </figure>
 
+       <figure class="figure-card">
+        <div class="figure-frame figure-frame-vertical">
+          <img src="/images/Analysis.png" alt="">
+        </div>
+        <figcaption>Smelly Code Detector Analysis</figcaption>
+      </figure>
+
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
-          <img src="/images/redundantCodeDiagram.png" alt="">
+          <img src="./images/FixAnalysis.png" alt="">
         </div>
-        <figcaption>Redundant Code Checker Diagram</figcaption>
+        <figcaption>Smelly Code Detector Fixes/Suggestions Analysis</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-square">
-          <img src="/images/repeatedCodeDiagram.png" alt="">
+          <img src="./images/repeatedCodeDiagram.png" alt="">
         </div>
         <figcaption>Repeated Code Checker Diagram</figcaption>
       </figure>
       
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
-          <img src="/images/longParamListDiagram.png" alt="">
+          <img src="./images/longParamListDiagram.png" alt="">
         </div>
         <figcaption>Long Param List Diagram</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
-          <img src="/images/memoryLeakDiagram.png" alt="">
+          <img src="./images/memoryLeakDiagram.png" alt="">
         </div>
         <figcaption>Memory Leak Checker Diagram</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-square">
-          <img src="/images/inheritanceDiagram.png" alt="">
+          <img src="./images/inheritanceDiagram.png" alt="">
         </div>
         <figcaption>Inheritance Checker Diagram</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
-          <img src="/images/deadCodeDiagram.png" alt="">
+          <img src="./images/deadCodeDiagram.png" alt="">
         </div>
         <figcaption>Dead Code Checker Diagram</figcaption>
       </figure>
@@ -662,16 +684,6 @@
         </ul>
       </article>
 
-    </div>
-
-    <div class="terminal" role="img" aria-label="Example usage of the internal API" style="margin-top: 2rem;">
-      <div class="terminal-bar">
-        <span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
-        <span class="terminal-title">usage — SmellyCodeDetector</span>
-      </div>
-      <pre class="terminal-body"><span class="t-dim">std::ifstream inputFile("example.cpp");
-SmellyCodeDetector detector(inputFile);
-int warningCount = detector.runDetectors();</span></pre>
     </div>
   </section>
 
