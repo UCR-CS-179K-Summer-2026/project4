@@ -108,12 +108,9 @@ void memoryChecker::traverse(TSNode node, const ParsedSource& parsedSource, std:
     uint32_t count = ts_node_child_count(node);//goes through all children of current node
     for (uint32_t i = 0; i < count; ++i) {
         TSNode child = ts_node_child(node, i);
-        std::string childType = ts_node_type(child);
-        if (type == "if_statement" && (childType == "compound_statement" || childType == "if_statement")) {
-            continue; 
-        }
-        traverse(child, parsedSource, warnings);//traverse recursively for each child
+        traverse(child, parsedSource, warnings); //traverse recursively for each child
     }
+    
 }
 
 std::vector<Warning> memoryChecker::analyzeSource(const ParsedSource& parsedSource) {
