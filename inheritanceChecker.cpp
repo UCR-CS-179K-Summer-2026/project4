@@ -500,7 +500,7 @@ bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& p
     return found;
 }
 
-//Outputs refactored version of the code alongside detected code snippet given an unused inheritance is found
+//Outputs refactored version of the code alongside detected code snippet and changes made given an unused inheritance is found
 std::string InheritanceChecker::offerRefactoring(TSNode classNode, TSNode baseClauseNode, const std::vector<std::string>& unusedBases, const std::string& source) const{
     uint32_t classStart = ts_node_start_byte(classNode);
     uint32_t classEnd = ts_node_end_byte(classNode);
