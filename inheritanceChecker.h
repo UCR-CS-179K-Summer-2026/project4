@@ -38,7 +38,7 @@ class InheritanceChecker : public Detector {
 
         bool isBaseUsedViaSlicing(TSNode root, const ParsedSource& parsedSource, const std::string& derivedClassName, const std::string& baseName) const;
 
-        void offerRefactoring(TSNode classNode, TSNode baseClauseNode, const std::string& className,const std::vector<std::string>& unusedBases, const std::string& source) const;
+        std::string offerRefactoring(TSNode classNode, TSNode baseClauseNode, const std::vector<std::string>& unusedBases, const std::string& source) const;
 
 };
 

@@ -174,7 +174,16 @@ void InheritanceChecker::checkClass(TSNode classNode, const ParsedSource& parsed
             << "and no assignment or parameter-passing of a subclass object where a base-typed "
             << "value is expected). Consider removing the inheritance.";
 
+    if(unusedBases.size() == baseNames.size()){
+        TSNode baseClauseNode = findChildByType(classNode, "base_class_clause");
+
+        if(!ts_node_is_null(baseClauseNode)){
+            message << offerRefactoring(classNode, baseClauseNode, unusedBases, parsedSource.source);
+        }
+    }
+
     warnIngs.push_back(Warning{line, "unused-inheritance", message.str()});
+
 }
 
 //Grabs the root of the syntax tree and then runs visitNode to start the traversal
@@ -492,17 +501,18 @@ bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& p
 }
 
 
-void InheritanceChecker::offerRefactoring(TSNode classNode, TSNode baseClauseNode, const std::string& className,const std::vector<std::string>& unusedBases, const std::string& source) const{
+std::string InheritanceChecker::offerRefactoring(TSNode classNode, TSNode baseClauseNode, const std::vector<std::string>& unusedBases, const std::string& source) const{
     uint32_t classStart = ts_node_start_byte(classNode);
     uint32_t classEnd = ts_node_end_byte(classNode);
-    std::string originalText = source.subsyr(classStart, classEnd-classStart);
-
+    std::string originalText = source.substr(classStart, classEnd-classStart);
+ 
     uint32_t clauseStart = ts_node_start_byte(baseClauseNode);
     uint32_t clauseEnd = ts_node_end_byte(baseClauseNode);
     size_t relStart = clauseStart - classStart;
     size_t relLen = clauseEnd - clauseStart;
  
     std::string refactoredText = originalText.substr(0, relStart) + originalText.substr(relStart + relLen);
+ 
 
     size_t firstNewline = refactoredText.find('\n');
     std::string headerLine = (firstNewline == std::string::npos) ? refactoredText : refactoredText.substr(0, firstNewline);
@@ -510,10 +520,10 @@ void InheritanceChecker::offerRefactoring(TSNode classNode, TSNode baseClauseNod
  
     std::string cleanedHeader;
     bool lastWasSpace = false;
-    for (char c : headerLine) {
+    for(char c : headerLine){
         bool isSpace = (c == ' ' || c == '\t');
 
-        if (isSpace && lastWasSpace){
+        if(isSpace && lastWasSpace){
             continue;
         }
 
@@ -523,35 +533,15 @@ void InheritanceChecker::offerRefactoring(TSNode classNode, TSNode baseClauseNod
  
     std::string cleaned = cleanedHeader + restOfBody;
  
-    std::cout << "\nClass '" << className << "' inherits from ";
-    for(size_t i = 0;i< unusedBases.size();++i) {
-        std::cout << "'" << unusedBases[i] << "'";
+    std::ostringstream out;
 
-        if(i + 1 < unusedBases.size()){
-            std::cout << ", ";
-        }
+    out << "\n\n--- Original ---\n" << originalText;
+    out << "\n\n--- Refactored ---\n" << cleaned << ";";
+    out << "\n\nChanges made:";
+
+    for(const auto& base : unusedBases) {
+        out << "\n  - Removed inheritance from '" << base << "'";
     }
-
-    std::cout << " but never uses " << (unusedBases.size()> 1 ? "them" : "it") << ".\n";
-    std::cout<< "Would you like to refactor this now and remove the unused inheritance? (y/n): ";
  
-    std::string response;
-    std::getline(std::cin, response);
- 
-    if(!response.empty() && (response[0] == 'y' || response[0] == 'Y')) {
-        std::cout << "\n--- Original ---\n" << originalText << "\n";
-        std::cout << "\n--- Refactored ---\n" << cleaned << ";\n";
-        std::cout << "\nChanges made:\n";
-
-        for(const auto& base : unusedBases){
-            std::cout << "  - Removed inheritance from '" << base << "'\n";
-        }
-
-        std::cout << std::endl;
-    } 
-    
-    else{
-        std::cout << "Skipped refactoring for '" << className << "'.\n" << std::endl;
-    }
-
+    return out.str();
 }
