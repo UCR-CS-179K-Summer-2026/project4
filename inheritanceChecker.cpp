@@ -1,5 +1,6 @@
 #include "inheritanceChecker.h"
 
+#include <iostream>
 #include <sstream>
 #include <cstring>
 #include <algorithm>
@@ -173,7 +174,16 @@ void InheritanceChecker::checkClass(TSNode classNode, const ParsedSource& parsed
             << "and no assignment or parameter-passing of a subclass object where a base-typed "
             << "value is expected). Consider removing the inheritance.";
 
+    if(unusedBases.size() == baseNames.size()){
+        TSNode baseClauseNode = findChildByType(classNode, "base_class_clause");
+
+        if(!ts_node_is_null(baseClauseNode)){
+            message << offerRefactoring(classNode, baseClauseNode, unusedBases, parsedSource.source);
+        }
+    }
+
     warnIngs.push_back(Warning{line, "unused-inheritance", message.str()});
+
 }
 
 //Grabs the root of the syntax tree and then runs visitNode to start the traversal
@@ -488,4 +498,50 @@ bool InheritanceChecker::isBaseUsedViaSlicing(TSNode root, const ParsedSource& p
     bool found = false;
     scanForSlicingUsage(root, root, parsedSource.source, baseName, derivedInstanceNames, baseInstanceNames, found);
     return found;
+}
+
+//Outputs refactored version of the code alongside detected code snippet and changes made given an unused inheritance is found
+std::string InheritanceChecker::offerRefactoring(TSNode classNode, TSNode baseClauseNode, const std::vector<std::string>& unusedBases, const std::string& source) const{
+    uint32_t classStart = ts_node_start_byte(classNode);
+    uint32_t classEnd = ts_node_end_byte(classNode);
+    std::string originalText = source.substr(classStart, classEnd-classStart);
+ 
+    uint32_t clauseStart = ts_node_start_byte(baseClauseNode);
+    uint32_t clauseEnd = ts_node_end_byte(baseClauseNode);
+    size_t relStart = clauseStart - classStart;
+    size_t relLen = clauseEnd - clauseStart;
+ 
+    std::string refactoredText = originalText.substr(0, relStart) + originalText.substr(relStart + relLen);
+ 
+
+    size_t firstNewline = refactoredText.find('\n');
+    std::string headerLine = (firstNewline == std::string::npos) ? refactoredText : refactoredText.substr(0, firstNewline);
+    std::string restOfBody = (firstNewline == std::string::npos) ? "" : refactoredText.substr(firstNewline);
+ 
+    std::string cleanedHeader;
+    bool lastWasSpace = false;
+    for(char c : headerLine){
+        bool isSpace = (c == ' ' || c == '\t');
+
+        if(isSpace && lastWasSpace){
+            continue;
+        }
+
+        cleanedHeader += c;
+        lastWasSpace = isSpace;
+    }
+ 
+    std::string cleaned = cleanedHeader + restOfBody;
+ 
+    std::ostringstream out;
+
+    out << "\n\n--- Original ---\n" << originalText;
+    out << "\n\n--- Refactored ---\n" << cleaned << ";";
+    out << "\n\nChanges made:";
+
+    for(const auto& base : unusedBases) {
+        out << "\n  - Removed inheritance from '" << base << "'";
+    }
+ 
+    return out.str();
 }
