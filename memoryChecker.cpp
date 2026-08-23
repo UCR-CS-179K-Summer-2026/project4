@@ -14,7 +14,7 @@ std::string memoryChecker::getNode(TSNode node, const std::string& src) {
     return src.substr(start, end - start);
 }
 
-
+//ROUND 2
 void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
 
     //string to hold node type for comparison
@@ -44,10 +44,20 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
     if (nodeType == "delete_expression" || nodeType == "call_expression") {
 
         std::string text = getNode(node, parsedSource.source);
-        std::string VarName ="";
+        bool isCustomDeallocator = false;
         
-        // only proceed if it is a delete statement/function call to free
-        if (nodeType == "delete_expression" || text.find("free(") != std::string::npos) {
+        //check if is deallocator using infor from round 1
+        if (nodeType == "call_expression") {
+            for (const auto& funcName : deallocatingFunctions) {
+                //if it's in deallocating functions, is custom deallocator
+                if (!funcName.empty() && text.rfind(funcName, 0) == 0) {
+                    isCustomDeallocator = true;
+                    break;
+                }
+            }
+        }
+        //if it is a deletion or free, or if is custom deallocator
+        if (nodeType == "delete_expression" || text.find("free(") != std::string::npos || isCustomDeallocator) {
             //search for matching variable in trackedAllocations
             for (auto it = trackedAllocations.begin(); it != trackedAllocations.end(); ) {
                 if (text.find(it->first) != std::string::npos) {
@@ -72,7 +82,7 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
     }
 }
 
-//recursive traversal helper function
+//ROUND 2: recursive traversal helper function
 void memoryChecker::traverse(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     std::string type = ts_node_type(node);//gets current node type as string
     
@@ -127,6 +137,93 @@ std::vector<Warning> memoryChecker::analyzeSource(const ParsedSource& parsedSour
         return warnings;
     }
 
+    //ROUND 1: gather info on deallocating functions
+    collectDeallocatingFunctions(rootNode, parsedSource);
+
+    //ROUND 2: now knowing which functions are deallocating, go through and catch leaks
     traverse(rootNode, parsedSource, warnings);
     return warnings;
+}
+
+
+
+// ROUND 1: helper function to scan a function's body to see if it deletes a specific parameter
+bool memoryChecker::checkIfBodyDeallocates(TSNode node, const std::string& paramName, const std::string& src) {
+    if (ts_node_is_null(node)) return false;
+
+    std::string type = ts_node_type(node);
+    std::string text = getNode(node, src);
+
+    //find delete expressions or free calls containing the parameter name
+    if (type == "delete_expression" || type == "call_expression") {
+        if (type == "delete_expression" || text.find("free(") != std::string::npos) {
+            if (text.find(paramName) != std::string::npos) {
+                return true;
+            }
+        }
+    }
+
+    // recursively check all children inside the function
+    uint32_t count = ts_node_child_count(node);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (checkIfBodyDeallocates(ts_node_child(node, i), paramName, src)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// ROUND 1: Scans the entire tree looking for function declarations, adds deallocating functions to deallocatingFUnctions
+void memoryChecker::collectDeallocatingFunctions(TSNode node, const ParsedSource& parsedSource) {
+    if (ts_node_is_null(node)) return;
+
+    std::string type = ts_node_type(node);
+
+    //if function definition detected
+    if (type == "function_definition") {
+        //get the function name
+        TSNode declNode = ts_node_child_by_field_name(node, "declarator", 10);
+        std::string funcName = "";
+        
+        if (!ts_node_is_null(declNode) && std::string(ts_node_type(declNode)) == "function_declarator") {
+            TSNode nameNode = ts_node_child_by_field_name(declNode, "declarator", 10);
+            if (!ts_node_is_null(nameNode)) {
+                funcName = getNode(nameNode, parsedSource.source);
+            }
+
+            //check parameters for pointer inputs
+            TSNode paramListNode = ts_node_child_by_field_name(declNode, "parameters", 10);
+            //if there are parameterr
+            if (!ts_node_is_null(paramListNode)) {
+                uint32_t paramCount = ts_node_child_count(paramListNode);
+                //loop through parameters
+                for (uint32_t i = 0; i < paramCount; ++i) {
+                    TSNode param = ts_node_child(paramListNode, i);
+                    
+                    if (std::string(ts_node_type(param)) == "parameter_declaration") {
+                        TSNode pDecl = ts_node_child_by_field_name(param, "declarator", 10);
+                        if (!ts_node_is_null(pDecl)) {
+                            std::string paramName = getNode(pDecl, parsedSource.source);
+                            
+                            //strip asterisks to get the raw param name
+                            size_t aster = paramName.find_first_not_of(" \t*");
+                            if (aster != std::string::npos) paramName = paramName.substr(aster);
+
+                            //check if body deallocates this param name
+                            TSNode bodyNode = ts_node_child_by_field_name(node, "body", 4);
+                            if (!paramName.empty() && checkIfBodyDeallocates(bodyNode, paramName, parsedSource.source)) {
+                                deallocatingFunctions.insert(funcName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //recursive traversal of the rest of the file
+    uint32_t count = ts_node_child_count(node);
+    for (uint32_t i = 0; i < count; ++i) {
+        collectDeallocatingFunctions(ts_node_child(node, i), parsedSource);
+    }
 }
