@@ -21,6 +21,7 @@ class DataClumpDetector : public Detector {
         NameAnalyzer nameAnalyzer;
         std::map<std::vector<std::string>, ClumpInfo> variableClumps;
         std::vector<std::unordered_set<std::string>> variableGroups;
+        std::vector<int> groupLineNumbers;
         std::unordered_map<std::string, std::bitset<MAX_GROUPS>> variableBitsets;
 
         void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;

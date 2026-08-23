@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <iostream>
 #include <set>
-#include <utility>
 
 void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
     struct CandidateInfo {
@@ -23,65 +22,35 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
         }
         sort(sortedVariables.begin(), sortedVariables.end());
 
-        // Frequent pairs 
-        std::set<std::pair<std::string, std::string>> frequentPairs;
-        for(int i = 0; i < variableBitsets.size(); ++i) {
-            for(int j = i + 1; j < variableBitsets.size(); ++j) {
-                auto intersectBits = variableBitsets[sortedVariables[i]] & variableBitsets[sortedVariables[j]];
-
-                if(intersectBits.count() > 2) {
-                    frequentPairs.insert({sortedVariables[i], sortedVariables[j]});
-                }
-            }
-        }
-
         // Get triples from frequent pairs
-        for(const auto& pair : frequentPairs) {
-            for(int k = 0; k < variableBitsets.size(); ++k) {
-                if(sortedVariables[k] != pair.first && sortedVariables[k] != pair.second) {
-                    auto intersectBits = variableBitsets[pair.first] & variableBitsets[pair.second] & variableBitsets[sortedVariables[k]];
+        for(int i = 0; i < sortedVariables.size(); ++i) {
+            for(int j = i + 1; j < sortedVariables.size(); ++j) {
+                for(int k = j + 1; k < sortedVariables.size(); ++k) {
+                    const std::string& var1 = sortedVariables[i];
+                    const std::string& var2 = sortedVariables[j];
+                    const std::string& var3 = sortedVariables[k];
 
-                    if(intersectBits.count() > 2) {
-                        std::vector<std::string> triple = {pair.first, pair.second, sortedVariables[k]};
-                        std::sort(triple.begin(), triple.end());
-                        candidateMap[triple].variableNames.insert(pair.first);
-                        candidateMap[triple].variableNames.insert(pair.second);
-                        candidateMap[triple].variableNames.insert(sortedVariables[k]);
+                    std::bitset<MAX_GROUPS> combinedBitset = variableBitsets[var1] & variableBitsets[var2] & variableBitsets[var3];
+
+                    if(combinedBitset.count() > 2) {
+                        std::vector<std::string> variableList = {var1, var2, var3};
+                        std::sort(variableList.begin(), variableList.end());
+
+                        CandidateInfo& candidateInfo = candidateMap[variableList];
+                        candidateInfo.variableNames.insert(var1);
+                        candidateInfo.variableNames.insert(var2);
+                        candidateInfo.variableNames.insert(var3);
 
                         for(size_t groupIndex = 0; groupIndex < variableGroups.size(); ++groupIndex) {
-                            const auto& variableGroup = variableGroups[groupIndex];
-                            if(variableGroup.count(pair.first) && variableGroup.count(pair.second) && variableGroup.count(sortedVariables[k])) {
-                                candidateMap[triple].lineNumbers.push_back(groupIndex);
-                                candidateMap[triple].counter++;
+                            if(combinedBitset.test(groupIndex)) {
+                                candidateInfo.lineNumbers.push_back(groupLineNumbers[groupIndex]);
                             }
                         }
+                        candidateInfo.counter = static_cast<int>(combinedBitset.count());
                     }
                 }
             }
         }
-
-        // for(int i = 0; i < variableGroups.size(); ++i) {
-        //     for(int j = i + 1; j < variableGroups.size(); ++j) {
-        //         std::unordered_set<std::string> intersection;
-        //         for(const auto& var : variableGroups[i]) {
-        //             if(variableGroups[j].count(var)) {
-        //                 intersection.insert(var);
-        //             }
-        //         }
-
-        //         if(intersection.size() > 2) {
-        //             sortedVariables.clear();
-        //             for(const auto& var : intersection) {
-        //                 sortedVariables.push_back(var);
-        //             }
-        //             std::sort(sortedVariables.begin(), sortedVariables.end());
-        //             candidateMap[sortedVariables].variableNames = intersection;
-        //             candidateMap[sortedVariables].lineNumbers.push_back(i);
-        //             candidateMap[sortedVariables].lineNumbers.push_back(j);
-        //             candidateMap[sortedVariables].counter++;
-        //         }
-        //     }
-        // }
         
         for (const auto& entry : candidateMap) {
             const CandidateInfo& candidateInfo = entry.second;
@@ -107,32 +76,6 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
             }
         }
     }
-
-
-    // for (const auto& entry : variableClumps) {
-    //     const std::vector<std::string>& variableNames = entry.first;
-    //     const ClumpInfo& clumpInfo = entry.second;
-
-    //     if (clumpInfo.counter > 2) {
-    //         std::string variableList;
-    //         for (const auto& variable : variableNames) {
-    //             variableList += variable + ", ";
-    //         }
-    //         variableList = variableList.substr(0, variableList.length() - 2);
-
-    //         std::string lineList;
-    //         for (const auto& line : clumpInfo.lineNumbers) {
-    //             lineList += std::to_string(line) + ", ";
-    //         }
-    //         lineList = lineList.substr(0, lineList.length() - 2);
-
-    //         warnings.push_back({
-    //             clumpInfo.lineNumbers.front(),
-    //             "Data Clump",
-    //             "The following lines share the same set of variables: " + lineList + ". Variables: " + variableList + ". Consider using a struct or class to reduce code duplication."
-    //         });
-    //     }
-    // }
 }
 
 void DataClumpDetector::createBitsets() {
@@ -147,7 +90,7 @@ void DataClumpDetector::createBitsets() {
 }
 
 void DataClumpDetector::storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope) {
-    if(variablesInScope.size() > 1) {
+    if(variablesInScope.size() > 1 && !currentLines.empty()) {
         currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
         currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
         std::vector<std::string> sortedVariables = currentVariables;
@@ -158,6 +101,7 @@ void DataClumpDetector::storeClumpInfo(std::vector<std::string>& currentVariable
         clumpInfo.counter++;
 
         variableGroups.push_back(variablesInScope);
+        groupLineNumbers.push_back(currentLines.front());
     }
 }
 
