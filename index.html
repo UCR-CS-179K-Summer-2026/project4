@@ -21,8 +21,8 @@
       <a href="#overview">Overview</a>
       <a href="#build">Build</a>
       <a href="#architecture">Architecture</a>
-      <a href="#structures">Class&nbsp;Structure</a>
       <a href="#code-structure">Code&nbsp;Structure</a>
+      <a href="#structures">Class&nbsp;Structure</a>
       <a href="#api">Internal&nbsp;API</a>
       <a href="#dependencies">Dependencies</a>
       <a href="#algorithms">Algorithms</a>
@@ -48,32 +48,9 @@
     <div class="hero-cta">
       <a href="https://github.com/UCR-CS-179K-Summer-2026/project4" class="button" target="_blank" rel="noopener">GitHub Repository</a>
     </div>
-
-    <div class="terminal" role="img" aria-label="Example terminal output from the detector">
-      <div class="terminal-bar">
-        <span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
-        <span class="terminal-title">main.cpp — smellycodedetector</span>
-      </div>
-      <pre class="terminal-body"><span class="t-prompt">$</span> ./build/Debug/project4.exe
-      <pre class="terminal-body"><span class="t-prompt">$</span> Enter the name of the file to read: filename.cpp
-      <span class="t-warn">Warning:</span> [Redundant dead/unused variable]. The variable "x" is declared but never used.(line 12)
-      <span class="t-warn">Warning:</span> [repeated-code]. Repeated code detected in function: calculateCost
-      <span class="t-dim">In line(s) 3 to 5</span>
-      <span class="t-dim">In line(s) 6 to 8</span>
-      <span class="t-dim">Repeated code:</span>
-      <span class="t-dim">result = a + b;</span>
-      <span class="t-warn">Warning:</span> [Poor Naming]. Poor identifier name detected: 'a'. Consider using a more descriptive name.(line 20)
-      <span class="t-warn">Warning:</span> [Comments]. Function has no comments.(line 24)
-      <span class="t-warn">Warning:</span> [Redundant boolean comparison]. "isReady == true" can be simplified to "isReady".(line 25)
-      <span class="t-warn">Warning:</span> [Redundant Chained-If Statement]. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead.(line 30)
-      <span class="t-warn">Warning:</span> [deep-if]. Deeply nested if statement(line 42)
-      <span class="t-warn">Warning:</span> [long-param-list]. Function "processOrder" has 7 parameters; consider grouping related arguments.(line 48)
-      <span class="t-warn">Warning:</span> [unused-function]. Function "legacyCalc" is defined but never reachable from main().(line 61)
-      <span class="t-pass">9 Smelly code(s) found</span> in the file: filename.cpp</pre>
-    </div>
   </section>
 
-   <!-- BUILD -->
+  <!-- BUILD -->
   <section class="section" id="build">
     <p class="section-label">//00 &nbsp;how to build</p>
     <h2>How to Build</h2>
@@ -137,10 +114,43 @@
             <li><code>./build/Debug/project4.exe</code></li>
           </ul>
           <p class="build-step-note">Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file.</p>
+          <p class="build-step-note">The program prompts for suggested fixes do be applied:</p>
+          <ul>
+            <li><code>Some detected smells in "filename.cpp" have automatic fixes available. Apply them? (y/n): y </code></li>
+            <li><code>Fixed file written to: filename.fixed.cpp</code></li>
+          </ul>
+          <p class="build-step-note">Users choose whether they want the fixes to be applied to create a new file. If 'y' or yes is selected, 
+            the program writes a new file with the same name as the original but with <code>.fixed</code> appended before the extension. 
+            If 'n' or no is selected, no new file is created and the program exits.</p>
+          </p>
         </div>
       </li>
-
     </ol>
+  </section>
+
+  <section class="hero" id="overview">
+    <div class="terminal" role="img" aria-label="Example terminal output from the detector">
+      <div class="terminal-bar">
+        <span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
+        <span class="terminal-title">main.cpp — smellycodedetector</span>
+      </div>
+      <pre class="terminal-body"><span class="t-prompt">$</span> ./build/Debug/project4.exe
+      <pre class="terminal-body"><span class="t-prompt">$</span> Enter the name of the file to read: filename.cpp
+      <span class="t-warn">Warning:</span> [Redundant dead/unused variable]. The variable "x" is declared but never used.(line 12)
+      <span class="t-warn">Warning:</span> [repeated-code]. Repeated code detected in function: calculateCost
+      <span class="t-dim">In line(s) 3 to 5</span>
+      <span class="t-dim">In line(s) 6 to 8</span>
+      <span class="t-dim">Repeated code:</span>
+      <span class="t-dim">result = a + b;</span>
+      <span class="t-warn">Warning:</span> [Poor Naming]. Poor identifier name detected: 'a'. Consider using a more descriptive name.(line 20)
+      <span class="t-warn">Warning:</span> [Comments]. Function has no comments.(line 24)
+      <span class="t-warn">Warning:</span> [Redundant boolean comparison]. "isReady == true" can be simplified to "isReady".(line 25)
+      <span class="t-warn">Warning:</span> [Redundant Chained-If Statement]. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead.(line 30)
+      <span class="t-warn">Warning:</span> [deep-if]. Deeply nested if statement(line 42)
+      <span class="t-warn">Warning:</span> [long-param-list]. Function "processOrder" has 7 parameters; consider grouping related arguments.(line 48)
+      <span class="t-warn">Warning:</span> [unused-function]. Function "legacyCalc" is defined but never reachable from main().(line 61)
+      <span class="t-pass">9 Smelly code(s) found</span> in the file: filename.cpp</pre>
+    </div>
   </section>
 
   <!-- ARCHITECTURE -->
@@ -220,14 +230,132 @@
     </div>
   </section>
 
+  <!-- CODE STRUCTURE -->
+  <section class="section" id="code-structure">
+    <p class="section-label">// 02 &nbsp;code structure</p>
+    <h2>Code Structure</h2>
+    <p class="section-intro">One file per concern. Each module owns a single smell, or the parsing/orchestration that feeds all of them.</p>
+
+    <div class="module-grid">
+
+      <article class="module-card">
+        <h3>Parser.cpp</h3>
+        <ul class="fn-list">
+          <li>Reads the input file once and builds the shared tree-sitter <code>TSTree</code>, returning it as a <code>ParsedSource</code>.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>SmellyCodeDetector.cpp</h3>
+        <ul class="fn-list">
+          <li>Parses the input file once at construction and owns one instance of every detector; <code>runDetectors()</code> merges, sorts, and prints all of their warnings, and retains them for later fix application.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>commentChecker.cpp</h3>
+        <ul class="fn-list">
+          <li>Flags functions with no preceding, interior, or trailing comment.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>poorNameChecker.cpp</h3>
+        <ul class="fn-list">
+          <li>Finds variable, function, and parameter declarations in the tree and hands their names off to <code>NameAnalyzer</code>.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>NameAnalyzer.cpp</h3>
+        <ul class="fn-list">
+          <li>Shared naming heuristics — length checks and regex patterns — used by both <code>PoorNameChecker</code> and <code>FunctionAnalyzer</code>.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>FunctionAnalyzer.cpp</h3>
+        <ul class="fn-list">
+          <li>Applies <code>NameAnalyzer</code>'s checks specifically to function names and parameter lists.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>redundantCodeChecker.cpp</h3>
+        <ul class="fn-list">
+          <li>Unused variables, redundant boolean comparisons, redundant if/else boolean returns, and chained-if patterns — four checks in one traversal. The first three also generate a safe <code>Edit</code> for auto-fixing; chained-if is warning-only.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>deadCodeChecker.cpp</h3>
+        <ul class="fn-list">
+          <li>Unreachable code after an unconditional exit (auto-fixable, unless the function contains a <code>goto</code>/label), and unused/dead functions unreachable from <code>main</code> via a call graph (warning-only).</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>FixApplier.cpp</h3>
+        <ul class="fn-list">
+          <li>Declares <code>applyFixes()</code> in <code>Detector.h</code>; collects every warning's <code>Edit</code>, applies them back-to-front by byte offset, and skips any that overlap one already applied.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>repeatedCodeChecker.cpp</h3>
+        <ul class="fn-list">
+          <li>Finds duplicated runs of statements inside a function body using structural AST hashing and a sliding window.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>DeepIfDetector.cpp</h3>
+        <ul class="fn-list">
+          <li>Flags <code>if</code> statements nested past a fixed depth.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>longParamList.cpp</h3>
+        <ul class="fn-list">
+          <li>Flags functions whose parameter count exceeds a defined threshold.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>DataClumpDetector.cpp</h3>
+        <ul class="fn-list">
+          <li>Flags variables or arguments that repeatedly appear together, suggesting they belong in their own type.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>inheritanceChecker.cpp</h3>
+        <ul class="fn-list">
+          <li>Flags classes that inherit from a base class without ever using that inheritance.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>memoryChecker.cpp</h3>
+        <ul class="fn-list">
+          <li>Flags paths where allocated memory isn't freed before a function returns.</li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
   <!-- CLASS / STRUCT STRUCTURE -->
   <section class="section" id="structures">
-  <p class="section-label">// 02 &nbsp;data model</p>
+  <p class="section-label">// 03 &nbsp;data model</p>
   <h2>Class &amp; Struct Structure</h2>
   <p class="section-intro">
     Structs carry data between stages; classes carry behavior. Every detector is a
     subclass of the same abstract <code>Detector</code>, so <code>SmellyCodeDetector</code>
     can run all of them the same way and collect their results into one shared list.
+    Some warnings also carry an <code>Edit</code> — a safe, byte-precise fix that
+    <code>FixApplier</code> can splice into the source on request.
   </p>
 
   <div class="type-grid">
@@ -243,11 +371,22 @@
 
     <article class="type-card type-struct">
       <p class="type-kind">struct</p>
+      <h3>Edit</h3>
+      <ul>
+        <li><code>startByte</code> / <code>endByte</code> — the byte range in the original source to replace.</li>
+        <li><code>replacement</code> — the text to splice in; an empty string deletes the range.</li>
+        <li>Only produced by a check when the fix is provably safe from the AST alone — no cross-function or whole-program reasoning required.</li>
+      </ul>
+    </article>
+
+    <article class="type-card type-struct">
+      <p class="type-kind">struct</p>
       <h3>Warning</h3>
       <ul>
         <li><code>line</code> — the source line the warning applies to.</li>
         <li><code>category</code> — a short label identifying which check raised it, e.g. <code>"Poor Naming"</code>, <code>"deep-if"</code>, <code>"repeated-code"</code>.</li>
         <li><code>message</code> — the human-readable warning text.</li>
+        <li><code>fix</code> — a <code>std::optional&lt;Edit&gt;</code>; empty when the check has no safe auto-fix, populated when it does.</li>
       </ul>
     </article>
 
@@ -319,10 +458,10 @@
       <h3>RedundantCodeChecker <span class="extends">extends Detector</span></h3>
       <h4>Checks implemented</h4>
       <ul>
-        <li>Unused/dead variables — declared but never referenced again within their own scope, correctly handling shadowing</li>
-        <li>Redundant boolean comparisons — <code>x == true</code>, <code>x != false</code>, etc.</li>
-        <li>Redundant if/else returning boolean literals — <code>if (cond) return true; else return false;</code></li>
-        <li>Chained if-statements that should be if/else if/else — consecutive sibling <code>if</code>s that each unconditionally return, with no <code>else</code></li>
+        <li>Unused/dead variables — declared but never referenced again within their own scope, correctly handling shadowing. <strong>Auto-fixable</strong>: deletes the enclosing declaration statement, but only when it has a single declarator.</li>
+        <li>Redundant boolean comparisons — <code>x == true</code>, <code>x != false</code>, etc. <strong>Auto-fixable</strong>: replaces the comparison with the simplified expression.</li>
+        <li>Redundant if/else returning boolean literals — <code>if (cond) return true; else return false;</code> <strong>Auto-fixable</strong>: replaces the whole if/else with a single <code>return</code>.</li>
+        <li>Chained if-statements that should be if/else if/else — consecutive sibling <code>if</code>s that each unconditionally return, with no <code>else</code>. <strong>No auto-fix</strong> — restructuring into an if/else chain is a real rewrite, not a safe text splice.</li>
       </ul>
     </article>
 
@@ -331,8 +470,8 @@
       <h3>DeadCodeChecker <span class="extends">extends Detector</span></h3>
       <h4>Checks implemented</h4>
       <ul>
-        <li>Unreachable code — walks each block's statements in order; once one is found to unconditionally exit (via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or an if/else where both branches always exit), every sibling statement after it in that block is flagged</li>
-        <li>Unused/dead functions — builds a call graph of every top-level function to the names it calls, then runs an iterative DFS from <code>main</code> to compute which functions are actually reachable; anything defined but unreachable (and not <code>main</code> itself) is flagged</li>
+        <li>Unreachable code — walks each block's statements in order; once one is found to unconditionally exit (via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or an if/else where both branches always exit), every sibling statement after it in that block is flagged. <strong>Auto-fixable</strong>: deletes the unreachable range — except auto-fix is suppressed for any function containing a <code>goto</code> or a label, since the reachability model doesn't account for jump targets and could otherwise delete a line another <code>goto</code> depends on.</li>
+        <li>Unused/dead functions — builds a call graph of every top-level function to the names it calls, then runs an iterative DFS from <code>main</code> to compute which functions are actually reachable; anything defined but unreachable (and not <code>main</code> itself) is flagged. <strong>No auto-fix</strong> — the call graph doesn't model member calls, qualified calls, function pointers, or virtual dispatch, so a false "unreachable" verdict could mean deleting live code.</li>
         <li>Skips the unused-function check entirely if the file has no <code>main</code>, since reachability can't be determined</li>
       </ul>
     </article>
@@ -400,126 +539,29 @@
     </article>
 
     <article class="type-card type-class">
+      <p class="type-kind">free function</p>
+      <h3>FixApplier <span class="extends">applyFixes()</span></h3>
+      <ul>
+        <li>Declared in <code>Detector.h</code>, defined in <code>FixApplier.cpp</code>; signature is <code>std::string applyFixes(const std::string&amp; source, const std::vector&lt;Warning&gt;&amp; warnings)</code></li>
+        <li>Collects every warning's <code>Edit</code>, sorts them descending by <code>startByte</code>, then splices each into a copy of the source — descending order means an earlier splice never invalidates a later edit's byte offsets</li>
+        <li>Skips any edit that overlaps one already applied, so two checks flagging the same region (e.g. a boolean simplification nested inside an if/else that's also being collapsed) can't corrupt the file — the skipped edit's warning is still reported, just not auto-applied in that pass</li>
+      </ul>
+    </article>
+
+    <article class="type-card type-class">
       <p class="type-kind">class</p>
       <h3>SmellyCodeDetector</h3>
       <ul>
         <li>Owns one <code>Parser</code> and one instance of every registered detector — <code>PoorNameChecker</code>, <code>RedundantCodeChecker</code>, <code>DeadCodeChecker</code>, <code>RepeatedCodeChecker</code>, <code>CommentChecker</code>, <code>DeepIfDetector</code>, and <code>LongParamList</code> — held as member objects and registered into a <code>std::vector&lt;Detector*&gt;</code> in the constructor</li>
         <li>Constructor takes the opened input file and immediately parses it, storing the result in <code>parsedSource</code></li>
-        <li><code>runDetectors()</code> — calls <code>analyzeSource(parsedSource)</code> on every detector, merges all returned warnings into one list, sorts by line (tie-broken by category), prints each one, and returns the total warning count</li>
+        <li><code>runDetectors()</code> — calls <code>analyzeSource(parsedSource)</code> on every detector, merges all returned warnings into one list, sorts by line (tie-broken by category), prints each one, stores the merged list in the <code>allWarnings</code> member, and returns the total warning count</li>
+        <li><code>getWarnings()</code> / <code>getParsedSource()</code> — const accessors exposing the retained <code>allWarnings</code> and <code>parsedSource</code>, so <code>main.cpp</code> can prompt for and apply fixes after <code>runDetectors()</code> returns</li>
       </ul>
     </article>
 
   </div>
 </section>
 
-  <!-- CODE STRUCTURE -->
-  <section class="section" id="code-structure">
-    <p class="section-label">// 03 &nbsp;code structure</p>
-    <h2>Code Structure</h2>
-    <p class="section-intro">One file per concern. Each module owns a single smell, or the parsing/orchestration that feeds all of them.</p>
-
-    <div class="module-grid">
-
-      <article class="module-card">
-        <h3>Parser.cpp</h3>
-        <ul class="fn-list">
-          <li>Reads the input file once and builds the shared tree-sitter <code>TSTree</code>, returning it as a <code>ParsedSource</code>.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>SmellyCodeDetector.cpp</h3>
-        <ul class="fn-list">
-          <li>Parses the input file once at construction and owns one instance of every detector; <code>runDetectors()</code> merges, sorts, and prints all of their warnings.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>commentChecker.cpp</h3>
-        <ul class="fn-list">
-          <li>Flags functions with no preceding, interior, or trailing comment.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>poorNameChecker.cpp</h3>
-        <ul class="fn-list">
-          <li>Finds variable, function, and parameter declarations in the tree and hands their names off to <code>NameAnalyzer</code>.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>NameAnalyzer.cpp</h3>
-        <ul class="fn-list">
-          <li>Shared naming heuristics — length checks and regex patterns — used by both <code>PoorNameChecker</code> and <code>FunctionAnalyzer</code>.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>FunctionAnalyzer.cpp</h3>
-        <ul class="fn-list">
-          <li>Applies <code>NameAnalyzer</code>'s checks specifically to function names and parameter lists.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>redundantCodeChecker.cpp</h3>
-        <ul class="fn-list">
-          <li>Unused variables, redundant boolean comparisons, redundant if/else boolean returns, and chained-if patterns — four checks in one traversal.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>deadCodeChecker.cpp</h3>
-        <ul class="fn-list">
-          <li>Unreachable code after an unconditional exit, and unused/dead functions unreachable from <code>main</code> via a call graph.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>repeatedCodeChecker.cpp</h3>
-        <ul class="fn-list">
-          <li>Finds duplicated runs of statements inside a function body using structural AST hashing and a sliding window.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>DeepIfDetector.cpp</h3>
-        <ul class="fn-list">
-          <li>Flags <code>if</code> statements nested past a fixed depth.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>longParamList.cpp</h3>
-        <ul class="fn-list">
-          <li>Flags functions whose parameter count exceeds a defined threshold.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>DataClumpDetector.cpp</h3>
-        <ul class="fn-list">
-          <li>Flags variables or arguments that repeatedly appear together, suggesting they belong in their own type.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>inheritanceChecker.cpp</h3>
-        <ul class="fn-list">
-          <li>Flags classes that inherit from a base class without ever using that inheritance.</li>
-        </ul>
-      </article>
-
-      <article class="module-card">
-        <h3>memoryChecker.cpp</h3>
-        <ul class="fn-list">
-          <li>Flags paths where allocated memory isn't freed before a function returns.</li>
-        </ul>
-      </article>
-
-    </div>
-  </section>
 
   <!-- INTERNAL API -->
   <section class="section" id="api">

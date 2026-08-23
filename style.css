@@ -404,8 +404,8 @@ h2 {
 --------------------------------------------- */
 .type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 2fr));
+  gap: 1rem;
   text-align: left;
 }
 
