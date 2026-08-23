@@ -564,7 +564,7 @@
 
 
   <!-- INTERNAL API -->
-  <section class="section" id="api">
+<section class="section" id="api">
     <p class="section-label">// 04 &nbsp;internal api</p>
     <h2>Internal API</h2>
     <p class="section-intro">The actual functions each module exposes, grouped by file.</p>
@@ -582,7 +582,9 @@
         <h3>SmellyCodeDetector</h3>
         <ul class="fn-list">
           <li><code>SmellyCodeDetector(const std::ifstream&amp; inputFile)</code> — parses the file immediately and registers one instance of every detector</li>
-          <li><code>int runDetectors()</code> — runs <code>analyzeSource()</code> on every detector, merges the results, sorts by line then category, prints <code>"Warning: [category]. message(line N)"</code> for each, and returns the total count</li>
+          <li><code>int runDetectors()</code> — runs <code>analyzeSource()</code> on every detector, merges the results, sorts by line then category, prints <code>"Warning: [category]. message(line N)"</code> for each, stores the merged list in the <code>allWarnings</code> member, and returns the total count</li>
+          <li><code>const std::vector&lt;Warning&gt;&amp; getWarnings() const</code> — exposes <code>allWarnings</code> after <code>runDetectors()</code> has run</li>
+          <li><code>const ParsedSource&amp; getParsedSource() const</code> — exposes the stored <code>parsedSource</code>, so callers have the original source text to pass into <code>applyFixes()</code></li>
         </ul>
       </article>
 
@@ -630,14 +632,14 @@
           <li><code>void visitNode(...)</code> — single recursive walk, dispatching by node type (<code>function_definition</code>, <code>binary_expression</code>, <code>if_statement</code>, <code>compound_statement</code>)</li>
           <li><code>std::vector&lt;Warning&gt; analyzeSource(const ParsedSource&amp;)</code> — gets the tree's root node, kicks off <code>visitNode()</code>, returns all warnings found</li>
           <li><code>std::string nodeText(TSNode, const std::string&amp;)</code> — extracts a node's exact source text via its byte offsets</li>
-          <li><code>void checkUnusedVariables(...)</code> — flags variables declared but never referenced again, scoped per-declaration to correctly handle shadowing</li>
-          <li><code>extractIdentifierFromDeclarator()</code> / <code>collectDeclarations()</code> — resolve declared variable names from a <code>declaration</code> node, including pointers and comma-separated declarations</li>
+          <li><code>void checkUnusedVariables(...)</code> — flags variables declared but never referenced again, scoped per-declaration to correctly handle shadowing; when the enclosing <code>declaration</code> has exactly one declarator, attaches an <code>Edit</code> deleting the whole statement (plus its trailing newline)</li>
+          <li><code>extractIdentifierFromDeclarator()</code> / <code>collectDeclarations()</code> — resolve declared variable names from a <code>declaration</code> node, including pointers and comma-separated declarations; also used to count sibling declarators when deciding whether a fix is safe</li>
           <li><code>findEnclosingScope()</code> — walks up from a declarator to the nearest enclosing <code>compound_statement</code>, so usage counting starts from the declaration's own scope</li>
           <li><code>blockRedeclares()</code> — checks whether a block directly redeclares a given name, used to detect shadowing</li>
           <li><code>countIdentifierOccurrences()</code> — counts references to a name within a subtree, skipping into any nested block that redeclares the name</li>
-          <li><code>checkBooleanComparison()</code> — flags <code>x == true</code> / <code>x != false</code>-style comparisons and suggests the simplification</li>
-          <li><code>checkRedundantIfElseReturn()</code> / <code>unwrapToReturnStatement()</code> — flags if/else branches that both return opposite boolean literals</li>
-          <li><code>checkChainedReturnIfs()</code> / <code>alwaysReturns()</code> / <code>getLastStatement()</code> — flags consecutive if-statements, each returning unconditionally with no <code>else</code>; <code>getLastStatement()</code> skips brace tokens and comments to find a block's real final statement, which <code>alwaysReturns()</code> checks is itself a return</li>
+          <li><code>checkBooleanComparison()</code> — flags <code>x == true</code> / <code>x != false</code>-style comparisons, suggests the simplification, and attaches an <code>Edit</code> replacing the comparison expression with it</li>
+          <li><code>checkRedundantIfElseReturn()</code> / <code>unwrapToReturnStatement()</code> — flags if/else branches that both return opposite boolean literals, and attaches an <code>Edit</code> replacing the whole <code>if_statement</code> with a single <code>return</code></li>
+          <li><code>checkChainedReturnIfs()</code> / <code>alwaysReturns()</code> / <code>getLastStatement()</code> — flags consecutive if-statements, each returning unconditionally with no <code>else</code>; no <code>Edit</code> is attached, since collapsing them into an if/else chain is a structural rewrite rather than a text splice; <code>getLastStatement()</code> skips brace tokens and comments to find a block's real final statement, which <code>alwaysReturns()</code> checks is itself a return</li>
         </ul>
       </article>
 
@@ -649,10 +651,19 @@
           <li><code>std::string nodeText(TSNode, const std::string&amp;)</code> — extracts a node's exact text via byte offsets</li>
           <li><code>TSNode getLastStatement(TSNode)</code> — walks a block's children, skipping brace tokens and comments, to find its final real statement</li>
           <li><code>bool alwaysExits(TSNode)</code> — true if a statement unconditionally exits via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or (for an <code>if</code>) has an <code>else</code> where both branches always exit; recurses through <code>compound_statement</code> and <code>else_clause</code> wrappers</li>
-          <li><code>void checkUnreachableCode(...)</code> — walks a block's direct children in order; once one satisfies <code>alwaysExits()</code>, every later sibling in that block is flagged</li>
+          <li><code>bool containsGotoOrLabel(TSNode)</code> — recursively checks a subtree for any <code>goto_statement</code> or <code>labeled_statement</code></li>
+          <li><code>TSNode findEnclosingFunction(TSNode)</code> — walks up from any node to its enclosing <code>function_definition</code></li>
+          <li><code>void checkUnreachableCode(...)</code> — walks a block's direct children in order; once one satisfies <code>alwaysExits()</code>, every later sibling in that block is flagged. Before attaching an <code>Edit</code> that deletes the unreachable range, checks <code>containsGotoOrLabel()</code> on the enclosing function via <code>findEnclosingFunction()</code> — if it contains a <code>goto</code> or label anywhere, the fix is suppressed (warning still reported) since the reachability model can't account for jump targets</li>
           <li><code>std::string getFunctionName(TSNode)</code> — resolves a <code>function_definition</code>'s declarator down to its identifier</li>
           <li><code>std::set&lt;std::string&gt; collectCalledFunctionNames(TSNode)</code> — scans a function body for <code>call_expression</code> nodes and collects each callee's name (plain identifier calls only)</li>
-          <li><code>void checkUnusedFunctions(...)</code> — collects every top-level function, skips the check if no <code>main</code> exists, builds a call graph via <code>collectCalledFunctionNames()</code>, runs an iterative DFS from <code>main</code> to compute the reachable set, and flags any defined function outside it</li>
+          <li><code>void checkUnusedFunctions(...)</code> — collects every top-level function, skips the check if no <code>main</code> exists, builds a call graph via <code>collectCalledFunctionNames()</code>, runs an iterative DFS from <code>main</code> to compute the reachable set, and flags any defined function outside it; never attaches an <code>Edit</code>, since the call graph doesn't model member calls, qualified calls, function pointers, or virtual dispatch</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>FixApplier.cpp</h3>
+        <ul class="fn-list">
+          <li><code>std::string applyFixes(const std::string&amp; source, const std::vector&lt;Warning&gt;&amp; warnings)</code> — declared in <code>Detector.h</code>; collects every warning's <code>Edit</code>, sorts them descending by <code>startByte</code>, splices each into a copy of <code>source</code>, and skips any edit whose range overlaps one already applied</li>
         </ul>
       </article>
 
