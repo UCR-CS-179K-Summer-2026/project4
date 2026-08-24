@@ -46,6 +46,21 @@ public:
 
 //----------------------------
 
+//------SHOULD NOT DETECT BUT DETECTS ANYWAY BUGGED!-----
+class UnusedInheritance : public Base {
+public:
+    void doOwnThing() {
+        int local = 5;
+    }
+};
+
+void test(UnusedInheritance u){
+    u.doOwnThing();
+    u.helper();
+}
+
+//----------------------------
+
 //------SHOULD NOT DETECT, subclass does not explicitly use baseclass but the object calls baseclass member
 class Walker{
     public: 
