@@ -1,18 +1,10 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-// points-to-test-cases.cpp
-//
-// Test cases for the DeadCodeChecker points-to extension. Each case
-// documents, inline, what SHOULD be flagged "Unused/Dead Function" and
-// what SHOULD NOT, with the reasoning tied to the design decisions made
-// in PointsToAnalyzer (unused-pointer seeding, conservative fallback on
+
+// Test cases for the DeadCodeChecker points-to extension.
+// PointsToAnalyzer (unused-pointer seeding, conservative fallback on
 // empty points-to sets, flow-insensitive union at merges).
-//
-// Suggest running these as separate files/compilation units through your
-// detector rather than one giant file -- keeps the DFS-from-main results
-// easy to eyeball per case, and avoids name collisions between cases
-// (Case 2 and 5 both use "Dog"/"Cat").
 
 // =============================================================================
 // CASE 1: Original example -- the baseline points-to win over CHA/RTA
@@ -59,11 +51,6 @@ void helper(Animal *x) {
     Cat *f;
     Animal *y = std::rand() ? x : e;
     makeSounds(y);
-}
-void main() {
-    Dog *d;
-    Cat *c;
-    helper(d);
 }
 
 
@@ -239,4 +226,20 @@ void unusedHelper() {
 void main5() {
     int ghost;
     usedHelper();
+}
+
+void main() {
+    // Case 1
+    Dog *d;
+    Cat *c;
+    helper(d);
+
+    // Case 2
+    main2();
+    // Case 3
+    main3();
+    // Case 4
+    main4();
+    // Case 5
+    main5();
 }

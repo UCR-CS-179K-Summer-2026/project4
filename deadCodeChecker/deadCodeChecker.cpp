@@ -14,7 +14,7 @@ std::string DeadCodeChecker::nodeText(TSNode node, const std::string& source) {
 std::string DeadCodeChecker::extractIdentifierFromDeclarator(TSNode node, const std::string& source) {
     std::string type = ts_node_type(node);
 
-    if (type == "identifier") {
+    if (type == "identifier" || type == "field_identifier") {
         return nodeText(node, source);
     }
 
@@ -27,14 +27,13 @@ std::string DeadCodeChecker::extractIdentifierFromDeclarator(TSNode node, const 
     for (uint32_t i = 0; i < childCount; ++i) {
         TSNode child = ts_node_child(node, i);
         std::string childType = ts_node_type(child);
-        if (childType == "identifier") {
+        if (childType == "identifier" || childType == "field_identifier") {
             return nodeText(child, source);
         }
     }
 
     return "";
 }
-
 // ---------- Check 5: dead/unused code blocks  ----------
 
 TSNode DeadCodeChecker::getLastStatement(TSNode compoundStatement) {
@@ -225,7 +224,9 @@ std::vector<std::string> DeadCodeChecker::extractParamNames(TSNode functionDefNo
 // - records its base(s) into hierarchy.bases
 // - adds each method's qualified name ("Dog::makeSound") to `functions`
 // - records which methods it defines into hierarchy.methodsDefinedIn
-void DeadCodeChecker::collectClassMethods(TSNode declNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& functions, ClassHierarchy& hierarchy) {
+void DeadCodeChecker::collectClassMethods(TSNode declNode, const std::string& source,
+                                           std::vector<std::pair<std::string, TSNode>>& functions,
+                                           ClassHierarchy& hierarchy) {
     TSNode classSpec = declNode;
     if (std::string(ts_node_type(declNode)) == "declaration") {
         TSNode typeField = ts_node_child_by_field_name(declNode, "type", strlen("type"));
@@ -238,12 +239,19 @@ void DeadCodeChecker::collectClassMethods(TSNode declNode, const std::string& so
     if (ts_node_is_null(nameNode)) return;
     std::string className = nodeText(nameNode, source);
 
+    // base_class_clause: "class Dog : public Animal { ... }" -- named
+    // children here include an access_specifier ("public") alongside the
+    // base type_identifier, so filter to identifiers only.
     TSNode baseClause = ts_node_child_by_field_name(classSpec, "base_class_clause", strlen("base_class_clause"));
     if (!ts_node_is_null(baseClause)) {
         uint32_t bc = ts_node_named_child_count(baseClause);
         for (uint32_t i = 0; i < bc; ++i) {
             TSNode baseNameNode = ts_node_named_child(baseClause, i);
-            hierarchy.bases[className].push_back(nodeText(baseNameNode, source));
+            std::string baseKind = ts_node_type(baseNameNode);
+            if (baseKind == "type_identifier" || baseKind == "identifier") {
+                hierarchy.bases[className].push_back(nodeText(baseNameNode, source));
+            }
+            // access_specifier ("public"/"private"/"protected") intentionally skipped
         }
     }
 
@@ -254,8 +262,10 @@ void DeadCodeChecker::collectClassMethods(TSNode declNode, const std::string& so
     for (uint32_t i = 0; i < fieldCount; ++i) {
         TSNode member = ts_node_named_child(body, i);
         if (std::string(ts_node_type(member)) != "function_definition") continue;
+
         std::string methodName = getFunctionName(member, source);
         if (methodName.empty()) continue;
+
         functions.push_back({className + "::" + methodName, member});
         hierarchy.methodsDefinedIn[className].insert(methodName);
     }
@@ -314,6 +324,7 @@ void DeadCodeChecker::checkUnusedFunctions(const ParsedSource& parsedSource, std
             std::string name = getFunctionName(child, source);
             if (!name.empty()) functions.push_back({name, child});
         } else if (kind == "declaration" || kind == "class_specifier") {
+            size_t before = functions.size();
             collectClassMethods(child, source, functions, hierarchy);
         }
     }
@@ -396,6 +407,7 @@ void DeadCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, s
 
 // ---------- Analyze Source ----------
 std::vector<Warning> DeadCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
+    std::cerr << "###### BUILD CHECK: THIS IS THE NEW FILE ######\n";
     std::vector<Warning> warnings;
     if (parsedSource.tree == nullptr) return warnings;
     TSNode rootNode = ts_tree_root_node(parsedSource.tree);

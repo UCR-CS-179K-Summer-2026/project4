@@ -5,7 +5,9 @@
 #include <map>
 #include <vector>
 #include <unordered_map>
-#include "ParsedSource.h"
+#include <iostream>
+#include "../ParsedSource.h"
+#include "../Detector.h"
 
 using TypeSet = std::set<std::string>;
 

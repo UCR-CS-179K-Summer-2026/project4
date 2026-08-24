@@ -2,26 +2,54 @@
 #include <cstring>
 
 namespace {
-    std::string nodeText(TSNode node, const std::string& source) {
-        uint32_t start = ts_node_start_byte(node);
-        uint32_t end = ts_node_end_byte(node);
-        return source.substr(start, end - start);
-    }
 
-    // Collects every bare identifier referenced anywhere in `subtree` into
-    // `used`. Run over each statement in a first pass over a function body, so declaration in
-    // the second pass knows whether a declared pointer is ever referenced
-    // again elsewhere in the function.
-    void collectReferencedIdentifiers(TSNode subtree, const std::string& source, std::set<std::string>& used) {
-        std::string type = ts_node_type(subtree);
-        if (type == "identifier") {
-            used.insert(nodeText(subtree, source));
-        }
-        uint32_t count = ts_node_child_count(subtree);
-        for (uint32_t i = 0; i < count; ++i) {
-            collectReferencedIdentifiers(ts_node_child(subtree, i), source, used);
+std::string nodeText(TSNode node, const std::string& source) {
+    uint32_t start = ts_node_start_byte(node);
+    uint32_t end = ts_node_end_byte(node);
+    return source.substr(start, end - start);
+}
+
+// Unwraps a declarator down to its bare identifier -- e.g. a
+// pointer_declarator wrapping "e" returns "e", not "*e". Mirrors
+// DeadCodeChecker::extractIdentifierFromDeclarator; duplicated here (not
+// shared) since PointsToAnalyzer doesn't currently depend on
+// DeadCodeChecker. If you'd rather not duplicate it, move the original
+// into a shared free function both files call.
+std::string extractBareIdentifier(TSNode node, const std::string& source) {
+    std::string type = ts_node_type(node);
+    if (type == "identifier") {
+        return nodeText(node, source);
+    }
+    TSNode declaratorField = ts_node_child_by_field_name(node, "declarator", strlen("declarator"));
+    if (!ts_node_is_null(declaratorField)) {
+        return extractBareIdentifier(declaratorField, source);
+    }
+    uint32_t childCount = ts_node_child_count(node);
+    for (uint32_t i = 0; i < childCount; ++i) {
+        TSNode child = ts_node_child(node, i);
+        if (std::string(ts_node_type(child)) == "identifier") {
+            return nodeText(child, source);
         }
     }
+    return "";
+}
+
+// Collects every bare identifier referenced anywhere in `subtree` into
+// `used`. Run over each statement (other than a plain declaration's own
+// name) in a first pass over a function body, so declaration seeding in
+// the second pass knows whether a declared pointer is ever referenced
+// again elsewhere in the function.
+void collectReferencedIdentifiers(TSNode subtree, const std::string& source, std::set<std::string>& used) {
+    std::string type = ts_node_type(subtree);
+    if (type == "identifier") {
+        used.insert(nodeText(subtree, source));
+    }
+    uint32_t count = ts_node_child_count(subtree);
+    for (uint32_t i = 0; i < count; ++i) {
+        collectReferencedIdentifiers(ts_node_child(subtree, i), source, used);
+    }
+}
+
 } // namespace
 
 void PointsToAnalyzer::seedIfUsed(const VarId& var, const std::string& declaredType, bool isUsedDownstream) {
@@ -39,12 +67,16 @@ void PointsToAnalyzer::registerParams(const std::string& funcName, const std::ve
 // Orchestration: two passes over one function body
 // ---------------------------------------------------------------------------
 
-void PointsToAnalyzer::collectFromFunction(const std::string& funcName, TSNode funcBody, const ParsedSource& parsedSource) {
+void PointsToAnalyzer::collectFromFunction(const std::string& funcName, TSNode funcBody,
+                                            const ParsedSource& parsedSource) {
     const std::string& source = parsedSource.source;
     uint32_t topCount = ts_node_named_child_count(funcBody);
 
     // Sub-pass A: every identifier referenced anywhere in this function
-    // body, EXCLUDING a plain declaration's own name token
+    // body, EXCLUDING a plain declaration's own name token (so "Dog *d;"
+    // by itself doesn't count as "d is referenced"). This is what makes
+    // "Cat *f;" (declared, never touched again) and "Cat *c;" in main
+    // correctly contribute nothing to the analysis.
     std::set<std::string> referenced;
     for (uint32_t i = 0; i < topCount; ++i) {
         TSNode stmt = ts_node_named_child(funcBody, i);
@@ -100,13 +132,10 @@ void PointsToAnalyzer::handleDeclaration(TSNode declNode, const std::string& fun
         TSNode nameNode = ts_node_child_by_field_name(declarator, "declarator", strlen("declarator"));
         TSNode valueNode = ts_node_child_by_field_name(declarator, "value", strlen("value"));
         if (ts_node_is_null(nameNode) || ts_node_is_null(valueNode)) return;
-
-        // nameNode may still be wrapped (pointer_declarator); use
-        // DeadCodeChecker::extractIdentifierFromDeclarator to unwrap it in
-        // your actual call site rather than assuming a bare identifier here.
-        std::string varName = nodeText(nameNode, source);
+ 
+        std::string varName = extractBareIdentifier(nameNode, source);
         VarId target{funcName, varName};
-
+ 
         std::string valueKind = ts_node_type(valueNode);
         if (valueKind == "conditional_expression") {
             handleConditionalExpression(valueNode, target, funcName, parsedSource);
@@ -114,15 +143,14 @@ void PointsToAnalyzer::handleDeclaration(TSNode declNode, const std::string& fun
             edges_.push_back({VarId{funcName, nodeText(valueNode, source)}, target});
         }
     } else {
-        // Plain "Dog *d;" -- no initializer. Unwrap to the bare name the
-        // same way (pointer_declarator -> identifier) and seed only if
-        // sub-pass A saw it referenced again anywhere later in the function.
-        std::string varName = nodeText(declarator, source); // unwrap as above in real integration
+        // Plain "Dog *d;" -- no initializer. Seed only if sub-pass A saw
+        // this name referenced again elsewhere in the function.
+        std::string varName = extractBareIdentifier(declarator, source);
         bool usedLater = referencedElsewhere.count(varName) > 0;
         seedIfUsed(VarId{funcName, varName}, declaredType, usedLater);
     }
 }
-
+ 
 void PointsToAnalyzer::handleAssignment(TSNode assignNode, const std::string& funcName, const ParsedSource& parsedSource) {
     const std::string& source = parsedSource.source;
     TSNode lhs = ts_node_child_by_field_name(assignNode, "left", strlen("left"));
@@ -210,7 +238,10 @@ std::set<std::string> PointsToAnalyzer::resolveVirtualCall(const VarId& ptrVar, 
     const TypeSet& types = pointsTo(ptrVar);
 
     if (types.empty()) {
-        // every override of methodName is assumed reachable
+        // Nothing concrete tracked here -- conservative fallback: every
+        // known override of methodName is assumed reachable, so this
+        // fails toward false negatives (a missed dead-code case) rather
+        // than false positives (flagging a live method dead).
         for (auto& cls : hierarchy_.allTypesDefining(methodName)) {
             reachable.insert(cls + "::" + methodName);
         }
