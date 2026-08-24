@@ -1,7 +1,8 @@
 # SmellyCodeDetector
 
-A C++ static analysis tool that scans a C++ source file and detects common code smells,
-printing warning messages straight to the terminal. Parsing is powered by
+A C++ static analysis tool that scans one or more C++ source files and detects common code
+smells, printing warning messages straight to the terminal. Each file is parsed once and
+the resulting syntax tree is shared by all detectors. Parsing is powered by
 [tree-sitter](https://tree-sitter.github.io/tree-sitter/), so every detector works directly
 off the source's syntax tree rather than pattern-matching raw text.
 
@@ -20,32 +21,49 @@ aliasing or macros.
 
 ### DeadCodeChecker
 Unreachable-code detection doesn't account for `throw` or infinite loops as exit paths. Unused-
-function detection only tracks plain function calls (not member calls, namespaced calls, or
-function pointers), is skipped if there's no `main()`, and is single-file only.
+function reachability is limited to the current file and can still miss behavior hidden behind
+unsupported call patterns, despite the points-to analysis for recognized function and method
+calls. The check is skipped if there is no `main()`.
 
 ### PoorNameChecker / NameAnalyzer / FunctionAnalyzer
-*(limitations TBD)*
+Uses naming heuristics rather than semantic understanding. Short names, generic verbs, and
+placeholder names can be intentional, while names hidden behind macros or unusual declarators
+may not be analyzed as expected.
 
 ### RepeatedCodeChecker
-*(limitations TBD)*
+Only compares repeated statement runs inside the same block. It reports structurally equal AST
+subtrees, but does not identify semantically equivalent code that uses different operations or
+different control flow.
 
 ### CommentChecker
-*(limitations TBD)*
+Checks for the presence of comments, not whether a comment is accurate or useful. It operates
+on comments recognized by tree-sitter and only evaluates function definitions in the current
+translation unit.
 
 ### DeepIfDetector
-*(limitations TBD)*
+Flags nesting deeper than `MAX_DEPTH` (currently 3). Deep nesting can be intentional, and the
+detector does not assess whether a flatter design would actually be clearer.
 
 ### LongParamList
-*(limitations TBD)*
+Flags functions with more than four parameters. The threshold is fixed and the detector does
+not determine whether the parameters are genuinely related or whether grouping them improves
+the API.
 
 ### DataClumpDetector
-*(limitations TBD)*
+Reports recurring groups when the implementation finds a frequent triple of variables. It does
+not enumerate every possible repeated subset, and its call-site analysis currently collects
+identifier arguments rather than arbitrary expressions. Struct/class name suggestions require
+network access and a configured Gemini API key.
 
 ### InheritanceChecker
-- offerRefactoring changelog is currently only handling removal of inheritance call, nothing else
-- Assignability edge case does not handle ambiguity from parenthesis styled construction (e.g. Animal a(d)) which can be mistaken for a function instead of constructor call.\
+- Refactoring output removes the redundant inheritance clause; it does not redesign the class.
+- Assignability analysis does not fully resolve ambiguity from parenthesis-style construction
+  (for example, `Animal a(d)` can be mistaken for a function declaration).
+
 ### MemoryChecker
-*(limitations TBD)*
+Tracks direct `new`, `malloc`, and `calloc` allocations by variable name and checks return paths.
+It recognizes `delete`, `free()`, and custom functions that visibly deallocate a parameter, but
+does not provide complete ownership, alias, interprocedural, or exception-path analysis.
 
 ## Table of Contents
 
@@ -65,6 +83,7 @@ function pointers), is skipped if there's no `main()`, and is single-file only.
 - [Setup](#setup)
 - [Building](#building)
 - [Running](#running)
+- [Testing](#testing)
 - [Architecture](#architecture)
 - [Planned Features (Not Yet Implemented)](#planned-features-not-yet-implemented)
 
@@ -78,8 +97,8 @@ function pointers), is skipped if there's no `main()`, and is single-file only.
 ## Features
 
 Each feature below is implemented as its own `Detector` subclass, walking the shared
-tree-sitter syntax tree once per file. See [Architecture](#architecture) for how they fit
-together.
+tree-sitter syntax tree for each input file. See [Architecture](#architecture) for how they
+fit together.
 
 ### Poor Naming
 
@@ -219,7 +238,7 @@ Warning: [Comments]. Function has no comments.(line 5)
 ### Deeply Nested Conditionals
 
 Tracks `if`-statement nesting depth as it recurses and flags any `if` whose depth exceeds a
-fixed maximum, so overly nested conditional logic gets surfaced without a separate pass to
+fixed maximum of 3, so overly nested conditional logic gets surfaced without a separate pass to
 compute depth.
 
 ```cpp
@@ -245,6 +264,10 @@ Warning: [deep-if]. Deeply nested if statement(line 5)
 Tracks function lines that share the same set of variables and recommends
 grouping these sets into a class or structure rather than writing each 
 field individually.
+
+The implementation looks for recurring variable groups in function parameters, call arguments,
+and binary expressions. It reports groups that recur more than twice and currently promotes
+frequent pairs into candidate triples before producing a warning.
 
 
 ```cpp
@@ -292,7 +315,9 @@ Warning: [memory-leak]. Unreleased memory allocated at  at line 2 does not reach
 
 ### Inheritance
 
-Determines if functions or other classes with inheritance are redudant or not being used.
+Determines if classes with inheritance are redundant or not being used. It checks in-class base
+usage, external access to base-only members, and object slicing through assignment or
+pass-by-value calls.
 
 ```cpp
 class Base {
@@ -310,7 +335,7 @@ public:
 ```
 
 ```
-Warning: [unused-inheritance]. Class 'UsesBaseConstructor' inherits from 'Base' but shows no using it (no qualified Base::member calls, no explicit base constructor call, no override/final specifier). Consider removing the inheritance.(line 7)
+Warning: [unused-inheritance]. Class 'Widget' inherits from 'Base' but shows no evidence of using it. Consider removing the inheritance.(line 7)
 ```
 
 ### Dead Code Blocks
@@ -332,9 +357,10 @@ int getStatus(int code) {
 Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
 ```
 
-**Unused functions** — functions defined in the file but never reachable from main,
-whether directly or transitively through other calls (self-recursion and mutual recursion
-are both handled correctly and won't cause a false flag on their own).
+**Unused functions** — free functions and recognized class methods defined in the file but
+never reachable from `main`, whether directly or transitively through other calls. The
+reachability pass includes a points-to analysis for recognized function and method call paths;
+self-recursion and mutual recursion are handled without repeatedly visiting the same function.
 
 ```cpp
 int square(int x) {
@@ -365,7 +391,9 @@ sorts them by line number (ties broken by category), and prints one line per war
 Warning: [<category>]. <message>(line <line>)
 ```
 
-It then reports the total number of warnings found in the file.
+It then reports the total number of warnings found in the file. When multiple files are given,
+each file gets its own report and the program prints aggregate smell and processed-file totals
+at the end.
 
 ## Setup
 
@@ -409,10 +437,10 @@ cd Debug
 ./project4.exe
 ```
 
-The program prompts for a file name to analyze:
+The program prompts for one or more whitespace-separated file names to analyze:
 
 ```
-Enter the name of the file to read: myFile.cpp
+Enter the name(s) of the file(s) to read: myFile.cpp other.cpp
 ```
 
 Paths are resolved relative to the directory you launch the executable from — since the
@@ -426,6 +454,34 @@ cd project4
 
 Warnings print directly to the terminal in the [format described above](#warning-output-format),
 one per detected smell, with the offending line number in the original source file.
+
+If a file has fixable warnings, the program asks whether to apply them for that file. A `y`
+response writes a new file by appending `.fixed.cpp` to the original path (for example,
+`myFile.cpp.fixed.cpp`) and leaves the source file unchanged. Unreadable paths are reported and
+skipped while other input files continue processing.
+
+Data-clump name generation additionally expects `GOOGLE_GEMINI_API_KEY` in `../../.env` relative
+to the executable, with a fallback lookup at `../env`. Requests use libcurl, have a 30-second
+timeout, and fall back to `DefaultName` for HTTP or transport failures. Missing credentials raise
+an error when a name is requested.
+
+## Testing
+
+The repository currently provides detector-specific C++ fixture files rather than a separate
+automated unit-test or CTest harness. Fixtures include `redundantCodeChecker/redundantTest.cpp`,
+`deadCodeChecker/deadCodeTest.cpp`, `deadCodeChecker/pointsToTest.cpp`, `poorNameTest.cpp`,
+`commentTest.cpp`, `repeatedTest.cpp`, `ifStatementTest.cpp`, `longParamTest.cpp`,
+`DataClumpTest.cpp`, `inheritanceTest.cpp`, `memoryTest.cpp`, and `cleanTest.cpp`.
+
+Build the target, run it from the project root, and enter fixture paths at the prompt:
+
+```bash
+cmake --build build
+./build/Debug/project4.exe
+```
+
+Expected warnings are currently checked from terminal output. There is no committed script that
+automatically asserts warning categories, line numbers, or generated fixed-file contents.
 
 ## Architecture
 
@@ -459,7 +515,9 @@ The following was part of the original project scope but is not currently implem
 any detector in this repository. Listed here so the gap is visible rather than silently
 dropped.
 
-**TBD**
+The current implementation is intentionally limited to the detector categories listed above.
+Potential future work includes a regression-test harness, benchmark measurements, broader
+cross-file analysis, and additional C++ control-flow and ownership cases.
 
 
 
