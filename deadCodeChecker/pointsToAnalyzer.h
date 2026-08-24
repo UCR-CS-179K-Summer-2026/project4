@@ -77,5 +77,9 @@ public:
     void registerParams(const std::string& funcName, const std::vector<std::string>& paramNames);
 
     private:
+        const ClassHierarchy& hierarchy_;
+        std::map<VarId, TypeSet> pointsToSets_;
+        std::vector<FlowEdge> edges_;
+        std::unordered_map<std::string, std::vector<VarId>> functionParams_;
 
 };
