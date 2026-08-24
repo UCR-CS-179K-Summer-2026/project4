@@ -56,9 +56,7 @@ identifier arguments rather than arbitrary expressions. Struct/class name sugges
 network access and a configured Gemini API key.
 
 ### InheritanceChecker
-- Refactoring output removes the redundant inheritance clause; it does not redesign the class.
-- Assignability analysis does not fully resolve ambiguity from parenthesis-style construction
-  (for example, `Animal a(d)` can be mistaken for a function declaration).
+Refactoring output removes the redundant inheritance clause; it does not redesign the class.Assignability analysis does not fully resolve ambiguity from parenthesis-style construction (for example, `Animal a(d)` can be mistaken for a function declaration).
 
 ### MemoryChecker
 Tracks direct `new`, `malloc`, and `calloc` allocations by variable name and checks return paths.
