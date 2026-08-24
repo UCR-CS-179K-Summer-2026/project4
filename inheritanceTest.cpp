@@ -47,14 +47,14 @@ public:
 //----------------------------
 
 //------SHOULD NOT DETECT, uses base class member function helper on derived class object u-----
-class UnusedInheritance : public Base {
+class Unused2Inheritance : public Base {
 public:
     void doOwnThing() {
         int local = 5;
     }
 };
 
-void test(UnusedInheritance u){
+void test(Unused2Inheritance u){
     u.doOwnThing();
     u.helper();
 }
@@ -74,7 +74,7 @@ class Robot: public Walker {
 
 void useRobotExternally(){
     Robot android;
-    // android.takeStep();
+    android.takeStep();
 }
 
 //----------------------------
