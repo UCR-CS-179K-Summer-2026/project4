@@ -46,6 +46,21 @@ public:
 
 //----------------------------
 
+//------SHOULD NOT DETECT, uses base class member function helper on derived class object u-----
+class UnusedInheritance : public Base {
+public:
+    void doOwnThing() {
+        int local = 5;
+    }
+};
+
+void test(UnusedInheritance u){
+    u.doOwnThing();
+    u.helper();
+}
+
+//----------------------------
+
 //------SHOULD NOT DETECT, subclass does not explicitly use baseclass but the object calls baseclass member
 class Walker{
     public: 
