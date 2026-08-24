@@ -29,15 +29,53 @@ public:
 //----------------------------
 
 //------SHOULD DETECT as it inherits Base but doesnt use anything from it-----
-class UnusedInheritance : public Base {
+class UnusedInheritance : public Parent {
 public:
     void doOwnThing() {
         int local = 5;
     }
 };
 
-//SHould be skipped as there is no inheritance
+//----------------------------
+
+//SHOULD NOT DETECT, there is no inheritance
 class NoInheritance {
 public:
     void doSomething();
 };
+
+//----------------------------
+
+//------SHOULD NOT DETECT, subclass does not explicitly use baseclass but the object calls baseclass member
+class Walker{
+    public: 
+        void takeStep();
+};
+
+class Robot: public Walker {
+    public:
+        void speak();
+};
+
+void useRobotExternally(){
+    Robot android;
+    android.takeStep();
+}
+
+//----------------------------
+
+//------SHOULD NOT DETECT, bird doesn't 'use' its baseClass but external function named useBirdViaAssignment() does
+class Creature{
+    public:
+        int speed;
+};
+
+class Bird : public Creature{};
+
+void useBirdViaAssignment() {
+    Bird b;
+    Creature creatureVar;
+    creatureVar = b;
+}
+
+//----------------------------

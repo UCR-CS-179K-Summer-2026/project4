@@ -62,6 +62,7 @@ set(SOURCE_FILES
     inheritanceChecker.cpp
     inheritanceTest.cpp
     DataClumpNameGen.cpp
+    FixApplier.cpp
 )
 
 add_executable(project4 ${SOURCE_FILES})

@@ -8,6 +8,45 @@ off the source's syntax tree rather than pattern-matching raw text.
 > **Scope note:** due to complexity and limited time, this tool does not support every
 > possible C++ use case. It focuses on detecting the code smells described below.
 
+## Known Limitations
+
+Quick early notice on each detector's blind spots — see the full documentation for details.
+
+### RedundantCodeChecker
+Only catches the specific patterns it's built for (e.g. `x == true`/`!= false`, an if/else
+returning literal booleans, unconditional chained ifs) — logically equivalent code written
+differently may not be flagged. Usage tracking can also misflag variables only touched through
+aliasing or macros.
+
+### DeadCodeChecker
+Unreachable-code detection doesn't account for `throw` or infinite loops as exit paths. Unused-
+function detection only tracks plain function calls (not member calls, namespaced calls, or
+function pointers), is skipped if there's no `main()`, and is single-file only.
+
+### PoorNameChecker / NameAnalyzer / FunctionAnalyzer
+*(limitations TBD)*
+
+### RepeatedCodeChecker
+*(limitations TBD)*
+
+### CommentChecker
+*(limitations TBD)*
+
+### DeepIfDetector
+*(limitations TBD)*
+
+### LongParamList
+*(limitations TBD)*
+
+### DataClumpDetector
+*(limitations TBD)*
+
+### InheritanceChecker
+- offerRefactoring changelog is currently only handling removal of inheritance call, nothing else
+- Assignability edge case does not handle ambiguity from parenthesis styled construction (e.g. Animal a(d)) which can be mistaken for a function instead of constructor call.\
+### MemoryChecker
+*(limitations TBD)*
+
 ## Table of Contents
 
 - [Team Members](#team-members)

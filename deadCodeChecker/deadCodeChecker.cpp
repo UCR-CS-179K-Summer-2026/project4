@@ -75,24 +75,109 @@ bool DeadCodeChecker::alwaysExits(TSNode statement) {
 }
 
 void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
+    const std::string& source = parsedSource.source;
+
+    // If this block's enclosing function uses goto/labels anywhere,
+    // our reachability model can't account for jump targets, so never
+    // auto-fix in this function -- warnings only.
+    TSNode enclosingFunc = findEnclosingFunction(blockNode);
+    bool suppressFix = !ts_node_is_null(enclosingFunc) && containsGotoOrLabel(enclosingFunc);
+
     uint32_t count = ts_node_child_count(blockNode);
     bool exited = false;
+    int rangeStart = -1;
+    int rangeEnd = -1;
+    TSNode rangeStartNode{};
+    TSNode rangeEndNode{};
+
+    auto emitRange = [&]() {
+        if (rangeStart == -1) return;
+
+        std::string message;
+        if (rangeStart == rangeEnd) {
+            message =
+                "This code can never execute because a previous statement in this block "
+                "always exits via return/break/continue/goto. "
+                "Unreachable line: " + std::to_string(rangeStart) + ".";
+        } else {
+            message =
+                "This code can never execute because a previous statement in this block "
+                "always exits via return/break/continue/goto. "
+                "Unreachable lines: " + std::to_string(rangeStart) + "-" +
+                std::to_string(rangeEnd) + ".";
+        }
+
+        Warning w{ rangeStart, "Unreachable Code", message };
+
+        if (!suppressFix) {
+            uint32_t start = ts_node_start_byte(rangeStartNode);
+            uint32_t end = ts_node_end_byte(rangeEndNode);
+
+            if (end < source.size() && source[end] == '\n') {
+                end += 1;
+            } else if (end + 1 < source.size() && source[end] == '\r' && source[end + 1] == '\n') {
+                end += 2;
+            }
+
+            w.fix = Edit{ start, end, "" };
+        }
+
+        warnings.push_back(w);
+        rangeStart = -1;
+        rangeEnd = -1;
+    };
 
     for (uint32_t i = 0; i < count; ++i) {
         TSNode child = ts_node_child(blockNode, i);
         std::string type = ts_node_type(child);
-        if (type == "{" || type == "}" || type == "comment") continue;   // <-- add comment
+        if (type == "{" || type == "}" || type == "comment") continue;
+
+        int line = ts_node_start_point(child).row + 1;
 
         if (exited) {
-            int line = ts_node_start_point(child).row + 1;
-            warnings.push_back({line, "Unreachable Code",
-                "This code can never execute because a previous statement in this block "
-                "always exits via return/break/continue/goto."});
-            break;
+            if (rangeStart == -1) {
+                rangeStart = line;
+                rangeStartNode = child;
+            }
+            rangeEnd = line;
+            rangeEndNode = child;
         }
-        if (alwaysExits(child)) exited = true;
+
+        if (alwaysExits(child)) {
+            exited = true;
+        } else if (rangeStart != -1 && !exited) {
+            emitRange();
+        }
     }
+
+    emitRange();
 }
+
+// New helper: recursively check if a subtree contains a goto or a label
+bool DeadCodeChecker::containsGotoOrLabel(TSNode node) {
+    std::string type = ts_node_type(node);
+    if (type == "goto_statement" || type == "labeled_statement") {
+        return true;
+    }
+    uint32_t count = ts_node_child_count(node);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (containsGotoOrLabel(ts_node_child(node, i))) return true;
+    }
+    return false;
+}
+
+// New helper: walk up from any node to its enclosing function_definition
+TSNode DeadCodeChecker::findEnclosingFunction(TSNode node) {
+    TSNode parent = ts_node_parent(node);
+    while (!ts_node_is_null(parent)) {
+        if (std::string(ts_node_type(parent)) == "function_definition") {
+            return parent;
+        }
+        parent = ts_node_parent(parent);
+    }
+    return TSNode{};
+}
+
 
 // ---------- Check 6: Unused/Dead Functions (unreachable from main) ----------
 

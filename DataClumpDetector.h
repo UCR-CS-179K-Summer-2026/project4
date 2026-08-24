@@ -11,6 +11,7 @@
 #include "NameAnalyzer.h"
 #include <bitset>
 #include "DataClumpNameGen.h"
+#include <cstring>
 
 class DataClumpDetector : public Detector {
     private:

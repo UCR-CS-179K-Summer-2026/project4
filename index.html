@@ -19,14 +19,15 @@
     </button>
     <nav class="site-nav" id="siteNav">
       <a href="#overview">Overview</a>
-      <a href="#build">Build</a>
+      <a href="#tutorial">Tutorial</a>
       <a href="#architecture">Architecture</a>
-      <a href="#structures">Class&nbsp;Structure</a>
-      <a href="#code-structure">Code&nbsp;Structure</a>
-      <a href="#api">Internal&nbsp;API</a>
-      <a href="#dependencies">Dependencies</a>
+      <a href="#modules">Major&nbsp;Modules</a>
       <a href="#algorithms">Algorithms</a>
-      <a href="#sprints">Sprints</a>
+      <a href="#optimizations">Optimizations</a>
+      <a href="#testing">Testing</a>
+      <a href="#benchmarking">Benchmarking</a>
+      <a href="#limitations">Limitations</a>
+      <a href="#sprints">Progress&nbsp;Log</a>
       <a href="#team">Team</a>
     </nav>
   </div>
@@ -34,7 +35,9 @@
 
 <main id="top">
 
-  <!-- HEADER -->
+  <!-- ============================================================
+       OVERVIEW
+  ============================================================ -->
   <section class="hero" id="overview">
     <p class="eyebrow">CS179K &middot; Software Engineering</p>
     <h1>Warnings your compiler<br>won't give you.</h1>
@@ -43,10 +46,11 @@
       result to a set of independent detectors&nbsp;— each one hunting a different code smell,
       from dead variables and deeply nested conditionals to copy-pasted blocks, unreachable and
       unused functions, bloated parameter lists, data clumps, redundant inheritance, and unfreed
-      memory — and printing what it finds straight to the terminal.
+      memory — and printing what it finds straight to the terminal, with safe fixes applied on request.
     </p>
     <div class="hero-cta">
       <a href="https://github.com/UCR-CS-179K-Summer-2026/project4" class="button" target="_blank" rel="noopener">GitHub Repository</a>
+      <a href="#tutorial" class="button button-ghost">Get Started →</a>
     </div>
 
     <div class="terminal" role="img" aria-label="Example terminal output from the detector">
@@ -55,82 +59,335 @@
         <span class="terminal-title">main.cpp — smellycodedetector</span>
       </div>
       <pre class="terminal-body"><span class="t-prompt">$</span> ./build/Debug/project4.exe
-      <pre class="terminal-body"><span class="t-prompt">$</span> Enter the name of the file to read: filename.cpp
-      <span class="t-warn">Warning:</span> [Redundant dead/unused variable]. The variable "x" is declared but never used.(line 12)
-      <span class="t-warn">Warning:</span> [repeated-code]. Repeated code detected in function: calculateCost
-      <span class="t-dim">In line(s) 3 to 5</span>
-      <span class="t-dim">In line(s) 6 to 8</span>
-      <span class="t-dim">Repeated code:</span>
-      <span class="t-dim">result = a + b;</span>
-      <span class="t-warn">Warning:</span> [Poor Naming]. Poor identifier name detected: 'a'. Consider using a more descriptive name.(line 20)
-      <span class="t-warn">Warning:</span> [Comments]. Function has no comments.(line 24)
-      <span class="t-warn">Warning:</span> [Redundant boolean comparison]. "isReady == true" can be simplified to "isReady".(line 25)
-      <span class="t-warn">Warning:</span> [Redundant Chained-If Statement]. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead.(line 30)
-      <span class="t-warn">Warning:</span> [deep-if]. Deeply nested if statement(line 42)
-      <span class="t-warn">Warning:</span> [long-param-list]. Function "processOrder" has 7 parameters; consider grouping related arguments.(line 48)
-      <span class="t-warn">Warning:</span> [unused-function]. Function "legacyCalc" is defined but never reachable from main().(line 61)
-      <span class="t-pass">9 Smelly code(s) found</span> in the file: filename.cpp</pre>
+<span class="t-prompt">$</span> Enter the name of the file to read: filename.cpp
+<span class="t-warn">Warning:</span> [Redundant dead/unused variable]. The variable "x" is declared but never used.(line 12)
+<span class="t-warn">Warning:</span> [repeated-code]. Repeated code detected in function: calculateCost
+<span class="t-dim">In line(s) 3 to 5</span>
+<span class="t-dim">In line(s) 6 to 8</span>
+<span class="t-dim">Repeated code:</span>
+<span class="t-dim">result = a + b;</span>
+<span class="t-warn">Warning:</span> [Poor Naming]. Poor identifier name detected: 'a'. Consider using a more descriptive name.(line 20)
+<span class="t-warn">Warning:</span> [Comments]. Function has no comments.(line 24)
+<span class="t-warn">Warning:</span> [Redundant boolean comparison]. "isReady == true" can be simplified to "isReady".(line 25)
+<span class="t-warn">Warning:</span> [Redundant Chained-If Statement]. 3 separate if-statements each return unconditionally; consider an if/else if/else chain instead.(line 30)
+<span class="t-warn">Warning:</span> [deep-if]. Deeply nested if statement(line 42)
+<span class="t-warn">Warning:</span> [long-param-list]. Function "processOrder" has 7 parameters; consider grouping related arguments.(line 48)
+<span class="t-warn">Warning:</span> [unused-function]. Function "legacyCalc" is defined but never reachable from main().(line 61)
+<span class="t-pass">9 Smelly code(s) found</span> in the file: filename.cpp</pre>
     </div>
   </section>
 
-  <!-- BUILD -->
-  <section class="section" id="build">
-    <p class = "section-label">//00 &nbsp;how to build</p>
-    <h2>How to Build</h2>
+  <!-- ============================================================
+       TUTORIAL  (rubric: easy-to-follow tutorial, navigable feature
+       menu, small representative examples of each use case)
+  ============================================================ -->
+  <section class="section section-wide" id="tutorial">
+    <p class="section-label">// 01 &nbsp;tutorial</p>
+    <h2>Tutorial</h2>
+    <p class="section-intro">Install it, run it, and see what each detector actually catches.</p>
 
-    <div class="build-grid">
+    <h3 class="subhead">1. Install &amp; Build</h3>
+    <ol class="build-steps">
 
-    <figure class = "figure-build-card">
-    <h3>Prerequisites</h3>
-    <ul>
-      <li>CMake (3.10+) — cmake.org/download, or <code>winget install Kitware.CMake</code> on Windows. Confirm with <code>cmake --version</code>.</li>
-      <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
-      <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/.</code>.</li>
-      <li></li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">01</div>
+        <div class="build-step-body">
+          <h3>Prerequisites</h3>
+          <ul>
+            <li>CMake (3.10+) — cmake.org/download, or <code>winget install Kitware.CMake</code> on Windows. Confirm with <code>cmake --version</code>.</li>
+            <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
+            <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code>.</li>
+          </ul>
+        </div>
+      </li>
 
-    <figure class = "figure-build-card">
-    <h3>Cloning and Setting up the Repo</h3>
-    <ul>
-      <li><code>git clone "repo-url"</code></li>
-      <li><code>cd project4</code></li>
-      <li><code>git submodule update --init --recursive</code></li>
-      <li>The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">02</div>
+        <div class="build-step-body">
+          <h3>Clone and Set Up the Repo</h3>
+          <ul>
+            <li><code>git clone "repo-url"</code></li>
+            <li><code>cd project4</code></li>
+            <li><code>git submodule update --init --recursive</code></li>
+          </ul>
+          <p class="build-step-note">The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</p>
+        </div>
+      </li>
 
-    <figure class = "figure-build-card">
-    <h3>Building</h3>
-    <ul>
-      <li><code>mkdir build</code></li>
-      <li><code>cd build</code></li>
-      <li><code>cmake .. -DBUILD_SHARED_LIBS=OFF</code></li>
-      <li><code>cmake --build .</code></li>
-      <li>This builds the tree-sitter runtime, the C++ grammar, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">03</div>
+        <div class="build-step-body">
+          <h3>Build</h3>
+          <ul>
+            <li><code>mkdir build</code></li>
+            <li><code>cd build</code></li>
+            <li><code>cmake .. -DBUILD_SHARED_LIBS=OFF</code></li>
+            <li><code>cmake --build .</code></li>
+          </ul>
+          <p class="build-step-note">This builds the tree-sitter runtime, the C++ grammar, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</p>
+        </div>
+      </li>
 
-    <figure class = "figure-build-card">
-    <h3>Running</h3>
-    <ul>
-      <li><code>cd Debug</code></li>
-      <li><code>./project4.exe</code></li>
-      <li>The program prompts for one or more file names to analyze:</li>
-      <li><code>Enter the name(s) of the file(s) to read: myFile.cpp</code></li>
-      <li>Paths are resolved relative to the directory you launch the executable from — since the build places the <code>.exe</code> in build/Debug, either give a relative path back up to your source files (e.g. <code>../../myFile.cpp</code>), or run the executable from the project root instead:</li>
-      <li><code>cd project4</code></li>
-      <li><code>./build/Debug/project4.exe</code></li>
-      <li>Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file.</li>
-    </ul>
-    </figure>
+      <li class="build-step">
+        <div class="build-step-marker">04</div>
+        <div class="build-step-body">
+          <h3>Run</h3>
+          <ul>
+            <li><code>cd Debug</code></li>
+            <li><code>./project4.exe</code></li>
+          </ul>
+          <p class="build-step-note">The program prompts for one or more file names to analyze:</p>
+          <ul>
+            <li><code>Enter the name(s) of the file(s) to read: myFile.cpp</code></li>
+          </ul>
+          <p class="build-step-note">Paths are resolved relative to the directory you launch the executable from. Since the build places the <code>.exe</code> in <code>build/Debug</code>, either give a relative path back up to your source files (e.g. <code>../../myFile.cpp</code>), or run from the project root instead:</p>
+          <ul>
+            <li><code>cd project4</code></li>
+            <li><code>./build/Debug/project4.exe</code></li>
+          </ul>
+          <p class="build-step-note">Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file. You'll then be prompted whether to apply automatic fixes:</p>
+          <ul>
+            <li><code>Some detected smells in "filename.cpp" have automatic fixes available. Apply them? (y/n): y</code></li>
+            <li><code>Fixed file written to: filename.fixed.cpp</code></li>
+          </ul>
+          <p class="build-step-note">Choosing "y" writes a new file with the same name as the original but with <code>.fixed</code> appended before the extension, leaving your original file untouched. Choosing "n" exits without creating a new file.</p>
+        </div>
+      </li>
+    </ol>
 
+    <h3 class="subhead">2. Feature Menu</h3>
+    <p class="section-intro" style="margin-bottom:1.5rem;">Every smell the detector currently checks for. Click one to jump to a minimal before/after example.</p>
+    <nav class="feature-menu" aria-label="Detector feature menu">
+      <a href="#ex-unused-var">Unused / Dead Variable</a>
+      <a href="#ex-bool-compare">Redundant Boolean Comparison</a>
+      <a href="#ex-if-else-return">Redundant If/Else Return</a>
+      <a href="#ex-chained-if">Chained If-Returns</a>
+      <a href="#ex-unreachable">Unreachable Code</a>
+      <a href="#ex-unused-func">Unused Function</a>
+      <a href="#ex-poor-name">Poor Naming</a>
+      <a href="#ex-no-comments">Missing Comments</a>
+      <a href="#ex-repeated">Repeated Code</a>
+      <a href="#ex-deep-if">Deeply Nested If</a>
+      <a href="#ex-long-params">Long Parameter List</a>
+      <a href="#ex-data-clump">Data Clump</a>
+      <a href="#ex-inheritance">Redundant Inheritance</a>
+      <a href="#ex-memory">Unfreed Memory</a>
+    </nav>
+
+    <div id="ex-unused-var" class="example-card">
+      <h4>Unused / Dead Variable <span style="color:var(--accent-pass); font-size:0.7rem; font-family:var(--font-display);">— auto-fixable</span></h4>
+      <p class="example-desc">A variable is declared but never referenced again in its own scope. <code>RedundantCodeChecker</code> handles shadowing correctly, so a same-named variable that's actually used in a different scope isn't a false positive.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>int total = 0;
+int unused = 42;
+total += 10;
+return total;</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [Redundant dead/unused code].
+'unused' is declared but never used.
+(line 2)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-bool-compare" class="example-card">
+      <h4>Redundant Boolean Comparison <span style="color:var(--accent-pass); font-size:0.7rem; font-family:var(--font-display);">— auto-fixable</span></h4>
+      <p class="example-desc">Comparisons like <code>x == true</code> or <code>x != false</code> that can be simplified to the variable itself.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>if (isReady == true) {
+    start();
+}</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [Redundant boolean comparison].
+"isReady == true" can be simplified
+to "isReady". (line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-if-else-return" class="example-card">
+      <h4>Redundant If/Else Boolean Return <span style="color:var(--accent-pass); font-size:0.7rem; font-family:var(--font-display);">— auto-fixable</span></h4>
+      <p class="example-desc">An if/else that only returns opposite boolean literals, collapsible to a single return of the condition.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>if (score >= passingGrade) {
+    return true;
+} else {
+    return false;
+}</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [Redundant if/else return].
+Can be simplified to:
+"return score >= passingGrade;"
+(line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-chained-if" class="example-card">
+      <h4>Chained If-Returns <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">Consecutive sibling <code>if</code> statements that each unconditionally return, with no <code>else</code> — structurally an if/else if/else chain. No auto-fix, since restructuring is a real rewrite, not a safe text splice.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>if (grade == 'A') return 4;
+if (grade == 'B') return 3;
+if (grade == 'C') return 2;</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [Redundant Chained-If].
+3 separate if-statements each return
+unconditionally; consider an
+if/else if/else chain instead.
+(line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-unreachable" class="example-card">
+      <h4>Unreachable Code <span style="color:var(--accent-pass); font-size:0.7rem; font-family:var(--font-display);">— auto-fixable*</span></h4>
+      <p class="example-desc">Any statement following an unconditional exit (<code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or an if/else where both branches always exit) within the same block. *Auto-fix is suppressed if the enclosing function contains a <code>goto</code> or label.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>int compute(int x) {
+    return x * 2;
+    log("done"); // never runs
+}</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [unreachable-code].
+Code after this point is
+unreachable. (line 3)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-unused-func" class="example-card">
+      <h4>Unused Function <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A defined function that's unreachable from <code>main()</code> via the call graph. Skipped entirely if the file has no <code>main</code>; no auto-fix, since the call graph doesn't model member calls, function pointers, or virtual dispatch.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>void legacyCalc() { /* ... */ }
+
+int main() {
+    doWork();
+    return 0;
+}</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [unused-function].
+Function "legacyCalc" is defined
+but never reachable from main().
+(line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-poor-name" class="example-card">
+      <h4>Poor Naming <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">Names under 3 characters (barring <code>i</code>/<code>j</code>/<code>k</code>/<code>id</code>), booleans that don't start with <code>is/has/can/should/was/will</code>, generic verb-based function names, and placeholders like <code>temp</code> or <code>val</code>.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>int a = getDiscountedPrice(p, q);</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [Poor Naming].
+Poor identifier name detected: 'a'.
+Consider a more descriptive name.
+(line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-no-comments" class="example-card">
+      <h4>Missing Comments <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A function with no preceding, interior, or same-line trailing comment.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>int square(int n) {
+    return n * n;
+}</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [Comments].
+Function has no comments.
+(line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-repeated" class="example-card">
+      <h4>Repeated Code <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A run of statements structurally identical to another run elsewhere in the same function, found via AST hashing rather than exact text matching (so formatting differences don't matter).</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>result = a + b;
+log(result);
+...
+result = a + b;
+log(result);</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [repeated-code].
+Repeated code detected in function:
+calculateCost.
+In line(s) 3 to 4
+In line(s) 8 to 9</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-deep-if" class="example-card">
+      <h4>Deeply Nested If <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">An <code>if</code> statement nested past a fixed depth threshold (<code>MAX_DEPTH</code>).</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>if (a) {
+  if (b) {
+    if (c) {
+      if (d) { doThing(); }
+    }
+  }
+}</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [deep-if].
+Deeply nested if statement.
+(line 4)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-long-params" class="example-card">
+      <h4>Long Parameter List <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A function whose parameter count exceeds a defined threshold, suggesting related arguments be grouped into a struct.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>void processOrder(int id, string name,
+  string addr, string city, string state,
+  string zip, double total);</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [long-param-list].
+Function "processOrder" has 7
+parameters; consider grouping
+related arguments. (line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-data-clump" class="example-card">
+      <h4>Data Clump <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A group of variables or arguments that recurs together often enough to suggest it belongs in its own type.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>drawRect(x, y, width, height);
+...
+resizeRect(x, y, width, height);
+...
+moveRect(x, y, width, height);</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [data-clump].
+{x, y, width, height} recurs
+together at lines 1, 3, 5.
+Consider a Rect struct.</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-inheritance" class="example-card">
+      <h4>Redundant Inheritance <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A class that inherits from a base class but never overrides a base function, calls a base function, or invokes a base constructor.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>class Widget : public Base {
+    void draw() { /* unrelated */ }
+};</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [redundant-inheritance].
+"Widget" inherits from "Base" but
+never uses it. (line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-memory" class="example-card">
+      <h4>Unfreed Memory <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A path through the function that reaches a <code>return</code> without freeing a tracked allocation — checked independently down every branch of every <code>if</code>.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>int* buf = new int[100];
+if (earlyExit) {
+    return -1; // buf never freed
+}
+delete[] buf;
+return 0;</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak].
+"buf" allocated on line 1 is not
+freed on this return path.
+(line 3)</pre></div>
+      </div>
     </div>
   </section>
 
-  <!-- ARCHITECTURE -->
+  <!-- ============================================================
+       ARCHITECTURE
+  ============================================================ -->
   <section class="section" id="architecture">
-    <p class="section-label">// 01 &nbsp;pipeline</p>
+    <p class="section-label">// 02 &nbsp;pipeline</p>
     <h2>Architecture</h2>
     <p class="section-intro">
       One parse, many detectors. The source file is read exactly once and turned into a shared
@@ -141,219 +398,90 @@
     <div class="figure-grid">
 
       <figure class="figure-card">
-        <div class="figure-frame">
-          <img src="CS179K Flow Diagram.png" alt="Flow diagram of the code smell detector">
+        <div class="figure-frame figure-frame-259">
+          <img src="/images/CS179KFlowDiagram.png" alt="Flow diagram of the code smell detector">
         </div>
-        <figcaption>Flow Diagram</figcaption>
+        <figcaption>Flow Diagram (data flow)</figcaption>
       </figure>
 
       <figure class="figure-card">
-        <div class="figure-frame">
-          <img src="CS179K UML Diagram.png" alt="UML diagram of the code smell detector">
+        <div class="figure-frame figure-frame-169">
+          <img src="/images/CS179KUMLDiagram.png" alt="UML diagram of the code smell detector">
         </div>
-        <figcaption>UML Diagram</figcaption>
+        <figcaption>UML Diagram (class relationships)</figcaption>
+      </figure>
+
+       <figure class="figure-card">
+        <div class="figure-frame figure-frame-square">
+          <img src="/images/Analysis.png" alt="">
+        </div>
+        <figcaption>Smelly Code Detector Analysis</figcaption>
+      </figure>
+
+      <figure class="figure-card">
+        <div class="figure-frame figure-frame-square">
+          <img src="./images/FixAnalysis.png" alt="">
+        </div>
+        <figcaption>Smelly Code Detector Fixes/Suggestions Analysis</figcaption>
+      </figure>
+
+      <figure class="figure-card">
+        <div class="figure-frame figure-frame-vertical">
+          <img src="./images/repeatedCodeDiagram.png" alt="">
+        </div>
+        <figcaption>Repeated Code Checker Diagram</figcaption>
+      </figure>
+
+      <figure class="figure-card">
+        <div class="figure-frame figure-frame-vertical">
+          <img src="./images/redundantCodeDiagram.png" alt="">
+        </div>
+        <figcaption>Redundant Code Checker Diagram</figcaption>
+      </figure>
+      
+      <figure class="figure-card">
+        <div class="figure-frame figure-frame-vertical">
+          <img src="./images/longParamListDiagram.png" alt="">
+        </div>
+        <figcaption>Long Param List Diagram</figcaption>
+      </figure>
+
+      <figure class="figure-card">
+        <div class="figure-frame figure-frame-43">
+          <img src="./images/memoryLeakDiagram.png" alt="">
+        </div>
+        <figcaption>Memory Leak Checker Diagram</figcaption>
+      </figure>
+
+      <figure class="figure-card">
+        <div class="figure-frame figure-frame-vertical">
+          <img src="./images/inheritanceDiagram.png" alt="">
+        </div>
+        <figcaption>Inheritance Checker Diagram</figcaption>
+      </figure>
+
+      <figure class="figure-card">
+        <div class="figure-frame figure-frame-vertical">
+          <img src="./images/deadCodeDiagram.png" alt="">
+        </div>
+        <figcaption>Dead Code Checker Diagram</figcaption>
       </figure>
     </div>
   </section>
 
-  <!-- CLASS / STRUCT STRUCTURE -->
-  <section class="section" id="structures">
-  <p class="section-label">// 02 &nbsp;data model</p>
-  <h2>Class &amp; Struct Structure</h2>
-  <p class="section-intro">
-    Structs carry data between stages; classes carry behavior. Every detector is a
-    subclass of the same abstract <code>Detector</code>, so <code>SmellyCodeDetector</code>
-    can run all of them the same way and collect their results into one shared list.
-  </p>
+  <!-- ============================================================
+       MAJOR MODULES  (merges former Code Structure / Class-Struct
+       Structure / Internal API / Dependencies into one section)
+  ============================================================ -->
+  <section class="section section-wide" id="modules">
+    <p class="section-label">// 03 &nbsp;major modules</p>
+    <h2>Major Modules</h2>
+    <p class="section-intro">
+      Documentation of every major class, struct, and file — written so a new contributor can find
+      the right module, understand what it owns, and modify it without needing to ask.
+    </p>
 
-  <div class="type-grid">
-
-    <article class="type-card type-struct">
-      <p class="type-kind">struct</p>
-      <h3>ParsedSource</h3>
-      <ul>
-        <li><code>source</code> — the raw, unmodified source code (including comments), read once from the input file.</li>
-        <li><code>tree</code> — a <code>TSTree*</code>, the full tree-sitter parse tree for that source. This replaced the old pre-sliced function/variable data entirely — every detector walks this tree directly instead.</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-struct">
-      <p class="type-kind">struct</p>
-      <h3>Warning</h3>
-      <ul>
-        <li><code>line</code> — the source line the warning applies to.</li>
-        <li><code>category</code> — a short label identifying which check raised it, e.g. <code>"Poor Naming"</code>, <code>"deep-if"</code>, <code>"repeated-code"</code>.</li>
-        <li><code>message</code> — the human-readable warning text.</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>Parser</h3>
-      <ul>
-        <li><code>parse()</code> — the only public method. Reads the opened input file into <code>source</code> in one pass via a stringstream's <code>rdbuf()</code>, spins up a <code>TSParser</code> configured for the <code>tree_sitter_cpp()</code> grammar, and parses that raw source directly into a <code>TSTree</code>.</li>
-        <li>Called exactly once, in <code>main.cpp</code>; the resulting <code>ParsedSource</code> is reused by every detector instead of each one re-parsing the file independently.</li>
-        <li>Fails safely — if the tree fails to build, it logs an error to stderr, cleans up the parser, and returns <code>ParsedSource{source, nullptr}</code> rather than crashing. Every detector already checks for a null tree before walking it.</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-abstract">
-      <p class="type-kind">abstract base class</p>
-      <h3>Detector</h3>
-      <ul>
-        <li><code>analyzeSource(const ParsedSource&amp;)</code> — pure virtual; every subclass implements this to walk the tree and return a <code>std::vector&lt;Warning&gt;</code> of everything it found.</li>
-        <li><code>visitNode(TSNode, const ParsedSource&amp;, std::vector&lt;Warning&gt;&amp;)</code> — also part of the interface; each subclass's recursive tree-walk, dispatching to its own checks by node type and appending to the shared warnings vector. Detectors no longer print anything themselves — output is centralized in <code>SmellyCodeDetector</code>.</li>
-        <li>Virtual destructor, since detectors are used polymorphically</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>CommentChecker <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Walks the tree for <code>function_definition</code> nodes and checks the immediately preceding sibling for a <code>comment</code> node</li>
-        <li>Falls back to recursively scanning the function's body for any interior or inline comment</li>
-        <li>Also checks for a trailing comment on the same source line as the function's closing brace</li>
-        <li>Flags any function matching none of the above as having no comments</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>PoorNameChecker <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Traverses the tree searching for <code>declaration</code> or <code>function_definition</code> nodes</li>
-        <li>For declarations, resolves the identifier out of <code>identifier</code>, <code>init_declarator</code>, or <code>array_declarator</code> children before checking it</li>
-        <li>For functions, delegates the function name and each parameter name to <code>FunctionAnalyzer</code></li>
-        <li>Checks every resolved name's validity via <code>NameAnalyzer</code></li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>NameAnalyzer</h3>
-      <ul>
-        <li>Extracts a variable's identifier name from the raw source using its byte offsets</li>
-        <li>Finds the line number a given node starts on</li>
-        <li>Depth-first searches a subtree for its first <code>identifier</code> node</li>
-        <li>Determines whether a name is poor using a length heuristic (with exceptions for common loop counters) plus regex checks for boolean-prefix naming, generic function verbs, and generic placeholder names like <code>temp</code> or <code>data</code></li>
-        <li>Given a name and line, appends a formatted "Poor Naming" warning</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>FunctionAnalyzer</h3>
-      <ul>
-        <li>Checks whether a function's name is poor, using <code>NameAnalyzer</code>'s methods</li>
-        <li>Iterates a function's parameter list and checks each parameter's name via <code>NameAnalyzer</code></li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>RedundantCodeChecker <span class="extends">extends Detector</span></h3>
-      <h4>Checks implemented</h4>
-      <ul>
-        <li>Unused/dead variables — declared but never referenced again within their own scope, correctly handling shadowing</li>
-        <li>Redundant boolean comparisons — <code>x == true</code>, <code>x != false</code>, etc.</li>
-        <li>Redundant if/else returning boolean literals — <code>if (cond) return true; else return false;</code></li>
-        <li>Chained if-statements that should be if/else if/else — consecutive sibling <code>if</code>s that each unconditionally return, with no <code>else</code></li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>DeadCodeChecker <span class="extends">extends Detector</span></h3>
-      <h4>Checks implemented</h4>
-      <ul>
-        <li>Unreachable code — walks each block's statements in order; once one is found to unconditionally exit (via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or an if/else where both branches always exit), every sibling statement after it in that block is flagged</li>
-        <li>Unused/dead functions — builds a call graph of every top-level function to the names it calls, then runs an iterative DFS from <code>main</code> to compute which functions are actually reachable; anything defined but unreachable (and not <code>main</code> itself) is flagged</li>
-        <li>Skips the unused-function check entirely if the file has no <code>main</code>, since reachability can't be determined</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>RepeatedCodeChecker <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Scans each function's <code>compound_statement</code> blocks for runs of consecutive statements repeated elsewhere in the same block</li>
-        <li>Structurally hashes each statement subtree so identical statements collide to the same key, regardless of exact source formatting</li>
-        <li>Slides a window across the block's statements, largest size first, grouping candidates by hash in an <code>unordered_map</code></li>
-        <li>Confirms every hash match with a full structural comparison before reporting, to rule out collisions</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>DeepIfDetector <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Tracks nesting depth as it recurses, incrementing on entering an <code>if_statement</code> and decrementing on the way back out</li>
-        <li>Flags any <code>if_statement</code> whose depth exceeds <code>MAX_DEPTH</code> as a "deep-if" warning</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>LongParamList <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Traverses the tree for <code>function_definition</code> nodes</li>
-        <li>Counts each function's declared parameters and flags it once the count exceeds a defined threshold</li>
-        <li>Resolves the function's full name via the same identifier/declarator walk used elsewhere, for the warning message</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>DataClumpDetector <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Searches the tree for <code>function_definition</code> and <code>compound_statement</code> nodes</li>
-        <li>Inside a block, groups variables that are declared together and arguments that are passed together into the same call, using each group as a key into a map</li>
-        <li>The map's value, <code>ClumpInfo</code>, tracks how many times that exact group of names occurred and at which line numbers</li>
-        <li>Also checks a function's own parameter list for the same recurring groupings</li>
-        <li>Any group that recurs often enough is reported as a data clump, with every occurrence's line number listed</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>InheritanceChecker <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Traverses the tree for <code>class_specifier</code> nodes</li>
-        <li>For each class that actually inherits from a base class, scans its body for evidence the inheritance is being used: overridden functions, calls to the base class's functions, or a constructor call into the base class</li>
-        <li>If none of those three signals are present, the inheritance is flagged as redundant</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>MemoryChecker <span class="extends">extends Detector</span></h3>
-      <ul>
-        <li>Tracks every memory allocation it sees, keyed by variable name and location, in <code>trackedAllocations</code></li>
-        <li>Walks the function body and, at every <code>if</code> statement, branches into each possible path so both sides of a conditional are checked independently</li>
-        <li>Flags any path that reaches a <code>return</code> without the corresponding allocation having been freed first</li>
-      </ul>
-    </article>
-
-    <article class="type-card type-class">
-      <p class="type-kind">class</p>
-      <h3>SmellyCodeDetector</h3>
-      <ul>
-        <li>Owns one <code>Parser</code> and one instance of every registered detector — <code>PoorNameChecker</code>, <code>RedundantCodeChecker</code>, <code>DeadCodeChecker</code>, <code>RepeatedCodeChecker</code>, <code>CommentChecker</code>, <code>DeepIfDetector</code>, and <code>LongParamList</code> — held as member objects and registered into a <code>std::vector&lt;Detector*&gt;</code> in the constructor</li>
-        <li>Constructor takes the opened input file and immediately parses it, storing the result in <code>parsedSource</code></li>
-        <li><code>runDetectors()</code> — calls <code>analyzeSource(parsedSource)</code> on every detector, merges all returned warnings into one list, sorts by line (tie-broken by category), prints each one, and returns the total warning count</li>
-      </ul>
-    </article>
-
-  </div>
-</section>
-
-  <!-- CODE STRUCTURE -->
-  <section class="section" id="code-structure">
-    <p class="section-label">// 03 &nbsp;code structure</p>
-    <h2>Code Structure</h2>
-    <p class="section-intro">One file per concern. Each module owns a single smell, or the parsing/orchestration that feeds all of them.</p>
-
+    <h3 class="subhead">Code Structure — one file per concern</h3>
     <div class="module-grid">
 
       <article class="module-card">
@@ -366,7 +494,7 @@
       <article class="module-card">
         <h3>SmellyCodeDetector.cpp</h3>
         <ul class="fn-list">
-          <li>Parses the input file once at construction and owns one instance of every detector; <code>runDetectors()</code> merges, sorts, and prints all of their warnings.</li>
+          <li>Parses the input file once at construction and owns one instance of every detector; <code>runDetectors()</code> merges, sorts, and prints all of their warnings, and retains them for later fix application.</li>
         </ul>
       </article>
 
@@ -401,14 +529,21 @@
       <article class="module-card">
         <h3>redundantCodeChecker.cpp</h3>
         <ul class="fn-list">
-          <li>Unused variables, redundant boolean comparisons, redundant if/else boolean returns, and chained-if patterns — four checks in one traversal.</li>
+          <li>Unused variables, redundant boolean comparisons, redundant if/else boolean returns, and chained-if patterns — four checks in one traversal. The first three also generate a safe <code>Edit</code> for auto-fixing; chained-if is warning-only.</li>
         </ul>
       </article>
 
       <article class="module-card">
         <h3>deadCodeChecker.cpp</h3>
         <ul class="fn-list">
-          <li>Unreachable code after an unconditional exit, and unused/dead functions unreachable from <code>main</code> via a call graph.</li>
+          <li>Unreachable code after an unconditional exit (auto-fixable, unless the function contains a <code>goto</code>/label), and unused/dead functions unreachable from <code>main</code> via a call graph (warning-only).</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>FixApplier.cpp</h3>
+        <ul class="fn-list">
+          <li>Declares <code>applyFixes()</code> in <code>Detector.h</code>; collects every warning's <code>Edit</code>, applies them back-to-front by byte offset, and skips any that overlap one already applied.</li>
         </ul>
       </article>
 
@@ -443,25 +578,236 @@
       <article class="module-card">
         <h3>inheritanceChecker.cpp</h3>
         <ul class="fn-list">
-          <li>Flags classes that inherit from a base class without ever using that inheritance.</li>
+          <li>Flags classes that inherit from a base class without ever using that inheritance — including uses of the base class from outside the subclass itself, and object-slicing usage — and offers a refactored version of the flagged code alongside the original and a changelog.</li>
         </ul>
       </article>
 
       <article class="module-card">
         <h3>memoryChecker.cpp</h3>
         <ul class="fn-list">
-          <li>Flags paths where allocated memory isn't freed before a function returns.</li>
+          <li>Flags paths where allocated memory isn't freed before a function returns — recognizing <code>delete</code>/<code>free()</code> as well as custom deallocation functions collected from elsewhere in the source.</li>
         </ul>
       </article>
 
     </div>
-  </section>
 
-  <!-- INTERNAL API -->
-  <section class="section" id="api">
-    <p class="section-label">// 04 &nbsp;internal api</p>
-    <h2>Internal API</h2>
-    <p class="section-intro">The actual functions each module exposes, grouped by file.</p>
+    <h3 class="subhead">Class &amp; Struct Reference</h3>
+    <p class="section-intro" style="margin-bottom:2rem;">
+      Structs carry data between stages; classes carry behavior. Every detector is a
+      subclass of the same abstract <code>Detector</code>, so <code>SmellyCodeDetector</code>
+      can run all of them the same way and collect their results into one shared list.
+      Some warnings also carry an <code>Edit</code> — a safe, byte-precise fix that
+      <code>FixApplier</code> can splice into the source on request.
+    </p>
+
+    <div class="type-grid">
+
+      <article class="type-card type-struct">
+        <p class="type-kind">struct</p>
+        <h3>ParsedSource</h3>
+        <ul>
+          <li><code>source</code> — the raw, unmodified source code (including comments), read once from the input file.</li>
+          <li><code>tree</code> — a <code>TSTree*</code>, the full tree-sitter parse tree for that source. This replaced the old pre-sliced function/variable data entirely — every detector walks this tree directly instead.</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-struct">
+        <p class="type-kind">struct</p>
+        <h3>Edit</h3>
+        <ul>
+          <li><code>startByte</code> / <code>endByte</code> — the byte range in the original source to replace.</li>
+          <li><code>replacement</code> — the text to splice in; an empty string deletes the range.</li>
+          <li>Only produced by a check when the fix is provably safe from the AST alone — no cross-function or whole-program reasoning required.</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-struct">
+        <p class="type-kind">struct</p>
+        <h3>Warning</h3>
+        <ul>
+          <li><code>line</code> — the source line the warning applies to.</li>
+          <li><code>category</code> — a short label identifying which check raised it, e.g. <code>"Poor Naming"</code>, <code>"deep-if"</code>, <code>"repeated-code"</code>.</li>
+          <li><code>message</code> — the human-readable warning text.</li>
+          <li><code>fix</code> — a <code>std::optional&lt;Edit&gt;</code>; empty when the check has no safe auto-fix, populated when it does.</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>Parser</h3>
+        <ul>
+          <li><code>parse()</code> — the only public method. Reads the opened input file into <code>source</code> in one pass via a stringstream's <code>rdbuf()</code>, spins up a <code>TSParser</code> configured for the <code>tree_sitter_cpp()</code> grammar, and parses that raw source directly into a <code>TSTree</code>.</li>
+          <li>Called exactly once, in <code>main.cpp</code>; the resulting <code>ParsedSource</code> is reused by every detector instead of each one re-parsing the file independently.</li>
+          <li>Fails safely — if the tree fails to build, it logs an error to stderr, cleans up the parser, and returns <code>ParsedSource{source, nullptr}</code> rather than crashing. Every detector already checks for a null tree before walking it.</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-abstract">
+        <p class="type-kind">abstract base class</p>
+        <h3>Detector</h3>
+        <ul>
+          <li><code>analyzeSource(const ParsedSource&amp;)</code> — pure virtual; every subclass implements this to walk the tree and return a <code>std::vector&lt;Warning&gt;</code> of everything it found.</li>
+          <li><code>visitNode(TSNode, const ParsedSource&amp;, std::vector&lt;Warning&gt;&amp;)</code> — also part of the interface; each subclass's recursive tree-walk, dispatching to its own checks by node type and appending to the shared warnings vector. Detectors no longer print anything themselves — output is centralized in <code>SmellyCodeDetector</code>.</li>
+          <li>Virtual destructor, since detectors are used polymorphically</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>CommentChecker <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Walks the tree for <code>function_definition</code> nodes and checks the immediately preceding sibling for a <code>comment</code> node</li>
+          <li>Falls back to recursively scanning the function's body for any interior or inline comment</li>
+          <li>Also checks for a trailing comment on the same source line as the function's closing brace</li>
+          <li>Flags any function matching none of the above as having no comments</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>PoorNameChecker <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Traverses the tree searching for <code>declaration</code> or <code>function_definition</code> nodes</li>
+          <li>For declarations, resolves the identifier out of <code>identifier</code>, <code>init_declarator</code>, or <code>array_declarator</code> children before checking it</li>
+          <li>For functions, delegates the function name and each parameter name to <code>FunctionAnalyzer</code></li>
+          <li>Checks every resolved name's validity via <code>NameAnalyzer</code></li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>NameAnalyzer</h3>
+        <ul>
+          <li>Extracts a variable's identifier name from the raw source using its byte offsets</li>
+          <li>Finds the line number a given node starts on</li>
+          <li>Depth-first searches a subtree for its first <code>identifier</code> node</li>
+          <li>Determines whether a name is poor using a length heuristic (with exceptions for common loop counters) plus regex checks for boolean-prefix naming, generic function verbs, and generic placeholder names like <code>temp</code> or <code>data</code></li>
+          <li>Given a name and line, appends a formatted "Poor Naming" warning</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>FunctionAnalyzer</h3>
+        <ul>
+          <li>Checks whether a function's name is poor, using <code>NameAnalyzer</code>'s methods</li>
+          <li>Iterates a function's parameter list and checks each parameter's name via <code>NameAnalyzer</code></li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>RedundantCodeChecker <span class="extends">extends Detector</span></h3>
+        <h4>Checks implemented</h4>
+        <ul>
+          <li>Unused/dead variables — declared but never referenced again within their own scope, correctly handling shadowing. <strong>Auto-fixable</strong>: deletes the enclosing declaration statement, but only when it has a single declarator.</li>
+          <li>Redundant boolean comparisons — <code>x == true</code>, <code>x != false</code>, etc. <strong>Auto-fixable</strong>: replaces the comparison with the simplified expression.</li>
+          <li>Redundant if/else returning boolean literals — <code>if (cond) return true; else return false;</code> <strong>Auto-fixable</strong>: replaces the whole if/else with a single <code>return</code>.</li>
+          <li>Chained if-statements that should be if/else if/else — consecutive sibling <code>if</code>s that each unconditionally return, with no <code>else</code>. <strong>No auto-fix</strong> — restructuring into an if/else chain is a real rewrite, not a safe text splice.</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>DeadCodeChecker <span class="extends">extends Detector</span></h3>
+        <h4>Checks implemented</h4>
+        <ul>
+          <li>Unreachable code — walks each block's statements in order; once one is found to unconditionally exit (via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or an if/else where both branches always exit), every sibling statement after it in that block is flagged. <strong>Auto-fixable</strong>: deletes the unreachable range — except auto-fix is suppressed for any function containing a <code>goto</code> or a label, since the reachability model doesn't account for jump targets and could otherwise delete a line another <code>goto</code> depends on.</li>
+          <li>Unused/dead functions — builds a call graph of every top-level function to the names it calls, then runs an iterative DFS from <code>main</code> to compute which functions are actually reachable; anything defined but unreachable (and not <code>main</code> itself) is flagged. <strong>No auto-fix</strong> — the call graph doesn't model member calls, qualified calls, function pointers, or virtual dispatch, so a false "unreachable" verdict could mean deleting live code.</li>
+          <li>Skips the unused-function check entirely if the file has no <code>main</code>, since reachability can't be determined</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>RepeatedCodeChecker <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Scans each function's <code>compound_statement</code> blocks for runs of consecutive statements repeated elsewhere in the same block</li>
+          <li>Structurally hashes each statement subtree so identical statements collide to the same key, regardless of exact source formatting</li>
+          <li>Slides a window across the block's statements, largest size first, grouping candidates by hash in an <code>unordered_map</code></li>
+          <li>Confirms every hash match with a full structural comparison before reporting, to rule out collisions</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>DeepIfDetector <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Tracks nesting depth as it recurses, incrementing on entering an <code>if_statement</code> and decrementing on the way back out</li>
+          <li>Flags any <code>if_statement</code> whose depth exceeds <code>MAX_DEPTH</code> as a "deep-if" warning</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>LongParamList <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Traverses the tree for <code>function_definition</code> nodes</li>
+          <li>Counts each function's declared parameters and flags it once the count exceeds a defined threshold</li>
+          <li>Resolves the function's full name via the same identifier/declarator walk used elsewhere, for the warning message</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>DataClumpDetector <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Searches the tree for <code>function_definition</code> and <code>compound_statement</code> nodes</li>
+          <li>Inside a block, groups variables that are declared together and arguments that are passed together into the same call, using each group as a key into a map</li>
+          <li>The map's value, <code>ClumpInfo</code>, tracks how many times that exact group of names occurred and at which line numbers</li>
+          <li>Also checks a function's own parameter list for the same recurring groupings</li>
+          <li>Any group that recurs often enough is reported as a data clump, with every occurrence's line number listed</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>InheritanceChecker <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Traverses the tree for <code>class_specifier</code> nodes</li>
+          <li>For each class that actually inherits from a base class, scans its body for evidence the inheritance is being used: overridden functions, calls to the base class's functions, or a constructor call into the base class</li>
+          <li>Also checks usage <em>outside</em> the subclass's own body — whether any instance of the subclass accesses a member the base class defines, anywhere else in the source file — and checks for object slicing, where a subclass instance is assigned to or passed as the base type</li>
+          <li>If none of the in-class, external-usage, or slicing signals are present, the inheritance is flagged as redundant</li>
+          <li>On a redundant-inheritance finding, offers a refactored version of the code, printed alongside the original with a changelog of what changed</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>MemoryChecker <span class="extends">extends Detector</span></h3>
+        <ul>
+          <li>Before traversing, scans the whole source for functions that themselves deallocate one of their parameters — e.g. a custom wrapper around <code>delete</code>/<code>free()</code> — and records them in <code>deallocatingFunctions</code>, so a call to one of those later counts as freeing the memory too</li>
+          <li>Tracks every memory allocation it sees, keyed by variable name and location, in <code>trackedAllocations</code></li>
+          <li>Walks the function body and, at every <code>if</code> statement, branches into each possible path so both sides of a conditional are checked independently</li>
+          <li>Flags any path that reaches a <code>return</code> without the corresponding allocation having been freed first — either directly (<code>delete</code>/<code>free()</code>) or via a recognized custom deallocating function</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">free function</p>
+        <h3>FixApplier <span class="extends">applyFixes()</span></h3>
+        <ul>
+          <li>Declared in <code>Detector.h</code>, defined in <code>FixApplier.cpp</code>; signature is <code>std::string applyFixes(const std::string&amp; source, const std::vector&lt;Warning&gt;&amp; warnings)</code></li>
+          <li>Collects every warning's <code>Edit</code>, sorts them descending by <code>startByte</code>, then splices each into a copy of the source — descending order means an earlier splice never invalidates a later edit's byte offsets</li>
+          <li>Skips any edit that overlaps one already applied, so two checks flagging the same region (e.g. a boolean simplification nested inside an if/else that's also being collapsed) can't corrupt the file — the skipped edit's warning is still reported, just not auto-applied in that pass</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>SmellyCodeDetector</h3>
+        <ul>
+          <li>Owns one <code>Parser</code> and one instance of every registered detector — <code>PoorNameChecker</code>, <code>RedundantCodeChecker</code>, <code>DeadCodeChecker</code>, <code>RepeatedCodeChecker</code>, <code>CommentChecker</code>, <code>DeepIfDetector</code>, and <code>LongParamList</code> — held as member objects and registered into a <code>std::vector&lt;Detector*&gt;</code> in the constructor</li>
+          <li>Constructor takes the opened input file and immediately parses it, storing the result in <code>parsedSource</code></li>
+          <li><code>runDetectors()</code> — calls <code>analyzeSource(parsedSource)</code> on every detector, merges all returned warnings into one list, sorts by line (tie-broken by category), prints each one, stores the merged list in the <code>allWarnings</code> member, and returns the total warning count</li>
+          <li><code>getWarnings()</code> / <code>getParsedSource()</code> — const accessors exposing the retained <code>allWarnings</code> and <code>parsedSource</code>, so <code>main.cpp</code> can prompt for and apply fixes after <code>runDetectors()</code> returns</li>
+        </ul>
+      </article>
+
+    </div>
+
+    <h3 class="subhead">Internal API</h3>
+    <p class="section-intro" style="margin-bottom:2rem;">The actual functions each module exposes, grouped by file.</p>
 
     <div class="module-grid">
 
@@ -476,7 +822,9 @@
         <h3>SmellyCodeDetector</h3>
         <ul class="fn-list">
           <li><code>SmellyCodeDetector(const std::ifstream&amp; inputFile)</code> — parses the file immediately and registers one instance of every detector</li>
-          <li><code>int runDetectors()</code> — runs <code>analyzeSource()</code> on every detector, merges the results, sorts by line then category, prints <code>"Warning: [category]. message(line N)"</code> for each, and returns the total count</li>
+          <li><code>int runDetectors()</code> — runs <code>analyzeSource()</code> on every detector, merges the results, sorts by line then category, prints <code>"Warning: [category]. message(line N)"</code> for each, stores the merged list in the <code>allWarnings</code> member, and returns the total count</li>
+          <li><code>const std::vector&lt;Warning&gt;&amp; getWarnings() const</code> — exposes <code>allWarnings</code> after <code>runDetectors()</code> has run</li>
+          <li><code>const ParsedSource&amp; getParsedSource() const</code> — exposes the stored <code>parsedSource</code>, so callers have the original source text to pass into <code>applyFixes()</code></li>
         </ul>
       </article>
 
@@ -524,14 +872,14 @@
           <li><code>void visitNode(...)</code> — single recursive walk, dispatching by node type (<code>function_definition</code>, <code>binary_expression</code>, <code>if_statement</code>, <code>compound_statement</code>)</li>
           <li><code>std::vector&lt;Warning&gt; analyzeSource(const ParsedSource&amp;)</code> — gets the tree's root node, kicks off <code>visitNode()</code>, returns all warnings found</li>
           <li><code>std::string nodeText(TSNode, const std::string&amp;)</code> — extracts a node's exact source text via its byte offsets</li>
-          <li><code>void checkUnusedVariables(...)</code> — flags variables declared but never referenced again, scoped per-declaration to correctly handle shadowing</li>
-          <li><code>extractIdentifierFromDeclarator()</code> / <code>collectDeclarations()</code> — resolve declared variable names from a <code>declaration</code> node, including pointers and comma-separated declarations</li>
+          <li><code>void checkUnusedVariables(...)</code> — flags variables declared but never referenced again, scoped per-declaration to correctly handle shadowing; when the enclosing <code>declaration</code> has exactly one declarator, attaches an <code>Edit</code> deleting the whole statement (plus its trailing newline)</li>
+          <li><code>extractIdentifierFromDeclarator()</code> / <code>collectDeclarations()</code> — resolve declared variable names from a <code>declaration</code> node, including pointers and comma-separated declarations; also used to count sibling declarators when deciding whether a fix is safe</li>
           <li><code>findEnclosingScope()</code> — walks up from a declarator to the nearest enclosing <code>compound_statement</code>, so usage counting starts from the declaration's own scope</li>
           <li><code>blockRedeclares()</code> — checks whether a block directly redeclares a given name, used to detect shadowing</li>
           <li><code>countIdentifierOccurrences()</code> — counts references to a name within a subtree, skipping into any nested block that redeclares the name</li>
-          <li><code>checkBooleanComparison()</code> — flags <code>x == true</code> / <code>x != false</code>-style comparisons and suggests the simplification</li>
-          <li><code>checkRedundantIfElseReturn()</code> / <code>unwrapToReturnStatement()</code> — flags if/else branches that both return opposite boolean literals</li>
-          <li><code>checkChainedReturnIfs()</code> / <code>alwaysReturns()</code> / <code>getLastStatement()</code> — flags consecutive if-statements, each returning unconditionally with no <code>else</code>; <code>getLastStatement()</code> skips brace tokens and comments to find a block's real final statement, which <code>alwaysReturns()</code> checks is itself a return</li>
+          <li><code>checkBooleanComparison()</code> — flags <code>x == true</code> / <code>x != false</code>-style comparisons, suggests the simplification, and attaches an <code>Edit</code> replacing the comparison expression with it</li>
+          <li><code>checkRedundantIfElseReturn()</code> / <code>unwrapToReturnStatement()</code> — flags if/else branches that both return opposite boolean literals, and attaches an <code>Edit</code> replacing the whole <code>if_statement</code> with a single <code>return</code></li>
+          <li><code>checkChainedReturnIfs()</code> / <code>alwaysReturns()</code> / <code>getLastStatement()</code> — flags consecutive if-statements, each returning unconditionally with no <code>else</code>; no <code>Edit</code> is attached, since collapsing them into an if/else chain is a structural rewrite rather than a text splice; <code>getLastStatement()</code> skips brace tokens and comments to find a block's real final statement, which <code>alwaysReturns()</code> checks is itself a return</li>
         </ul>
       </article>
 
@@ -543,10 +891,19 @@
           <li><code>std::string nodeText(TSNode, const std::string&amp;)</code> — extracts a node's exact text via byte offsets</li>
           <li><code>TSNode getLastStatement(TSNode)</code> — walks a block's children, skipping brace tokens and comments, to find its final real statement</li>
           <li><code>bool alwaysExits(TSNode)</code> — true if a statement unconditionally exits via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or (for an <code>if</code>) has an <code>else</code> where both branches always exit; recurses through <code>compound_statement</code> and <code>else_clause</code> wrappers</li>
-          <li><code>void checkUnreachableCode(...)</code> — walks a block's direct children in order; once one satisfies <code>alwaysExits()</code>, every later sibling in that block is flagged</li>
+          <li><code>bool containsGotoOrLabel(TSNode)</code> — recursively checks a subtree for any <code>goto_statement</code> or <code>labeled_statement</code></li>
+          <li><code>TSNode findEnclosingFunction(TSNode)</code> — walks up from any node to its enclosing <code>function_definition</code></li>
+          <li><code>void checkUnreachableCode(...)</code> — walks a block's direct children in order; once one satisfies <code>alwaysExits()</code>, every later sibling in that block is flagged. Before attaching an <code>Edit</code> that deletes the unreachable range, checks <code>containsGotoOrLabel()</code> on the enclosing function via <code>findEnclosingFunction()</code> — if it contains a <code>goto</code> or label anywhere, the fix is suppressed (warning still reported) since the reachability model can't account for jump targets</li>
           <li><code>std::string getFunctionName(TSNode)</code> — resolves a <code>function_definition</code>'s declarator down to its identifier</li>
           <li><code>std::set&lt;std::string&gt; collectCalledFunctionNames(TSNode)</code> — scans a function body for <code>call_expression</code> nodes and collects each callee's name (plain identifier calls only)</li>
-          <li><code>void checkUnusedFunctions(...)</code> — collects every top-level function, skips the check if no <code>main</code> exists, builds a call graph via <code>collectCalledFunctionNames()</code>, runs an iterative DFS from <code>main</code> to compute the reachable set, and flags any defined function outside it</li>
+          <li><code>void checkUnusedFunctions(...)</code> — collects every top-level function, skips the check if no <code>main</code> exists, builds a call graph via <code>collectCalledFunctionNames()</code>, runs an iterative DFS from <code>main</code> to compute the reachable set, and flags any defined function outside it; never attaches an <code>Edit</code>, since the call graph doesn't model member calls, qualified calls, function pointers, or virtual dispatch</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>FixApplier.cpp</h3>
+        <ul class="fn-list">
+          <li><code>std::string applyFixes(const std::string&amp; source, const std::vector&lt;Warning&gt;&amp; warnings)</code> — declared in <code>Detector.h</code>; collects every warning's <code>Edit</code>, sorts them descending by <code>startByte</code>, splices each into a copy of <code>source</code>, and skips any edit whose range overlaps one already applied</li>
         </ul>
       </article>
 
@@ -602,41 +959,40 @@
           <li><code>std::vector&lt;Warning&gt; analyzeSource(const ParsedSource&amp;)</code> — runs <code>visitNode()</code> from the tree's root</li>
           <li><code>void visitNode(...)</code> — traverses the tree for <code>class_specifier</code> nodes and calls <code>checkClass()</code> on each</li>
           <li><code>std::string nodeText(TSNode)</code> — extracts a node's raw text</li>
-          <li><code>TSNode findChildByType(...)</code> — returns a node's child matching a given type</li>
+          <li><code>TSNode findChildByType(...)</code> — returns the child of a given node matching a given type</li>
           <li><code>std::string extractBaseClasses(TSNode)</code> — determines whether a class actually inherits, returning its parent class's name if so</li>
           <li><code>bool scanForInheritance(TSNode)</code> — checks a class body for overridden functions, base-class function calls, or a base-class constructor call; any one of these means the inheritance isn't redundant</li>
-          <li><code>void checkClass(TSNode)</code> — for an inheriting class, scans its body via <code>scanForInheritance()</code>; if none of the three usage signals are found, prints a redundant-inheritance warning</li>
+          <li><code>void checkClass(TSNode)</code> — for an inheriting class, scans its body via <code>scanForInheritance()</code>, builds a list of which of the three in-class usage signals are present; if that list (combined with the external-usage and slicing checks below) is empty, prints a redundant-inheritance warning</li>
+          <li><code>TSNode findClassByName(...)</code> — searches the whole tree for the <code>class_specifier</code> node matching a given class name</li>
+          <li><code>bool isBaseUsedExternally(...)</code> — checks whether the base class is used outside the subclass's own scope, by checking for the subclass's member names being accessed from elsewhere</li>
+          <li><code>collectInstanceOfType(...)</code> — builds a list of variable declarations whose type matches the subclass name</li>
+          <li><code>collectMemberNames(...)</code> — builds a list of all members of a class body, reading each name from its <code>field_identifier</code> node</li>
+          <li><code>void checkExternalMemberUsage(...)</code> — walks the entire source file looking for a variable/member access pair where the variable matches a collected instance name and the member matches a collected member name</li>
+          <li><code>TSNode findFunctionByName(...)</code> — searches the tree for the <code>function_definition</code> node matching a given name</li>
+          <li><code>scanForSlicingUsage(...)</code> — walks the file for either an assignment using an operator or a subclass object passed into a function by value, both of which can slice the object down to its base type</li>
+          <li><code>bool isBaseUsedViaSlicing(...)</code> — checks whether a subclass instance is assigned to something typed as the base class member</li>
+          <li><code>offerRefactoring(...)</code> — called once an unused inheritance is confirmed; prints a refactored version of the code alongside the original, plus a changelog of what changed</li>
         </ul>
       </article>
 
       <article class="module-card">
         <h3>memoryChecker.cpp</h3>
         <ul class="fn-list">
-          <li><code>std::vector&lt;Warning&gt; analyzeSource(const ParsedSource&amp;)</code> — clears <code>trackedAllocations</code>, then runs <code>visitNode()</code></li>
+          <li><code>std::vector&lt;Warning&gt; analyzeSource(const ParsedSource&amp;)</code> — clears <code>trackedAllocations</code>, calls <code>collectDeallocatingFunctions()</code> to populate <code>deallocatingFunctions</code>, then runs <code>visitNode()</code></li>
           <li><code>std::string getNode(TSNode)</code> — same byte-offset text extraction as <code>redundantCodeChecker</code>'s <code>nodeText()</code></li>
-          <li><code>void visitNode(...)</code> — base case; checks that every memory allocation has a corresponding deallocation before a <code>return</code></li>
+          <li><code>void visitNode(...)</code> — base case; checks that every memory allocation has a corresponding <code>delete</code>, <code>free()</code>, or custom-function deallocation before a <code>return</code></li>
           <li><code>void traverse(...)</code> — branch case; at each <code>if</code> statement, calls <code>visitNode()</code> down every possible path to check whether any path reaches a <code>return</code> with memory still allocated</li>
+          <li><code>void collectDeallocatingFunctions()</code> — scans the source for functions whose body deallocates one of their own parameters (via <code>checkIfBodyDeallocates()</code>), and records each into <code>deallocatingFunctions</code></li>
+          <li><code>bool checkIfBodyDeallocates(...)</code> — returns whether a given function's body deallocates a given parameter</li>
+          <li><code>std::string getAllocationVariable(...)</code> — returns the name of the variable that a given allocation expression is assigning into</li>
           <li><code>trackedAllocations</code> — list of unfreed allocation locations and variable names found so far</li>
+          <li><code>deallocatingFunctions</code> — list of functions recognized as deallocating one of their parameters, used to extend the freed-memory check beyond direct <code>delete</code>/<code>free()</code> calls</li>
         </ul>
       </article>
 
     </div>
 
-    <div class="terminal" role="img" aria-label="Example usage of the internal API" style="margin-top: 2rem;">
-      <div class="terminal-bar">
-        <span class="dot dot-a"></span><span class="dot dot-b"></span><span class="dot dot-c"></span>
-        <span class="terminal-title">usage — SmellyCodeDetector</span>
-      </div>
-      <pre class="terminal-body"><span class="t-dim">std::ifstream inputFile("example.cpp");
-SmellyCodeDetector detector(inputFile);
-int warningCount = detector.runDetectors();</span></pre>
-    </div>
-  </section>
-
-  <!-- DEPENDENCIES -->
-  <section class="section" id="dependencies">
-    <p class="section-label">// 05 &nbsp;dependencies</p>
-    <h2>Dependencies</h2>
+    <h3 class="subhead">Dependencies</h3>
     <div class="tag-grid">
       <div class="tag-card"><h3>tree-sitter</h3><p>Builds the <code>TSTree</code> for the source file in <code>Parser::parse()</code>, using the <code>tree_sitter_cpp()</code> grammar. Every detector walks this tree directly via <code>TSNode</code> traversal instead of pre-sliced text.</p></div>
       <div class="tag-card"><h3>fstream</h3><p>Reads the input from a C++ source file via <code>std::ifstream</code>.</p></div>
@@ -647,12 +1003,138 @@ int warningCount = detector.runDetectors();</span></pre>
       <div class="tag-card"><h3>vector</h3><p>Carries each detector's <code>std::vector&lt;Warning&gt;</code> results back to <code>SmellyCodeDetector</code>, plus internal working lists like collected declarations, statements, or the DFS stack.</p></div>
       <div class="tag-card"><h3>string</h3><p>Stores the raw source, node text extracted via byte offsets, and variable/function names pulled from the tree.</p></div>
     </div>
-</section>
+  </section>
 
-  <!-- ALGORITHMS -->
-  <section class="section" id="algorithms">
-    <p class="section-label">// 06 &nbsp;performance</p>
-    <h2>Algorithms &amp; Optimizations</h2>
+  <!-- ============================================================
+       ALGORITHMS (pseudocode)
+  ============================================================ -->
+  <section class="section section-wide" id="algorithms">
+    <p class="section-label">// 04 &nbsp;algorithms</p>
+    <h2>Algorithms</h2>
+    <p class="section-intro">Pseudocode for the core algorithms behind parsing and detection.</p>
+
+    <div class="pseudocode-card">
+      <h4>Parse — build the shared AST once</h4>
+      <pre>function parse(inputFile):
+    source ← read_entire_file(inputFile)      // single pass, rdbuf()
+    parser ← new TSParser()
+    set_language(parser, tree_sitter_cpp())
+    tree ← ts_parser_parse_string(parser, source)
+    if tree is null:
+        log_error("failed to parse")
+        return ParsedSource(source, null)
+    return ParsedSource(source, tree)</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>SmellyCodeDetector — orchestrate all checks</h4>
+      <pre>function runDetectors(parsedSource, detectors[]):
+    allWarnings ← []
+    for each detector in detectors:
+        warnings ← detector.analyzeSource(parsedSource)
+        allWarnings.append(warnings)
+
+    sort allWarnings by (line asc, category asc)
+    for each warning in allWarnings:
+        print "Warning: [warning.category]. warning.message (line warning.line)"
+
+    return allWarnings, count(allWarnings)</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>RedundantCodeChecker — unused variable check (with shadowing)</h4>
+      <pre>function checkUnusedVariables(node, parsedSource, warnings[]):
+    for each declaration in node.declarations:
+        for each declarator in declaration.declarators:
+            name ← extractIdentifier(declarator)
+            scope ← findEnclosingScope(declarator)     // nearest compound_statement
+            uses  ← countIdentifierOccurrences(name, scope,
+                        skipNestedIf: blockRedeclares(nestedBlock, name))
+            if uses == 0:
+                fix ← null
+                if declaration.declarators.count == 1:
+                    fix ← Edit(declaration.startByte, declaration.endByte, "")
+                warnings.append(Warning(line(declarator),
+                                         "Redundant dead/unused code",
+                                         "'name' is declared but never used.",
+                                         fix))</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>DeadCodeChecker — unused function via call-graph reachability</h4>
+      <pre>function checkUnusedFunctions(tree, warnings[]):
+    functions ← collect_all(tree, "function_definition")
+    if no function named "main" in functions:
+        return                                  // can't determine reachability
+
+    callGraph ← {}                              // name -> set(names it calls)
+    for each fn in functions:
+        callGraph[fn.name] ← collectCalledFunctionNames(fn.body)
+
+    reachable ← {}                              // visited set
+    stack ← ["main"]
+    while stack is not empty:
+        current ← stack.pop()
+        if current in reachable: continue
+        reachable.add(current)
+        for callee in callGraph[current]:
+            if callee not in reachable:
+                stack.push(callee)
+
+    for each fn in functions:
+        if fn.name not in reachable and fn.name != "main":
+            warnings.append(Warning(line(fn), "unused-function",
+                "Function 'fn.name' is defined but never reachable from main()."))
+            // no Edit attached — call graph doesn't model virtual dispatch,
+            // function pointers, or qualified/member calls</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>RepeatedCodeChecker — structural-hash sliding window</h4>
+      <pre>function findRepeatedBlocks(statements[], warnings[]):
+    covered ← set()
+    for windowSize from len(statements) down to 2:
+        groups ← {}                             // hash -> list of window start indices
+        for i from 0 to len(statements) - windowSize:
+            if any index in [i, i+windowSize) already in covered: continue
+            h ← combinedHash(statements[i .. i+windowSize])
+            groups[h].append(i)
+
+        for hash, positions in groups:
+            if len(positions) < 2: continue
+            confirmed ← [p for p in positions
+                         if subtreesEqual(window(positions[0]), window(p))]
+            if len(confirmed) >= 2:
+                mark covered for every index in every confirmed window
+                warnings.append(reportRepeatedBlock(confirmed, windowSize))</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>FixApplier — apply all safe edits without corrupting offsets</h4>
+      <pre>function applyFixes(source, warnings[]):
+    edits ← [w.fix for w in warnings if w.fix is not null]
+    sort edits descending by startByte           // back-to-front splice
+
+    result ← copy(source)
+    lastAppliedStart ← infinity
+    for edit in edits:
+        if edit.endByte > lastAppliedStart:
+            continue                              // overlaps a prior edit — skip
+        result ← result[0:edit.startByte] + edit.replacement + result[edit.endByte:]
+        lastAppliedStart ← edit.startByte
+
+    return result</pre>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       OPTIMIZATIONS / REFACTORING
+  ============================================================ -->
+  <section class="section" id="optimizations">
+    <p class="section-label">// 05 &nbsp;performance</p>
+    <h2>Optimizations &amp; Refactoring</h2>
+    <p class="section-intro">Optimizations considered and applied over the course of the project.</p>
+
     <div class="tag-grid">
       <div class="tag-card"><h3>Single-read files</h3><p><code>Parser::parse()</code> reads the entire input into one string in a single pass via <code>rdbuf()</code> — the file is read exactly once for the whole program.</p></div>
       <div class="tag-card"><h3>Single parse, shared tree</h3><p>The <code>TSTree</code> is built once in <code>Parser::parse()</code> and reused by every detector afterward, instead of each detector re-parsing the source.</p></div>
@@ -664,13 +1146,181 @@ int warningCount = detector.runDetectors();</span></pre>
       <div class="tag-card"><h3>Centralized sort &amp; print</h3><p>Detectors return warnings rather than printing them, so <code>SmellyCodeDetector::runDetectors()</code> can merge everything and sort once by line (then category) before printing a single ordered report.</p></div>
       <div class="tag-card"><h3>Parallelism</h3><p><code>runDetectors()</code> currently runs each detector's <code>analyzeSource()</code> sequentially — a candidate for future parallel work.</p></div>
     </div>
-</section>
 
-  <!-- SPRINTS -->
+    <h3 class="subhead">Measured benefits</h3>
+    <div class="todo-card">
+      <span class="todo-badge">TODO — fill in</span>
+      <h4>Before/after numbers not yet collected</h4>
+      <p>Each optimization above should be backed by a measurement of what it actually saved. Time the naive version (e.g. re-parsing per detector, pairwise statement comparison in <code>RepeatedCodeChecker</code>) against the optimized version on the same input file(s), and drop the numbers into the table below.</p>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Optimization</th><th>Before</th><th>After</th><th>Improvement</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Single parse vs. re-parse per detector</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>Structural hashing vs. pairwise comparison (repeated-code)</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>Call-graph DFS vs. naive reachability scan</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       TESTING
+  ============================================================ -->
+  <section class="section" id="testing">
+    <p class="section-label">// 06 &nbsp;quality</p>
+    <h2>Testing</h2>
+
+    <div class="todo-card">
+      <span class="todo-badge">TODO — fill in</span>
+      <h4>Test design &amp; limitations</h4>
+      <p>Describe how test cases are structured for each detector, and what's out of scope. Suggested outline:</p>
+      <ul>
+        <li>One test file per detector (e.g. <code>redundantTest.cpp</code>) plus the "Universal Test file" mentioned in Sprint 3 that exercises every detector at once — describe what each covers</li>
+        <li>Categories of cases per detector: base case, multiple occurrences in one function, occurrences across multiple functions/scopes, edge cases (e.g. shadowed variables, nested scopes, comments containing brackets/quotes)</li>
+        <li>Known limitations of the test suite — e.g. does it cover multi-file projects, templates, macros, or only single-file plain C++?</li>
+      </ul>
+    </div>
+
+    <div class="todo-card">
+      <span class="todo-badge">TODO — fill in</span>
+      <h4>Execution</h4>
+      <p>How are the tests run — a shell script, CTest, manually invoking <code>project4.exe</code> against each fixture file and diffing output? Document the exact command(s).</p>
+    </div>
+
+    <h3 class="subhead">Test results (as of last run)</h3>
+    <div class="todo-card">
+      <span class="todo-badge">TODO — fill in</span>
+      <p>Replace this table with the actual current pass/fail state per detector.</p>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Detector</th><th>Test file</th><th>Status</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>RedundantCodeChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>DeadCodeChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>PoorNameChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>CommentChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>RepeatedCodeChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>DeepIfDetector</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>LongParamList</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>DataClumpDetector</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>InheritanceChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>MemoryChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       BENCHMARKING
+  ============================================================ -->
+  <section class="section" id="benchmarking">
+    <p class="section-label">// 07 &nbsp;benchmarking</p>
+    <h2>Benchmarking</h2>
+
+    <div class="todo-card">
+      <span class="todo-badge">TODO — fill in</span>
+      <h4>Parsing / analysis performance</h4>
+      <p>Run the detector against a range of source file sizes (e.g. a small single-file program, a ~1K line file, a ~10K line file, and a large real-world file) and record parse time and total analysis time, with and without the optimizations listed above.</p>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>File</th><th>Size (lines / KB)</th><th>Parse time</th><th>Full analysis time</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="todo-card">
+      <span class="todo-badge">TODO — fill in</span>
+      <h4>Detected / refactored code from real-world C++ projects</h4>
+      <p>Run the tool against a real open-source C++ repository (or a few files pulled from one) and report what it actually found — true positives, false positives you noticed, and what the auto-fix changed. This is the strongest evidence the tool works outside your own test fixtures.</p>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Project</th><th>File(s) analyzed</th><th>Smells found</th><th>Auto-fixed</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       LIMITATIONS
+  ============================================================ -->
+  <section class="section" id="limitations">
+    <p class="section-label">// 08 &nbsp;scope</p>
+    <h2>Limitations of the Current Implementation</h2>
+    <p class="section-intro">What the tool doesn't cover yet, so users don't run into a silent gap.</p>
+
+    <div class="type-grid" style="margin-bottom:2rem;">
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>Unused-function detection is call-graph only</h3>
+        <ul>
+          <li><code>DeadCodeChecker</code>'s reachability model only follows plain identifier calls; it doesn't model member-function calls, qualified calls, function pointers, or virtual/polymorphic dispatch — so a function only ever called through one of those paths can be misreported as unused. No auto-fix is offered for this check for that reason.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>Unreachable-code auto-fix is suppressed with goto/labels</h3>
+        <ul>
+          <li>If a function contains any <code>goto</code> or label, the reachability model can't account for jump targets, so the unreachable-code fix is skipped (the warning still prints) to avoid deleting a line another <code>goto</code> depends on.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>Chained if-return has no auto-fix</h3>
+        <ul>
+          <li>Collapsing consecutive if-returns into an if/else-if/else chain is a structural rewrite, not a safe text splice, so this check is warning-only.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>Single-file analysis</h3>
+        <ul>
+          <li>Detectors operate on one translation unit at a time; there's no cross-file/whole-project analysis (e.g. a function only called from a different file would look unused).</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>Scope limited to defined smell categories</h3>
+        <ul>
+          <li>The tool doesn't attempt full general-purpose C++ static analysis — only the specific smells each detector targets, per the team's original scope decision.</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="todo-card">
+      <span class="todo-badge">TODO — verify &amp; expand</span>
+      <h4>Confirm before publishing</h4>
+      <ul>
+        <li>Note any known false-positive patterns your team has observed while testing (e.g. macro-heavy code, templates, multiple inheritance edge cases).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       PROGRESS LOG (sprints)
+  ============================================================ -->
   <section class="section" id="sprints">
-    <p class="section-label">// 07 &nbsp;progress log</p>
-    <h2>Sprints</h2>
-    <p class="section-intro">What shipped, sprint by sprint. Replace the placeholders below with your own entries.</p>
+    <p class="section-label">// 09 &nbsp;progress log</p>
+    <h2>Progress Log</h2>
+    <p class="section-intro">What shipped, sprint by sprint.</p>
 
     <div class="timeline">
 
@@ -680,8 +1330,8 @@ int warningCount = detector.runDetectors();</span></pre>
           <p class="sprint-meta">Sprint 1 &middot; <span class="sprint-dates">7/27/2026 - 8/2/2026</span></p>
           <h3>// Stuart Arief</h3>
           <ul>
-            <li>Implement working ‘proof of concept’ for the entire detector.</li>
-            <li>Partially functional detection of ‘multiple lines of repeated code’ with basic base cases (If a block of code containing 3 lines of code is repeated in different parts of the input file, emit the warning message).</li>
+            <li>Implement working 'proof of concept' for the entire detector.</li>
+            <li>Partially functional detection of 'multiple lines of repeated code' with basic base cases (If a block of code containing 3 lines of code is repeated in different parts of the input file, emit the warning message).</li>
           </ul>
           <h3>// Rebecca Jennings</h3>
           <ul>
@@ -735,7 +1385,7 @@ int warningCount = detector.runDetectors();</span></pre>
             <li>Write function to strip strings from source code in parser.</li>
             <li>Modify parser so its functions are available for separate use in detectors.</li>
             <li>Update commentchecker using aforementioned function so it will not be tripped up by brackets in string literals.</li>
-            <li>Update commentChecker so that it will not be tripped up by brackets in ‘’ chars.</li>
+            <li>Update commentChecker so that it will not be tripped up by brackets in '' chars.</li>
             <li>Update commentchecker so that it will not be tripped up by brackets in comments.</li>
           </ul>
         </div>
@@ -779,11 +1429,13 @@ int warningCount = detector.runDetectors();</span></pre>
     </div>
   </section>
 
-  <!-- TEAM -->
+  <!-- ============================================================
+       TEAM
+  ============================================================ -->
   <section class="section" id="team">
-    <p class="section-label">// 08 &nbsp;credits</p>
+    <p class="section-label">// 10 &nbsp;credits</p>
     <h2>Team</h2>
-    <p class="section-intro">Our teams contributions to the project.</p>
+    <p class="section-intro">Our team's contributions to the project.</p>
     <div class="team-grid">
       <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, GitHub Page Website</p></div>
       <div class="team-card"><h3>Jimmy Munoz</h3><p>Parser Architecture, Poor Name Checker, Data Clump Checker, GitHub Page Website</p></div>
