@@ -7,6 +7,7 @@
 #include "ParsedSource.h"
 #include "Detector.h"
 #include "NameAnalyzer.h"
+#include <cstring>
 
 class DataClumpDetector : public Detector {
     private:
