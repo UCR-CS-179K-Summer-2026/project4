@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <set>
+#include <utility>
 
 void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
     struct CandidateInfo {
@@ -22,31 +23,36 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
         }
         sort(sortedVariables.begin(), sortedVariables.end());
 
-        // Get triples from frequent pairs
+        // Get pairs from frequent pairs
+        std::vector<std::pair<std::string, std::string>> frequentPairs;
         for(int i = 0; i < sortedVariables.size(); ++i) {
             for(int j = i + 1; j < sortedVariables.size(); ++j) {
-                for(int k = j + 1; k < sortedVariables.size(); ++k) {
-                    const std::string& var1 = sortedVariables[i];
-                    const std::string& var2 = sortedVariables[j];
-                    const std::string& var3 = sortedVariables[k];
+                auto bitsOfPair = variableBitsets[sortedVariables[i]] & variableBitsets[sortedVariables[j]];
+                if(bitsOfPair.count() > 2) {
+                    frequentPairs.push_back({sortedVariables[i], sortedVariables[j]});
+                }
+            }
+        }
 
-                    std::bitset<MAX_GROUPS> combinedBitset = variableBitsets[var1] & variableBitsets[var2] & variableBitsets[var3];
 
-                    if(combinedBitset.count() > 2) {
-                        std::vector<std::string> variableList = {var1, var2, var3};
-                        std::sort(variableList.begin(), variableList.end());
+        // Get triples from frequent pairs
+        for(int i = 0; i < frequentPairs.size(); ++i) {
+            for(int j = 0; j < sortedVariables.size(); ++j) {
+                if(sortedVariables[j] != frequentPairs[i].first && sortedVariables[j] != frequentPairs[i].second) {
+                    auto bitsOfTriple = variableBitsets[frequentPairs[i].first] & variableBitsets[frequentPairs[i].second] & variableBitsets[sortedVariables[j]];
+                    if(bitsOfTriple.count() > 2) {
+                        std::vector<std::string> triple = {frequentPairs[i].first, frequentPairs[i].second, sortedVariables[j]};
+                        std::sort(triple.begin(), triple.end());
 
-                        CandidateInfo& candidateInfo = candidateMap[variableList];
-                        candidateInfo.variableNames.insert(var1);
-                        candidateInfo.variableNames.insert(var2);
-                        candidateInfo.variableNames.insert(var3);
-
-                        for(size_t groupIndex = 0; groupIndex < variableGroups.size(); ++groupIndex) {
-                            if(combinedBitset.test(groupIndex)) {
-                                candidateInfo.lineNumbers.push_back(groupLineNumbers[groupIndex]);
+                        if(candidateMap.find(triple) == candidateMap.end()) {
+                            for(int k = 0; k < variableGroups.size(); ++k) {
+                                if(bitsOfTriple.test(k)) {
+                                    candidateMap[triple].lineNumbers.push_back(groupLineNumbers[k]);
+                                }
                             }
+                            candidateMap[triple].variableNames.insert(triple.begin(), triple.end());
+                            candidateMap[triple].counter = bitsOfTriple.count();
                         }
-                        candidateInfo.counter = static_cast<int>(combinedBitset.count());
                     }
                 }
             }
