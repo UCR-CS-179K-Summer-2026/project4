@@ -249,7 +249,7 @@ unreachable. (line 3)</pre></div>
 
     <div id="ex-unused-func" class="example-card">
       <h4>Unused Function <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
-      <p class="example-desc">A defined function that's unreachable from <code>main()</code> via the call graph. Skipped entirely if the file has no <code>main</code>; no auto-fix, since the call graph doesn't model member calls, function pointers, or virtual dispatch.</p>
+      <p class="example-desc">A defined function that's unreachable from <code>main()</code> via the call graph. Skipped entirely if the file has no <code>main</code>; no auto-fix, since reachability analysis is conservative and warnings must not delete possibly-live code.</p>
       <div class="example-io">
         <div><span class="io-label">Input</span><pre>void legacyCalc() { /* ... */ }
 
@@ -754,7 +754,7 @@ freed on this return path.
         <h4>Checks implemented</h4>
         <ul>
           <li>Unreachable code — walks each block's statements in order; once one is found to unconditionally exit (via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or an if/else where both branches always exit), every sibling statement after it in that block is flagged. <strong>Auto-fixable</strong>: deletes the unreachable range — except auto-fix is suppressed for any function containing a <code>goto</code> or a label, since the reachability model doesn't account for jump targets and could otherwise delete a line another <code>goto</code> depends on.</li>
-          <li>Unused/dead functions — builds a call graph of every top-level function to the names it calls, then runs an iterative DFS from <code>main</code> to compute which functions are actually reachable; anything defined but unreachable (and not <code>main</code> itself) is flagged. <strong>No auto-fix</strong> — the call graph doesn't model member calls, qualified calls, function pointers, or virtual dispatch, so a false "unreachable" verdict could mean deleting live code.</li>
+          <li>Unused/dead functions — builds a call graph of every function, resolving known function-pointer targets and virtual calls through <code>PointsToAnalyzer</code>, then runs an iterative DFS from <code>main</code>; anything defined but unreachable (and not <code>main</code> itself) is flagged. <strong>No auto-fix</strong> — reachability remains conservative when a target cannot be resolved.</li>
           <li>Skips the unused-function check entirely if the file has no <code>main</code>, since reachability can't be determined</li>
         </ul>
       </article>
@@ -763,9 +763,10 @@ freed on this return path.
         <p class="type-kind">class</p>
         <h3>PointsToAnalyzer</h3>
         <ul>
+          <li>Parse the program → track pointer relationships → resolve indirect calls → build the call graph → traverse from main → report unreachable functions.</li>
           <li><code>registerParams()</code> records ordered parameter identities for interprocedural argument propagation.</li>
           <li><code>collectFromFunction()</code> performs two passes over a function body: it identifies referenced variables, then collects type seeds and flow edges from declarations, assignments, calls, and returns.</li>
-          <li><code>solve()</code> repeatedly propagates points-to types across <code>FlowEdge</code>s until no set changes.</li>
+          <li><code>solve()</code> repeatedly propagates points-to types and known callable targets across <code>FlowEdge</code>s until no set changes.</li>
           <li><code>pointsTo()</code> queries inferred concrete types; <code>resolveVirtualCall()</code> maps those types through <code>ClassHierarchy</code> to qualified method names.</li>
           <li>The current pass is flow-insensitive, assumes single inheritance in hierarchy resolution, and leaves nested blocks such as if/else bodies out of scope.</li>
         </ul>
@@ -948,8 +949,8 @@ freed on this return path.
           <li><code>TSNode findEnclosingFunction(TSNode)</code> — walks up from any node to its enclosing <code>function_definition</code></li>
           <li><code>void checkUnreachableCode(...)</code> — walks a block's direct children in order; once one satisfies <code>alwaysExits()</code>, every later sibling in that block is flagged. Before attaching an <code>Edit</code> that deletes the unreachable range, checks <code>containsGotoOrLabel()</code> on the enclosing function via <code>findEnclosingFunction()</code> — if it contains a <code>goto</code> or label anywhere, the fix is suppressed (warning still reported) since the reachability model can't account for jump targets</li>
           <li><code>std::string getFunctionName(TSNode)</code> — resolves a <code>function_definition</code>'s declarator down to its identifier</li>
-          <li><code>std::set&lt;std::string&gt; collectCalledFunctionNames(TSNode)</code> — scans a function body for <code>call_expression</code> nodes and collects each callee's name (plain identifier calls only)</li>
-          <li><code>void checkUnusedFunctions(...)</code> — collects every top-level function, skips the check if no <code>main</code> exists, builds a call graph via <code>collectCalledFunctionNames()</code>, runs an iterative DFS from <code>main</code> to compute the reachable set, and flags any defined function outside it; never attaches an <code>Edit</code>, since the call graph doesn't model member calls, qualified calls, function pointers, or virtual dispatch</li>
+          <li><code>std::set&lt;std::string&gt; collectCalledFunctionNames(TSNode, ...)</code> — scans <code>call_expression</code> nodes, resolves known function-pointer targets through <code>PointsToAnalyzer</code>, and resolves pointer-member calls through the class hierarchy</li>
+          <li><code>void checkUnusedFunctions(...)</code> — collects every top-level function and class method, registers parameters, runs <code>PointsToAnalyzer</code>, builds the resolved call graph, then performs iterative DFS from <code>main</code> and flags any defined function outside the reachable set; never attaches an <code>Edit</code></li>
         </ul>
       </article>
 
@@ -1127,32 +1128,77 @@ freed on this return path.
     </div>
 
     <div class="pseudocode-card">
-      <h4>DeadCodeChecker — unused function via call-graph reachability</h4>
-      <pre>function checkUnusedFunctions(tree, warnings[]):
-    functions ← collect_all(tree, "function_definition")
-    if no function named "main" in functions:
-        return                                  // can't determine reachability
+        <h4>DeadCodeChecker — unused function via resolved call-graph reachability</h4>
+        <pre>function checkUnusedFunctions(tree, warnings[]):
+      functions, hierarchy ← collect_functions_and_class_methods(tree)
+      if no function named "main" in functions:
+        return                                      // can't determine reachability
 
-    callGraph ← {}                              // name -> set(names it calls)
-    for each fn in functions:
-        callGraph[fn.name] ← collectCalledFunctionNames(fn.body)
+      pointsTo ← new PointsToAnalyzer(hierarchy)
+      for each fn in functions:
+        pointsTo.registerParams(fn.name, fn.parameter_names)
+        pointsTo.registerFunction(fn.name)
+        pointsTo.collectFromFunction(fn.name, fn.body)
+      pointsTo.solve()                                // solve aliases and callbacks
 
-    reachable ← {}                              // visited set
-    stack ← ["main"]
-    while stack is not empty:
+      callGraph ← {}
+      for each fn in functions:
+        callGraph[fn.name] ← {}
+        for each call in fn.body:
+          if call uses a known function pointer:
+            callGraph[fn.name].add(pointsTo.callableTargets(call.variable))
+          else if call is a pointer-member call:
+            callGraph[fn.name].add(
+              pointsTo.resolveVirtualCall(call.object, call.method))
+          else:
+            callGraph[fn.name].add(call.direct_function_name)
+
+      reachable ← {}; stack ← ["main"]
+      while stack is not empty:
         current ← stack.pop()
         if current in reachable: continue
         reachable.add(current)
-        for callee in callGraph[current]:
-            if callee not in reachable:
-                stack.push(callee)
+        stack.push(each callee in callGraph[current])
 
-    for each fn in functions:
+      for each fn in functions:
         if fn.name not in reachable and fn.name != "main":
-            warnings.append(Warning(line(fn), "unused-function",
-                "Function 'fn.name' is defined but never reachable from main()."))
-            // no Edit attached — call graph doesn't model virtual dispatch,
-            // function pointers, or qualified/member calls</pre>
+          warnings.append(Warning(line(fn), "unused-function",
+            "Function 'fn.name' is defined but never reachable from main()."))
+          // warning only: deleting code based on an uncertain edge is unsafe</pre>
+      </div>
+
+      <div class="pseudocode-card">
+        <h4>PointsToAnalyzer — resolve object aliases and function pointers</h4>
+        <pre>function collectFromFunction(functionName, body):
+      referenced ← every identifier used in body, excluding plain declaration names
+
+      for each top-level statement in body:
+        if declaration of pointer variable:
+          if initializer is a concrete object type:
+            pointsTo[variable].add(declared_type)
+          if initializer is an identifier or conditional expression:
+            add_flow_edges(initializer, variable)
+            if initializer names a known function:
+              callableTargets[variable].add(initializer)
+        if assignment target = source:
+          add object and callable flow edges from source to target
+        if call callee(arg1, arg2, ...):
+          add edges from each argument to the registered parameter
+        if return value:
+          add an edge from the returned variable to function.__return__
+
+    function solve():
+      repeat until no set changes:
+        for each object flow edge source → target:
+          pointsTo[target] ← pointsTo[target] ∪ pointsTo[source]
+        for each callable flow edge source → target:
+          callableTargets[target] ← callableTargets[target]
+                        ∪ callableTargets[source]
+
+    function resolveVirtualCall(pointer, method):
+      if pointsTo[pointer] is empty:
+        return every known override of method   // conservative fallback
+      return the nearest override of method for each concrete type in pointsTo[pointer]</pre>
     </div>
 
     <div class="pseudocode-card">
@@ -1384,7 +1430,7 @@ freed on this return path.
         <p class="type-kind">known limitation</p>
         <h3>Unused-function detection is call-graph only</h3>
         <ul>
-          <li><code>DeadCodeChecker</code>'s reachability model only follows plain identifier calls; it doesn't model member-function calls, qualified calls, function pointers, or virtual/polymorphic dispatch — so a function only ever called through one of those paths can be misreported as unused. No auto-fix is offered for this check for that reason.</li>
+          <li><code>DeadCodeChecker</code> resolves direct calls and pointer-member calls with <code>PointsToAnalyzer</code>, including known concrete virtual overrides and callback targets. The analysis remains flow-insensitive, leaves nested blocks outside its points-to pass, and conservatively falls back to possible overrides when a pointer target is unknown. No auto-fix is offered for this check because an uncertain reachability result must not delete live code.</li>
         </ul>
       </article>
       <article class="type-card type-class">
