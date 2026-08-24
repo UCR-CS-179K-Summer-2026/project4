@@ -46,7 +46,7 @@ public:
 
 //----------------------------
 
-//------SHOULD NOT DETECT BUT DETECTS ANYWAY BUGGED!-----
+//------SHOULD NOT DETECT, uses base class member function helper on derived class object u-----
 class UnusedInheritance : public Base {
 public:
     void doOwnThing() {
