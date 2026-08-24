@@ -29,7 +29,7 @@ public:
 //----------------------------
 
 //------SHOULD DETECT as it inherits Base but doesnt use anything from it-----
-class UnusedInheritance : public Parent {
+class UnusedInheritance : public Base {
 public:
     void doOwnThing() {
         int local = 5;
@@ -59,7 +59,7 @@ class Robot: public Walker {
 
 void useRobotExternally(){
     Robot android;
-    android.takeStep();
+    // android.takeStep();
 }
 
 //----------------------------
