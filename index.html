@@ -42,8 +42,8 @@
     <p class="eyebrow">CS179K &middot; Software Engineering</p>
     <h1>Warnings your compiler<br>won't give you.</h1>
     <p class="hero-sub">
-      A static analysis tool that reads a single C++ source file once, then hands the parsed
-      result to a set of independent detectors&nbsp;— each one hunting a different code smell,
+      A static analysis tool that reads one or more C++ source files, parses each file once, then
+      hands each parsed result to a set of independent detectors&nbsp;— each one hunting a different code smell,
       from dead variables and deeply nested conditionals to copy-pasted blocks, unreachable and
       unused functions, bloated parameter lists, data clumps, redundant inheritance, and unfreed
       memory — and printing what it finds straight to the terminal, with safe fixes applied on request.
@@ -136,9 +136,9 @@
             <li><code>cd Debug</code></li>
             <li><code>./project4.exe</code></li>
           </ul>
-          <p class="build-step-note">The program prompts for one or more file names to analyze:</p>
+          <p class="build-step-note">The program prompts for one or more whitespace-separated file names to analyze:</p>
           <ul>
-            <li><code>Enter the name(s) of the file(s) to read: myFile.cpp</code></li>
+            <li><code>Enter the name(s) of the file(s) to read: first.cpp second.cpp</code></li>
           </ul>
           <p class="build-step-note">Paths are resolved relative to the directory you launch the executable from. Since the build places the <code>.exe</code> in <code>build/Debug</code>, either give a relative path back up to your source files (e.g. <code>../../myFile.cpp</code>), or run from the project root instead:</p>
           <ul>
@@ -148,9 +148,10 @@
           <p class="build-step-note">Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file. You'll then be prompted whether to apply automatic fixes:</p>
           <ul>
             <li><code>Some detected smells in "filename.cpp" have automatic fixes available. Apply them? (y/n): y</code></li>
-            <li><code>Fixed file written to: filename.fixed.cpp</code></li>
+            <li><code>Fixed file written to: filename.cpp.fixed.cpp</code></li>
           </ul>
-          <p class="build-step-note">Choosing "y" writes a new file with the same name as the original but with <code>.fixed</code> appended before the extension, leaving your original file untouched. Choosing "n" exits without creating a new file.</p>
+          <p class="build-step-note">The fix prompt appears independently for each successfully opened file. Choosing "y" writes a new file by appending <code>.fixed.cpp</code> to the original path, leaving the original untouched. Choosing "n" skips that file.</p>
+          <p class="build-step-note">After all files finish, the program prints the total smell count and total number of processed files. Missing or unreadable paths are reported and skipped; the run continues with the remaining files.</p>
         </div>
       </li>
     </ol>
@@ -429,14 +430,14 @@ freed on this return path.
         <div class="figure-frame figure-frame-vertical">
           <img src="./images/repeatedCodeDiagram.png" alt="">
         </div>
-        <figcaption>Repeated Code Checker Diagram</figcaption>
+        <figcaption>Repeated Code Detector Diagram</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
           <img src="./images/redundantCodeDiagram.png" alt="">
         </div>
-        <figcaption>Redundant Code Checker Diagram</figcaption>
+        <figcaption>Redundant Code Detector Diagram</figcaption>
       </figure>
       
       <figure class="figure-card">
@@ -450,21 +451,28 @@ freed on this return path.
         <div class="figure-frame figure-frame-43">
           <img src="./images/memoryLeakDiagram.png" alt="">
         </div>
-        <figcaption>Memory Leak Checker Diagram</figcaption>
+        <figcaption>Memory Leak Detector Diagram</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
           <img src="./images/inheritanceDiagram.png" alt="">
         </div>
-        <figcaption>Inheritance Checker Diagram</figcaption>
+        <figcaption>Inheritance Detector Diagram</figcaption>
       </figure>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
           <img src="./images/deadCodeDiagram.png" alt="">
         </div>
-        <figcaption>Dead Code Checker Diagram</figcaption>
+        <figcaption>Dead Code Detector Diagram</figcaption>
+      </figure>
+
+       <figure class="figure-card">
+        <div class="figure-frame figure-frame-square">
+          <img src="./images/dataClumpDiagram.png" alt="">
+        </div>
+        <figcaption>Data Clump Detector Diagram</figcaption>
       </figure>
     </div>
   </section>
@@ -495,6 +503,7 @@ freed on this return path.
         <h3>SmellyCodeDetector.cpp</h3>
         <ul class="fn-list">
           <li>Parses the input file once at construction and owns one instance of every detector; <code>runDetectors()</code> merges, sorts, and prints all of their warnings, and retains them for later fix application.</li>
+          <li>The registered detector set is <code>PoorNameChecker</code>, <code>RedundantCodeChecker</code>, <code>DeadCodeChecker</code>, <code>RepeatedCodeChecker</code>, <code>CommentChecker</code>, <code>DeepIfDetector</code>, <code>DataClumpDetector</code>, <code>MemoryChecker</code>, <code>LongParamList</code>, and <code>InheritanceChecker</code>.</li>
         </ul>
       </article>
 
@@ -541,6 +550,26 @@ freed on this return path.
       </article>
 
       <article class="module-card">
+        <h3>deadCodeChecker/pointsToAnalyzer.cpp</h3>
+        <ul class="fn-list">
+          <li>Supports <code>DeadCodeChecker</code>'s virtual-dispatch reachability analysis by tracking which concrete class types can flow through pointer variables and function parameters.</li>
+          <li>Collects declaration seeds, assignments, conditional-expression branches, call-argument propagation, and returned pointer values, then solves the resulting flow edges to a fixpoint.</li>
+          <li>Resolves a virtual call such as <code>a-&gt;makeSound()</code> to concrete overrides that may be reached. When no type is known, it conservatively keeps every known override reachable to avoid falsely flagging live code.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>deadCodeChecker/pointsToAnalyzer.cpp</h3>
+        <ul class="fn-list">
+          <li><code>collectFromFunction(...)</code> — gathers identifier references and builds points-to seeds and flow edges for one function body.</li>
+          <li><code>handleDeclaration(...)</code> / <code>handleAssignment(...)</code> — records concrete declared types and pointer-to-pointer assignments.</li>
+          <li><code>handleConditionalExpression(...)</code> — adds an edge for each identifier arm of a conditional expression.</li>
+          <li><code>handleCallArguments(...)</code> / <code>handleReturn(...)</code> — propagates identifier arguments into registered parameters and values into a function return variable.</li>
+          <li><code>solve()</code> — computes the transitive closure of the flow graph; <code>resolveVirtualCall(...)</code> converts inferred types into reachable qualified overrides.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
         <h3>FixApplier.cpp</h3>
         <ul class="fn-list">
           <li>Declares <code>applyFixes()</code> in <code>Detector.h</code>; collects every warning's <code>Edit</code>, applies them back-to-front by byte offset, and skips any that overlap one already applied.</li>
@@ -572,6 +601,18 @@ freed on this return path.
         <h3>DataClumpDetector.cpp</h3>
         <ul class="fn-list">
           <li>Flags variables or arguments that repeatedly appear together, suggesting they belong in their own type.</li>
+          <li>Builds recurring variable/argument groups and identifies frequent pairs and triples, then reports their source line numbers.</li>
+          <li>Calls the Google Gemini API to recommend a struct/class name for a detected data clump.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>DataClumpNameGen.cpp</h3>
+        <ul class="fn-list">
+          <li><code>WriteCallBack()</code> — used as a function for curl and determines how to manage the data returned from the request.</li>
+          <li><code>getKey()</code> — fetches the API key stored in a file.</li>
+          <li><code>generateName()</code> — verifies that the API key exists, prepares the request to the internet server, receives the response from the Google Gemini server, parses the JSON response, and returns the recommended name.</li>
+          <li>Requires <code>GOOGLE_GEMINI_API_KEY</code> in a <code>.env</code> file; network/API failures are reported and can leave name generation unavailable.</li>
         </ul>
       </article>
 
@@ -715,6 +756,18 @@ freed on this return path.
           <li>Unreachable code — walks each block's statements in order; once one is found to unconditionally exit (via <code>return</code>/<code>break</code>/<code>continue</code>/<code>goto</code>, or an if/else where both branches always exit), every sibling statement after it in that block is flagged. <strong>Auto-fixable</strong>: deletes the unreachable range — except auto-fix is suppressed for any function containing a <code>goto</code> or a label, since the reachability model doesn't account for jump targets and could otherwise delete a line another <code>goto</code> depends on.</li>
           <li>Unused/dead functions — builds a call graph of every top-level function to the names it calls, then runs an iterative DFS from <code>main</code> to compute which functions are actually reachable; anything defined but unreachable (and not <code>main</code> itself) is flagged. <strong>No auto-fix</strong> — the call graph doesn't model member calls, qualified calls, function pointers, or virtual dispatch, so a false "unreachable" verdict could mean deleting live code.</li>
           <li>Skips the unused-function check entirely if the file has no <code>main</code>, since reachability can't be determined</li>
+        </ul>
+      </article>
+
+      <article class="type-card type-class">
+        <p class="type-kind">class</p>
+        <h3>PointsToAnalyzer</h3>
+        <ul>
+          <li><code>registerParams()</code> records ordered parameter identities for interprocedural argument propagation.</li>
+          <li><code>collectFromFunction()</code> performs two passes over a function body: it identifies referenced variables, then collects type seeds and flow edges from declarations, assignments, calls, and returns.</li>
+          <li><code>solve()</code> repeatedly propagates points-to types across <code>FlowEdge</code>s until no set changes.</li>
+          <li><code>pointsTo()</code> queries inferred concrete types; <code>resolveVirtualCall()</code> maps those types through <code>ClassHierarchy</code> to qualified method names.</li>
+          <li>The current pass is flow-insensitive, assumes single inheritance in hierarchy resolution, and leaves nested blocks such as if/else bodies out of scope.</li>
         </ul>
       </article>
 
@@ -944,12 +997,21 @@ freed on this return path.
       <article class="module-card">
         <h3>DataClumpDetector.cpp</h3>
         <ul class="fn-list">
-          <li><code>std::vector&lt;Warning&gt; analyzeSource(const ParsedSource&amp;)</code> — checks for data clumps at the end of its traversal</li>
-          <li><code>void visitNode(...)</code> — searches for <code>function_definition</code> or <code>compound_statement</code> nodes, continuing the traversal otherwise</li>
-          <li><code>void checkInsideFunction(...)</code> — on a <code>compound_statement</code>, groups variables declared together and pushes each group into a map keyed by that group, tracking how often it recurs; also collects call-expression arguments the same way</li>
-          <li><code>void checkCallExpression(...)</code> — helper that pulls a call's arguments into the vector used as the map key</li>
-          <li><code>void checkFunctionParams(...)</code> — checks whether a function's parameter set is frequently reused, keyed the same way</li>
-          <li><code>void checkForDataClumps(...)</code> — reads the class-level map (key: vector of variable names, value: a <code>ClumpInfo{counter, lineNumbers}</code> struct) and builds a warning listing every variable and line number for groups that recur often enough</li>
+          <li><code>std::vector&lt;Warning&gt; analyzeSource(const ParsedSource&amp;)</code> — inherited from <code>Detector</code>; checks for data clumps at the end of its execution.</li>
+          <li><code>void visitNode(...)</code> — inherited from <code>Detector</code>; searches for <code>function_definition</code> or <code>compound_statement</code> nodes. If neither condition is true, traversal continues through the tree.</li>
+          <li><code>void checkInsideFunction(...)</code> — when a <code>compound_statement</code> is found, checks for variables declared together and pushes them into a vector used as a key for a map. The map stores how many times that group of variables was used/defined. It also searches for function calls, collects their arguments, and follows the same process.</li>
+          <li><code>void checkCallExpression(...)</code> — helper used to search a function call's arguments and store those arguments in the vector used as the map key.</li>
+          <li><code>void checkFunctionParams(...)</code> — determines whether a function's set of parameters is frequently used and stores the names in a vector used as a map key.</li>
+          <li><code>void checkForDataClumps(...)</code> — creates bitsets for variables, finds frequent pairs, searches those pairs for frequent triples, stores the matching line numbers, formats the warning, and calls the Google Gemini API to recommend a struct/class name.</li>
+        </ul>
+      </article>
+
+      <article class="module-card">
+        <h3>DataClumpNameGen.cpp</h3>
+        <ul class="fn-list">
+          <li><code>WriteCallBack(...)</code> — curl callback that determines how response data is managed.</li>
+          <li><code>getKey()</code> — fetches the API key stored in a file.</li>
+          <li><code>generateName(...)</code> — verifies the API key, prepares the internet request, receives the Google Gemini response, parses the JSON response, extracts the needed information, and returns the recommended name.</li>
         </ul>
       </article>
 
@@ -1000,8 +1062,12 @@ freed on this return path.
       <div class="tag-card"><h3>regex</h3><p>Powers <code>NameAnalyzer::isPoorName()</code>'s boolean-prefix, function-verb, and generic-placeholder pattern checks.</p></div>
       <div class="tag-card"><h3>unordered_map</h3><p>Groups candidate statement windows by structural hash in <code>RepeatedCodeChecker</code>, and represents <code>DeadCodeChecker</code>'s call graph (function name → set of names it calls) for the unused-function check.</p></div>
       <div class="tag-card"><h3>set</h3><p>Holds the DFS-visited/reachable set of function names in <code>DeadCodeChecker::checkUnusedFunctions()</code>, so a function reachable through more than one call path is only processed once.</p></div>
+      <div class="tag-card"><h3>Points-to flow graph</h3><p><code>PointsToAnalyzer</code> stores <code>VarId</code>-to-<code>TypeSet</code> facts and <code>FlowEdge</code>s, then propagates types to a fixpoint so virtual calls can resolve to concrete class overrides.</p></div>
       <div class="tag-card"><h3>vector</h3><p>Carries each detector's <code>std::vector&lt;Warning&gt;</code> results back to <code>SmellyCodeDetector</code>, plus internal working lists like collected declarations, statements, or the DFS stack.</p></div>
       <div class="tag-card"><h3>string</h3><p>Stores the raw source, node text extracted via byte offsets, and variable/function names pulled from the tree.</p></div>
+      <div class="tag-card"><h3>Curl</h3><p>Communicates with servers on the internet and is primarily used for the Google Gemini API request made by <code>DataClumpNameGen</code>.</p></div>
+      <div class="tag-card"><h3>Nlohmann/json</h3><p>Parses the Google Gemini API response into a JSON object so <code>DataClumpNameGen</code> can extract the recommended name.</p></div>
+      <div class="tag-card"><h3>Google Gemini API</h3><p>Uses the Gemini 3.5 Flash Lite API to recommend a struct/class name for detected data clumps. During testing of the most recent version, the response time was extremely slow and the service was too high in demand.</p></div>
     </div>
   </section>
 
@@ -1110,6 +1176,36 @@ freed on this return path.
     </div>
 
     <div class="pseudocode-card">
+      <h4>DataClumpDetector — pairs for triples</h4>
+      <pre>function findDataClumps(variables):
+    create a bitset for each variable
+    // 1 = variable is in the set, 0 = variable is not in the set
+
+    frequentPairs ← []
+    for each pair of variables:
+        intersect their bitsets
+        if the pair appears more than two times:
+            frequentPairs.append(pair)
+
+    frequentTriples ← {}
+    for each pair in frequentPairs:
+        for each variable:
+            if the three variables appear together more than two times:
+                frequentTriples.add(pair + variable)
+
+    store line numbers for each triple
+    format the warning
+    call Google Gemini API to recommend a struct/class name</pre>
+      <p class="section-intro" style="margin-top:1rem;">
+        The bitsets and frequent-pair search each cost <code>O(n^2)</code>. Intersecting the bits for a
+        potential pair costs <code>O(1)</code>. Searching for triples costs <code>O(F * N)</code>,
+        where <code>F</code> is the number of frequent pairs and <code>N</code> is the number of variables.
+        The detector supports data clumps of three variables; checking every possible repeated subset
+        would cost at least <code>O(2^n)</code>.
+      </p>
+    </div>
+
+    <div class="pseudocode-card">
       <h4>FixApplier — apply all safe edits without corrupting offsets</h4>
       <pre>function applyFixes(source, warnings[]):
     edits ← [w.fix for w in warnings if w.fix is not null]
@@ -1147,6 +1243,11 @@ freed on this return path.
       <div class="tag-card"><h3>Parallelism</h3><p><code>runDetectors()</code> currently runs each detector's <code>analyzeSource()</code> sequentially — a candidate for future parallel work.</p></div>
     </div>
 
+    <div class="tag-grid">
+      <div class="tag-card"><h3>Pairs for triples</h3><p><code>DataClumpDetector</code> first creates bitsets for variables in <code>O(n^2)</code>, then stores frequent pairs in a vector. Bitset intersection for a potential pair is <code>O(1)</code>. For triples, the detector loops through frequent pairs and all variables, costing <code>O(F * N)</code>. It supports data clumps of three variables rather than every possible repeated subset, which would cost at least <code>O(2^n)</code>.</p></div>
+      <div class="tag-card"><h3>API-based name generation</h3><p>After a data clump is identified, <code>DataClumpDetector</code> delegates struct/class name generation to <code>DataClumpNameGen</code>, which uses curl to communicate with Google Gemini and Nlohmann/json to parse the response.</p></div>
+    </div>
+
     <h3 class="subhead">Measured benefits</h3>
     <div class="todo-card">
       <span class="todo-badge">TODO — fill in</span>
@@ -1174,27 +1275,38 @@ freed on this return path.
     <p class="section-label">// 06 &nbsp;quality</p>
     <h2>Testing</h2>
 
-    <div class="todo-card">
-      <span class="todo-badge">TODO — fill in</span>
-      <h4>Test design &amp; limitations</h4>
-      <p>Describe how test cases are structured for each detector, and what's out of scope. Suggested outline:</p>
-      <ul>
-        <li>One test file per detector (e.g. <code>redundantTest.cpp</code>) plus the "Universal Test file" mentioned in Sprint 3 that exercises every detector at once — describe what each covers</li>
-        <li>Categories of cases per detector: base case, multiple occurrences in one function, occurrences across multiple functions/scopes, edge cases (e.g. shadowed variables, nested scopes, comments containing brackets/quotes)</li>
-        <li>Known limitations of the test suite — e.g. does it cover multi-file projects, templates, macros, or only single-file plain C++?</li>
-      </ul>
+    <div class="type-grid" style="margin-bottom:2rem;">
+      <article class="type-card type-class">
+        <p class="type-kind">repository fixtures</p>
+        <h3>Detector-specific source cases</h3>
+        <ul>
+          <li><code>redundantCodeChecker/redundantTest.cpp</code> covers unused variables, shadowing, boolean comparisons, redundant boolean returns, and chained if-returns.</li>
+          <li><code>deadCodeChecker/deadCodeTest.cpp</code> covers unreachable ranges and unused-function reachability; <code>deadCodeChecker/pointsToTest.cpp</code> exercises class and dispatch cases.</li>
+          <li><code>poorNameTest.cpp</code>, <code>commentTest.cpp</code>, <code>repeatedTest.cpp</code>, <code>ifStatementTest.cpp</code>, <code>longParamTest.cpp</code>, <code>DataClumpTest.cpp</code>, <code>inheritanceTest.cpp</code>, and <code>memoryTest.cpp</code> provide focused C++ inputs for the remaining detectors.</li>
+          <li><code>cleanTest.cpp</code> provides a low-smell input for checking that ordinary code is not broadly flagged.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">current execution model</p>
+        <h3>Manual integration runs</h3>
+        <ul>
+          <li>The fixture files are source inputs, not a separate unit-test executable or CTest suite. The CMake target compiles several of them into <code>project4</code>, while the detector is exercised by passing a fixture path at runtime.</li>
+          <li>Build with <code>cmake --build build</code>, then run <code>./build/Debug/project4.exe</code> from the project root and enter one or more fixture paths.</li>
+          <li>Expected warnings are checked from the terminal output. There is currently no committed script that automatically compares expected output or records a pass/fail table.</li>
+        </ul>
+      </article>
     </div>
 
     <div class="todo-card">
-      <span class="todo-badge">TODO — fill in</span>
-      <h4>Execution</h4>
-      <p>How are the tests run — a shell script, CTest, manually invoking <code>project4.exe</code> against each fixture file and diffing output? Document the exact command(s).</p>
+      <span class="todo-badge">CURRENT GAP</span>
+      <h4>Automated regression coverage</h4>
+      <p>The fixtures cover focused base cases and several edge cases, including nested scopes, comments containing punctuation, repeated AST structures, conditional memory paths, and inheritance usage. A future test harness should assert warning categories, lines, and fix output automatically; templates, macro-heavy code, and cross-file behavior remain outside the current fixture coverage.</p>
     </div>
 
     <h3 class="subhead">Test results (as of last run)</h3>
     <div class="todo-card">
-      <span class="todo-badge">TODO — fill in</span>
-      <p>Replace this table with the actual current pass/fail state per detector.</p>
+      <span class="todo-badge">NOT RECORDED</span>
+      <p>No automated pass/fail results are generated by the current repository. The table below is intentionally not presented as a test report until a harness records reproducible results.</p>
     </div>
     <div class="data-table-wrap">
       <table class="data-table">
@@ -1202,16 +1314,16 @@ freed on this return path.
           <tr><th>Detector</th><th>Test file</th><th>Status</th><th>Notes</th></tr>
         </thead>
         <tbody>
-          <tr><td>RedundantCodeChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>DeadCodeChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>PoorNameChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>CommentChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>RepeatedCodeChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>DeepIfDetector</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>LongParamList</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>DataClumpDetector</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>InheritanceChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>MemoryChecker</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>RedundantCodeChecker</td><td>redundantCodeChecker/redundantTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>DeadCodeChecker</td><td>deadCodeChecker/deadCodeTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>PoorNameChecker</td><td>poorNameTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>CommentChecker</td><td>commentTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>RepeatedCodeChecker</td><td>repeatedTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>DeepIfDetector</td><td>ifStatementTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>LongParamList</td><td>longParamTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>DataClumpDetector</td><td>DataClumpTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; API-backed name generation may require credentials and network access.</td></tr>
+          <tr><td>InheritanceChecker</td><td>inheritanceTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
+          <tr><td>MemoryChecker</td><td>memoryTest.cpp</td><td class="tbd">Manual</td><td>Fixture available; no recorded automated result.</td></tr>
         </tbody>
       </table>
     </div>
@@ -1422,6 +1534,36 @@ freed on this return path.
           <ul>
             <li>List out and categorize cases for memory leaks. </li>
             <li>Implement memory leak detector to account for various cases.</li>   
+          </ul>
+        </div>
+      </article>
+
+      <article class="sprint">
+        <div class="sprint-marker">04</div>
+        <div class="sprint-body">
+          <p class="sprint-meta">Sprint 4 &middot; <span class="sprint-dates">current implementation</span></p>
+          <h3>// Stuart Arief</h3>
+          <ul>
+            <li>Expanded inheritance analysis to account for external base-member access, object slicing, assignment, and base-constructor usage.</li>
+            <li>Added inheritance refactoring output with the original code, revised code, and a changelog.</li>
+            <li>Added detector flow diagrams and expanded implementation documentation.</li>
+          </ul>
+          <h3>// Rebecca Jennings</h3>
+          <ul>
+            <li>Expanded unreachable-code reporting to include affected line ranges.</li>
+            <li>Added shadowing-aware unused-variable handling, call-graph-based unused-function detection, and safe-fix overlap handling.</li>
+            <li>Added dead-code and redundant-code flow diagrams and updated the website documentation.</li>
+          </ul>
+          <h3>// Jimmy Munoz</h3>
+          <ul>
+            <li>Expanded data-clump detection to recurring variable groups in parameters, calls, and expressions.</li>
+            <li>Added API-backed struct/class name recommendations for detected data clumps.</li>
+            <li>Added flow diagrams for the implemented detector work.</li>
+          </ul>
+          <h3>// Aelynn Xu</h3>
+          <ul>
+            <li>Expanded memory analysis to follow conditional paths and recognize <code>delete</code>, <code>free()</code>, and custom deallocation functions.</li>
+            <li>Added memory leak flow documentation and detector edge-case coverage.</li>
           </ul>
         </div>
       </article>
