@@ -248,17 +248,7 @@ field individually.
 
 
 ```cpp
-void address(std::string streetName, std::string city, std::string state, std::string zip) {
-	std::cout << streetName << std::endl;
-    if(true) {
-        std::string firstName;
-        std::string lastName;
-        std::string middleName;
-        std::cout << firstName << " " << middleName << " " << lastName << std::endl;
-    }
-}
-
-void getAddress(std::string streetName, std::string city, std::string state, std::string zip) {
+void getStreetNumber(std::string streetName, std::string city, std::string state, std::string zip) {
 	std::cout << streetName << std::endl;
     std::string firstName;
     std::string lastName;
@@ -266,10 +256,23 @@ void getAddress(std::string streetName, std::string city, std::string state, std
 
     std::cout << firstName << " " << middleName << " " << lastName << std::endl;
 }
+
+void someFunction() {
+    std::string streetName;
+    std::string city;
+    std::string state;
+    std::string first;
+    std::string second;
+    std::string third;
+
+    getStreetNumber(streetName, city, state, first, second);
+    getStreetNumber(streetName, city, state, second, third);
+    getStreetNumber(streetName, city, state, third, first);
+}
 ```
 
 ```
-Warning: Warning: [Data Clump]. The following lines share the same set of variables: 1, 11 Variables: city, state, streetName, zip. Consider using a struct or class to reduce code duplication.(line 7)
+Warning: Warning: [Data Clump]. The following lines share the same set of variables: 1, 11 Variables: city, state, streetName. Consider converting this to a struct or class with the name: Address.(line 7)
 ```
 
 ### Memory Leaks
