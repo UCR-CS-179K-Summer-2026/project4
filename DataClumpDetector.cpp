@@ -74,10 +74,11 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
                 }
                 lineList = lineList.substr(0, lineList.length() - 2);
 
+                std::string generatedName = nameGenerator.generateName(variableList);
                 warnings.push_back({
                     candidateInfo.lineNumbers.front(),
                     "Data Clump",
-                    "The following lines share the same set of variables: " + lineList + ". Variables: " + variableList + ". Consider using a struct or class to reduce code duplication."
+                    "The following lines share the same set of variables: " + lineList + ". Variables: " + variableList + ". Consider converting this to a struct or class with the name: " + generatedName,
                 });
             }
         }

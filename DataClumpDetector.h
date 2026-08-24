@@ -10,6 +10,7 @@
 #include "Detector.h"
 #include "NameAnalyzer.h"
 #include <bitset>
+#include "DataClumpNameGen.h"
 
 class DataClumpDetector : public Detector {
     private:
@@ -23,6 +24,7 @@ class DataClumpDetector : public Detector {
         std::vector<std::unordered_set<std::string>> variableGroups;
         std::vector<int> groupLineNumbers;
         std::unordered_map<std::string, std::bitset<MAX_GROUPS>> variableBitsets;
+        DataClumpNameGen nameGenerator;
 
         void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
         void checkFunctionParams(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
