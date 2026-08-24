@@ -180,3 +180,51 @@ void PointsToAnalyzer::handleReturn(TSNode returnStmtNode, const std::string& fu
         edges_.push_back({VarId{funcName, nodeText(expr, source)}, VarId{funcName, "__return__"}});
     }
 }
+
+// ---------------------------------------------------------------------------
+// Fixpoint solve + query
+// ---------------------------------------------------------------------------
+
+void PointsToAnalyzer::solve() {
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (const auto& edge : edges_) {
+            auto& fromSet = pointsToSets_[edge.from];
+            auto& toSet = pointsToSets_[edge.to];
+            size_t before = toSet.size();
+            toSet.insert(fromSet.begin(), fromSet.end());
+            if (toSet.size() != before) changed = true;
+        }
+    }
+}
+
+const TypeSet& PointsToAnalyzer::pointsTo(const VarId& v) const {
+    static const TypeSet empty;
+    auto it = pointsToSets_.find(v);
+    return it == pointsToSets_.end() ? empty : it->second;
+}
+
+std::set<std::string> PointsToAnalyzer::resolveVirtualCall(const VarId& ptrVar, const std::string& methodName) const {
+    std::set<std::string> reachable;
+    const TypeSet& types = pointsTo(ptrVar);
+
+    if (types.empty()) {
+        // Nothing concrete tracked here -- conservative fallback: every
+        // known override of methodName is assumed reachable, so this
+        // fails toward false negatives (a missed dead-code case) rather
+        // than false positives (flagging a live method dead).
+        for (auto& cls : hierarchy_.allTypesDefining(methodName)) {
+            reachable.insert(cls + "::" + methodName);
+        }
+        return reachable;
+    }
+
+    for (const std::string& concreteType : types) {
+        std::string definer = hierarchy_.resolveOverride(concreteType, methodName);
+        if (!definer.empty()) {
+            reachable.insert(definer + "::" + methodName);
+        }
+    }
+    return reachable;
+}
