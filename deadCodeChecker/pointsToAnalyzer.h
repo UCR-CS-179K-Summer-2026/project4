@@ -57,3 +57,25 @@ struct ClassHierarchy {
         return result;
     }
 };
+
+class PointsToAnalyzer {
+public:
+    explicit PointsToAnalyzer(const ClassHierarchy& hierarchy) : hierarchy_(hierarchy) {}
+    void collectFromFunction(const std::string& funcName, TSNode funcBody, const ParsedSource& parsedSource);
+
+    void solve();
+
+    const TypeSet& pointsTo(const VarId& v) const;
+
+    // Returns the set of qualified reachable methods, e.g. {"Dog::makeSound"}.
+    // If the pointer's points-to set is empty, falls
+    // back to marking EVERY known override of methodName reachable.
+    std::set<std::string> resolveVirtualCall(const VarId& ptrVar,const std::string& methodName) const;
+
+    // Registers the ordered parameter VarIds for a function, so call-site
+    // argument propagation (helper(d) -> param x) can look them up.
+    void registerParams(const std::string& funcName, const std::vector<std::string>& paramNames);
+
+    private:
+
+};
