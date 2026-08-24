@@ -381,6 +381,34 @@ int main() {
 Warning: [Unused Function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
 ```
 
+```cpp
+class Animal {
+    virtual void makeSound();
+};
+class Dog : public Animal {
+public:
+    void makeSound() { std::cout << "woof"; }
+};
+class Cat : public Animal {
+public:
+    void makeSound() { std::cout << "meow"; }
+};
+void makeSounds(Animal *a) {
+    a->makeSound();
+}
+int main() {
+    Dog *d;
+    Cat *c;
+    makeSounds(d);
+    return 0;
+}
+
+```
+
+```
+Warning: [Unused Function]. Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.(line 10)
+```
+
 ## Warning Output Format
 
 Every detector returns its findings as a `std::vector<Warning>` instead of printing
@@ -394,6 +422,20 @@ Warning: [<category>]. <message>(line <line>)
 It then reports the total number of warnings found in the file. When multiple files are given,
 each file gets its own report and the program prints aggregate smell and processed-file totals
 at the end.
+
+## Refactor Suggestion Format
+
+Warnings print directly to the terminal, one per detected smell, with the offending line number in the original source file. You'll then be prompted whether to apply automatic fixes:
+
+`Some detected smells in "filename.cpp" have automatic fixes available. Apply them? (y/n): y`
+
+`Fixed file written to: filename.cpp.fixed.cpp`
+
+The fix prompt appears independently for each successfully opened file. Choosing "y" writes a new file by appending .fixed.cpp to the original path, leaving the original untouched. Choosing "n" skips that file.
+
+Currently the features: Unused / Dead Variable, Redundant Boolean Comparison, Redundant If/Else Boolean Return, and Unreachable Code are auto-fixable. Data Clumps and Inhertiance suggest fixes in their warning output, but do not directly edit/genereate in the new file.
+
+After all files finish, the program prints the total smell count and total number of processed files. Missing or unreadable paths are reported and skipped; the run continues with the remaining files.
 
 ## Setup
 
