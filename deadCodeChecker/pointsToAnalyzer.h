@@ -83,4 +83,6 @@ public:
         std::unordered_map<std::string, std::vector<VarId>> functionParams_;
 
         void seedIfUsed(const VarId& var, const std::string& declaredType, bool isUsedDownstream);
+        void handleDeclaration(TSNode declNode, const std::string& funcName, const ParsedSource& parsedSource, const std::set<std::string>& referencedElsewhere);
+        void handleConditionalExpression(TSNode condExprNode, const VarId& targetVar, const std::string& funcName, const ParsedSource& parsedSource);
 };
