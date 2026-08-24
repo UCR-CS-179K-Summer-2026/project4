@@ -210,10 +210,7 @@ std::set<std::string> PointsToAnalyzer::resolveVirtualCall(const VarId& ptrVar, 
     const TypeSet& types = pointsTo(ptrVar);
 
     if (types.empty()) {
-        // Nothing concrete tracked here -- conservative fallback: every
-        // known override of methodName is assumed reachable, so this
-        // fails toward false negatives (a missed dead-code case) rather
-        // than false positives (flagging a live method dead).
+        // every override of methodName is assumed reachable
         for (auto& cls : hierarchy_.allTypesDefining(methodName)) {
             reachable.insert(cls + "::" + methodName);
         }
