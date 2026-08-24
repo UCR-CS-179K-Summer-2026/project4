@@ -74,6 +74,21 @@ void PointsToAnalyzer::handleDeclaration(TSNode declNode, const std::string& fun
     }
 }
 
+void PointsToAnalyzer::handleAssignment(TSNode assignNode, const std::string& funcName, const ParsedSource& parsedSource) {
+    const std::string& source = parsedSource.source;
+    TSNode lhs = ts_node_child_by_field_name(assignNode, "left", strlen("left"));
+    TSNode rhs = ts_node_child_by_field_name(assignNode, "right", strlen("right"));
+    if (ts_node_is_null(lhs) || ts_node_is_null(rhs)) return;
+    VarId target{funcName, nodeText(lhs, source)};
+
+    std::string rhsKind = ts_node_type(rhs);
+    if (rhsKind == "identifier") {
+        edges_.push_back({VarId{funcName, nodeText(rhs, source)}, target});
+    } else if (rhsKind == "conditional_expression") {
+        handleConditionalExpression(rhs, target, funcName, parsedSource);
+    }
+}
+
 void PointsToAnalyzer::handleConditionalExpression(TSNode condExprNode, const VarId& targetVar, const std::string& funcName, const ParsedSource& parsedSource) {
     const std::string& source = parsedSource.source;
     TSNode consequence = ts_node_child_by_field_name(condExprNode, "consequence", strlen("consequence"));
@@ -83,6 +98,27 @@ void PointsToAnalyzer::handleConditionalExpression(TSNode condExprNode, const Va
         if (ts_node_is_null(arm)) continue;
         if (std::string(ts_node_type(arm)) == "identifier") {
             edges_.push_back({VarId{funcName, nodeText(arm, source)}, targetVar});
+        }
+    }
+}
+
+void PointsToAnalyzer::handleCallArguments(TSNode callExprNode, const std::string& callerFunc, const ParsedSource& parsedSource) {
+    const std::string& source = parsedSource.source;
+    TSNode funcNode = ts_node_child_by_field_name(callExprNode, "function", strlen("function"));
+    TSNode argsNode = ts_node_child_by_field_name(callExprNode, "arguments", strlen("arguments"));
+    if (ts_node_is_null(funcNode) || ts_node_is_null(argsNode)) return;
+    if (std::string(ts_node_type(funcNode)) != "identifier") return; // field_expression handled in DeadCodeChecker
+
+    std::string calleeName = nodeText(funcNode, source);
+    auto it = functionParams_.find(calleeName);
+    if (it == functionParams_.end()) return; // unknown/unregistered callee
+    const std::vector<VarId>& params = it->second;
+
+    uint32_t argCount = ts_node_named_child_count(argsNode);
+    for (uint32_t i = 0; i < argCount && i < params.size(); ++i) {
+        TSNode arg = ts_node_named_child(argsNode, i);
+        if (std::string(ts_node_type(arg)) == "identifier") {
+            edges_.push_back({VarId{callerFunc, nodeText(arg, source)}, params[i]});
         }
     }
 }
