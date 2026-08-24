@@ -80,6 +80,7 @@ does not provide complete ownership, alias, interprocedural, or exception-path a
   - [Dead Code Blocks](#dead-code-blocks)
 
 - [Warning Output Format](#warning-output-format)
+- [Refactor Suggestion Format](#refactor-suggestion-format)
 - [Setup](#setup)
 - [Building](#building)
 - [Running](#running)
@@ -433,7 +434,7 @@ Warnings print directly to the terminal, one per detected smell, with the offend
 
 The fix prompt appears independently for each successfully opened file. Choosing "y" writes a new file by appending .fixed.cpp to the original path, leaving the original untouched. Choosing "n" skips that file.
 
-Currently the features: Unused / Dead Variable, Redundant Boolean Comparison, Redundant If/Else Boolean Return, and Unreachable Code are auto-fixable. Data Clumps and Inhertiance suggest fixes in their warning output, but do not directly edit/genereate in the new file.
+Currently the features: Unused / Dead Variable, Redundant Boolean Comparison, Redundant If/Else Boolean Return, and Unreachable Code are auto-fixable and generate a new file. The other detectors still output warnings or suggest fixes in their warning output, but do not directly edit/genereate in the new file.
 
 After all files finish, the program prints the total smell count and total number of processed files. Missing or unreadable paths are reported and skipped; the run continues with the remaining files.
 
