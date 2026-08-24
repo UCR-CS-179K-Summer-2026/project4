@@ -207,16 +207,6 @@ void DataClumpDetector::checkInsideFunction(TSNode node, const ParsedSource& par
         TSNode childNode = ts_node_child(node, i);
 
         if(strcmp(ts_node_type(childNode), "declaration") == 0) {
-            // TSNode identifierNode = ts_node_child_by_field_name(childNode, "declarator", 10);
-            // if(!ts_node_is_null(identifierNode)) {
-            //     identifierNode = nameAnalyzer.findIdentifierNode(identifierNode);
-            //     if(!ts_node_is_null(identifierNode)) {
-            //         std::string name = nameAnalyzer.extractIdentifierName(parsedSource, identifierNode);
-            //         currentVariables.push_back(name);
-            //         variablesInScope.insert(name);
-            //         currentLines.push_back(nameAnalyzer.getLineNumber(parsedSource, identifierNode));
-            //     }
-            // }
         } else if(strcmp(ts_node_type(childNode), "expression_statement") == 0) {
             TSNode expressionNode = ts_node_child(childNode, 0);
             if(strcmp(ts_node_type(expressionNode), "call_expression") == 0) {
