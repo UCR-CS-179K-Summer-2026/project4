@@ -221,14 +221,10 @@ std::vector<std::string> DeadCodeChecker::extractParamNames(TSNode functionDefNo
     return names;
 }
 
-// NEW: walks a class_specifier (unwrapping a top-level "declaration" node
-// if that's how your grammar surfaces "class Foo { ... };") and:
-//   - records its base(s) into hierarchy.bases
-//   - adds each method's qualified name ("Dog::makeSound") to `functions`
-//   - records which methods it defines into hierarchy.methodsDefinedIn
-// A "virtual void makeSound();" with no body is a field_declaration, not
-// a function_definition, so it's correctly skipped here -- there's no
-// definition to ever call dead or alive.
+// walks a class_specifier (unwrapping a top-level "declaration" node
+// - records its base(s) into hierarchy.bases
+// - adds each method's qualified name ("Dog::makeSound") to `functions`
+// - records which methods it defines into hierarchy.methodsDefinedIn
 void DeadCodeChecker::collectClassMethods(TSNode declNode, const std::string& source, std::vector<std::pair<std::string, TSNode>>& functions, ClassHierarchy& hierarchy) {
     TSNode classSpec = declNode;
     if (std::string(ts_node_type(declNode)) == "declaration") {
@@ -265,9 +261,8 @@ void DeadCodeChecker::collectClassMethods(TSNode declNode, const std::string& so
     }
 }
 
-// CHANGED: now takes currentFunction + pta. Resolves field_expression
-// calls (a->makeSound()) through points-to analysis instead of skipping
-// them; plain identifier calls (foo()) are unchanged.
+// Resolves field_expression: calls (a->makeSound()) through points-to analysis
+// plain identifier calls (foo()) are unchanged.
 void DeadCodeChecker::collectCalledFunctionNames(TSNode node, const std::string& source, const std::string& currentFunction, const PointsToAnalyzer& pta, std::set<std::string>& callees) {
     std::string type = ts_node_type(node);
 
