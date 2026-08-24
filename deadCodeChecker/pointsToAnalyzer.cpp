@@ -23,3 +23,14 @@ namespace {
         }
     }
 } // namespace
+
+void PointsToAnalyzer::seedIfUsed(const VarId& var, const std::string& declaredType, bool isUsedDownstream) {
+    if (!isUsedDownstream) return; // e.g. "Cat *f;" never referenced again -> not seeded
+    pointsToSets_[var].insert(declaredType);
+}
+
+void PointsToAnalyzer::registerParams(const std::string& funcName, const std::vector<std::string>& paramNames) {
+    std::vector<VarId> ids;
+    for (auto& p : paramNames) ids.push_back(VarId{funcName, p});
+    functionParams_[funcName] = ids;
+}

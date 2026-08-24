@@ -82,4 +82,5 @@ public:
         std::vector<FlowEdge> edges_;
         std::unordered_map<std::string, std::vector<VarId>> functionParams_;
 
+        void seedIfUsed(const VarId& var, const std::string& declaredType, bool isUsedDownstream);
 };

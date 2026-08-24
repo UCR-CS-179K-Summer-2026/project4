@@ -11,7 +11,6 @@
 
 class DeadCodeChecker : public Detector {
     private:
-        void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
         std::string nodeText(TSNode node, const std::string& source);
         std::string extractIdentifierFromDeclarator(TSNode node, const std::string& source);
 
@@ -31,6 +30,8 @@ class DeadCodeChecker : public Detector {
     public:
         DeadCodeChecker() = default;
         std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
+        void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
+
 };
 
 #endif
