@@ -132,11 +132,41 @@ void RedundantCodeChecker::checkUnusedVariables(TSNode functionDefNode, const Pa
         int occurrences = countIdentifierOccurrences(scope, source, name);
         if (occurrences <= 1) {
             int line = ts_node_start_point(declNode).row + 1;
-            warnings.push_back({
+
+            Warning w{
                 line,
                 "Unused/dead Variable",
                 "The variable \"" + name + "\" is declared but never used."
-            });
+            };
+
+            // Walk up to the enclosing "declaration" statement node
+            TSNode declStmt = declNode;
+            while (!ts_node_is_null(declStmt) && std::string(ts_node_type(declStmt)) != "declaration") {
+                declStmt = ts_node_parent(declStmt);
+            }
+
+            if (!ts_node_is_null(declStmt)) {
+                // Only auto-fix if this declaration has exactly one declarator
+                // (skip "int x, y = unused;" style lines)
+                std::vector<std::pair<std::string, TSNode>> siblingDecls;
+                collectDeclarations(declStmt, source, siblingDecls);
+
+                if (siblingDecls.size() == 1) {
+                    uint32_t start = ts_node_start_byte(declStmt);
+                    uint32_t end = ts_node_end_byte(declStmt);
+
+                    // Consume a single trailing newline so we don't leave a blank line
+                    if (end < source.size() && source[end] == '\n') {
+                        end += 1;
+                    } else if (end + 1 < source.size() && source[end] == '\r' && source[end + 1] == '\n') {
+                        end += 2;
+                    }
+
+                    w.fix = Edit{ start, end, "" };
+                }
+            }
+
+            warnings.push_back(w);
         }
     }
 }
@@ -188,7 +218,8 @@ void RedundantCodeChecker::checkBooleanComparison(TSNode node, const ParsedSourc
     warnings.push_back({
         line,
         "Redundant boolean comparison",
-        " \"" + exprText + "\" can be simplified to \"" + suggestion + "\"."
+        " \"" + exprText + "\" can be simplified to \"" + suggestion + "\".",
+        Edit{ ts_node_start_byte(node), ts_node_end_byte(node), suggestion }
     });
 }
 
@@ -274,7 +305,8 @@ void RedundantCodeChecker::checkRedundantIfElseReturn(TSNode node, const ParsedS
     warnings.push_back({
         line,
         "Redundant-If-Else Return Boolean",
-        "Can be simplified to \"return " + suggestion + ";\"."
+        "Can be simplified to \"return " + suggestion + ";\".",
+        Edit{ ts_node_start_byte(node), ts_node_end_byte(node), "return " + suggestion + ";" }
     });
 }
 

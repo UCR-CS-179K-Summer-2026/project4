@@ -19,6 +19,8 @@ class DeadCodeChecker : public Detector {
         // ---------- Check 5: dead/unused code blocks  ----------
         static TSNode getLastStatement(TSNode compoundStatement);
         static bool alwaysExits(TSNode statement);
+        bool containsGotoOrLabel(TSNode node);
+        TSNode findEnclosingFunction(TSNode node);
         void checkUnreachableCode(TSNode blockNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
 
         // ---------- Check 6: Unused/Dead Functions (unreachable from main) ----------

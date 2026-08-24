@@ -42,8 +42,8 @@ function pointers), is skipped if there's no `main()`, and is single-file only.
 *(limitations TBD)*
 
 ### InheritanceChecker
-*(limitations TBD)*
-
+- offerRefactoring changelog is currently only handling removal of inheritance call, nothing else
+- Assignability edge case does not handle ambiguity from parenthesis styled construction (e.g. Animal a(d)) which can be mistaken for a function instead of constructor call.\
 ### MemoryChecker
 *(limitations TBD)*
 
