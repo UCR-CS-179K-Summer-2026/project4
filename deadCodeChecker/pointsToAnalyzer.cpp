@@ -39,6 +39,55 @@ void PointsToAnalyzer::registerParams(const std::string& funcName, const std::ve
 // Orchestration: two passes over one function body
 // ---------------------------------------------------------------------------
 
+void PointsToAnalyzer::collectFromFunction(const std::string& funcName, TSNode funcBody, const ParsedSource& parsedSource) {
+    const std::string& source = parsedSource.source;
+    uint32_t topCount = ts_node_named_child_count(funcBody);
+
+    // Sub-pass A: every identifier referenced anywhere in this function
+    // body, EXCLUDING a plain declaration's own name token
+    std::set<std::string> referenced;
+    for (uint32_t i = 0; i < topCount; ++i) {
+        TSNode stmt = ts_node_named_child(funcBody, i);
+        std::string kind = ts_node_type(stmt);
+        if (kind == "declaration") {
+            TSNode declarator = ts_node_child_by_field_name(stmt, "declarator", strlen("declarator"));
+            if (!ts_node_is_null(declarator) &&
+                std::string(ts_node_type(declarator)) == "init_declarator") {
+                TSNode valueNode = ts_node_child_by_field_name(declarator, "value", strlen("value"));
+                if (!ts_node_is_null(valueNode)) {
+                    collectReferencedIdentifiers(valueNode, source, referenced);
+                }
+            }
+            continue; // plain "Type *name;" contributes nothing to `referenced`
+        }
+        collectReferencedIdentifiers(stmt, source, referenced);
+    }
+
+    // Sub-pass B: build points-to seeds and flow edges, using `referenced`
+    // to decide whether a bare declaration is worth seeding at all.
+    for (uint32_t i = 0; i < topCount; ++i) {
+        TSNode stmt = ts_node_named_child(funcBody, i);
+        std::string kind = ts_node_type(stmt);
+
+        if (kind == "declaration") {
+            handleDeclaration(stmt, funcName, parsedSource, referenced);
+        } else if (kind == "expression_statement") {
+            TSNode expr = ts_node_named_child(stmt, 0);
+            if (ts_node_is_null(expr)) continue;
+            std::string exprKind = ts_node_type(expr);
+            if (exprKind == "assignment_expression") {
+                handleAssignment(expr, funcName, parsedSource);
+            } else if (exprKind == "call_expression") {
+                handleCallArguments(expr, funcName, parsedSource);
+            }
+        } else if (kind == "return_statement") {
+            handleReturn(stmt, funcName, parsedSource);
+        }
+        // Nested blocks (if/else, loops) are intentionally out of scope
+        // for this pass, matching the rest of the detector's scope cuts.
+    }
+}
+
 void PointsToAnalyzer::handleDeclaration(TSNode declNode, const std::string& funcName, const ParsedSource& parsedSource, const std::set<std::string>& referencedElsewhere) {
     const std::string& source = parsedSource.source;
     TSNode typeNode = ts_node_child_by_field_name(declNode, "type", strlen("type"));
@@ -120,5 +169,14 @@ void PointsToAnalyzer::handleCallArguments(TSNode callExprNode, const std::strin
         if (std::string(ts_node_type(arg)) == "identifier") {
             edges_.push_back({VarId{callerFunc, nodeText(arg, source)}, params[i]});
         }
+    }
+}
+
+void PointsToAnalyzer::handleReturn(TSNode returnStmtNode, const std::string& funcName, const ParsedSource& parsedSource) {
+    const std::string& source = parsedSource.source;
+    if (ts_node_named_child_count(returnStmtNode) == 0) return;
+    TSNode expr = ts_node_named_child(returnStmtNode, 0);
+    if (std::string(ts_node_type(expr)) == "identifier") {
+        edges_.push_back({VarId{funcName, nodeText(expr, source)}, VarId{funcName, "__return__"}});
     }
 }

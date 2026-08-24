@@ -87,4 +87,5 @@ public:
         void handleAssignment(TSNode assignNode, const std::string& funcName, const ParsedSource& parsedSource);
         void handleConditionalExpression(TSNode condExprNode, const VarId& targetVar, const std::string& funcName, const ParsedSource& parsedSource);
         void handleCallArguments(TSNode callExprNode, const std::string& callerFunc, const ParsedSource& parsedSource);
+        void handleReturn(TSNode returnStmtNode, const std::string& funcName, const ParsedSource& parsedSource);
 };
