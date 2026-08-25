@@ -306,17 +306,6 @@ int basicTest(){
     int* exampleptr = new int;
     return 2;
 }
-```
-
-```
-Warning: [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 3)
-```
-
-```cpp
-int basicTest(){
-    int* exampleptr = new int;
-    return 2;
-}
 
 void multipleFunctionCallPartialTest(){
     int* exampleptr = new int;
