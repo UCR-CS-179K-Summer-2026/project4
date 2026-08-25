@@ -312,6 +312,29 @@ int basicTest(){
 Warning: [memory-leak]. Unreleased memory allocated at  at line 2 does not reach a destructor.(line 3)
 ```
 
+```cpp
+int basicTest(){
+    int* exampleptr = new int;
+    return 2;
+}
+
+void multipleFunctionCallPartialTest(){
+    int* exampleptr = new int;
+    int* exampleptrTwo = new int;
+    partialDeleterFunction(exampleptr, exampleptrTwo);
+    return;
+}
+
+void partialDeleterFunction(int* one, int* two){
+    delete one;
+}
+```
+
+```
+Warning: [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 3)
+Warning: [memory-leak]. Unreleased memory allocated at line 8 does not reach a destructor.(line 10)
+```
+
 ### Inheritance
 
 Determines if classes with inheritance are redundant or not being used. It checks in-class base
@@ -353,7 +376,7 @@ int getStatus(int code) {
 ```
 
 ```
-Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
+Warning: [unreachable-code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
 ```
 
 **Unused functions** — free functions and recognized class methods defined in the file but
@@ -377,11 +400,12 @@ int main() {
 ```
 
 ```
-Warning: [Unused Function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
+Warning: [unused-function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
 ```
 
 ```cpp
 class Animal {
+public:
     virtual void makeSound();
 };
 class Dog : public Animal {
@@ -394,18 +418,18 @@ public:
 };
 void makeSounds(Animal *a) {
     a->makeSound();
+    a->makeSound();
 }
-int main() {
-    Dog *d;
-    Cat *c;
-    makeSounds(d);
-    return 0;
+void helper(Animal *x) {
+    Dog *e;
+    Cat *f;
+    Animal *y = std::rand() ? x : e;
+    makeSounds(y);
 }
-
 ```
 
 ```
-Warning: [Unused Function]. Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.(line 10)
+Warning: [unused-function]. Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.(line 11)
 ```
 
 ## Warning Output Format
