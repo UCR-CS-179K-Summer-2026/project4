@@ -309,7 +309,7 @@ int basicTest(){
 ```
 
 ```
-Warning: [memory-leak]. Unreleased memory allocated at  at line 2 does not reach a destructor.(line 3)
+Warning: [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 3)
 ```
 
 ```cpp
