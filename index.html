@@ -235,9 +235,42 @@ int main() {
     return 0;
 }</pre></div>
         <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [unused-function].
-Function "legacyCalc" is defined
-but never reachable from main().
+Function "legacyCalc" is never called from main (directly or indirectly) and is dead code.
 (line 1)</pre></div>
+      </div>
+    </div>
+
+    <div id="ex-unused-func" class="example-card">
+      <h4>Unused Function - Points to Analysis <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
+      <p class="example-desc">A defined function via pointers or function paramters that's unreachable from <code>main()</code> via the call graph. Skipped entirely if the file has no <code>main</code>; no auto-fix, since reachability analysis is conservative and warnings must not delete possibly-live code.</p>
+      <div class="example-io">
+        <div><span class="io-label">Input</span><pre>
+          class Animal {
+            public:
+                virtual void makeSound();
+          };
+          class Dog : public Animal {
+            public:
+              void makeSound() { std::cout << "woof"; }
+          };
+          class Cat : public Animal {
+            public:
+              void makeSound() { std::cout << "meow"; }
+          };
+          void makeSounds(Animal *a) {
+            a->makeSound();
+            a->makeSound();
+          }
+          void helper(Animal *x) {
+            Dog *e;
+            Cat *f;
+            Animal *y = std::rand() ? x : e;
+            makeSounds(y);
+          }
+        </pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [unused-function].
+Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.
+(line 3)</pre></div>
       </div>
     </div>
 
@@ -345,18 +378,29 @@ never uses it. (line 1)</pre></div>
 
     <div id="ex-memory" class="example-card">
       <h4>Unfreed Memory <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
-      <p class="example-desc">A path through the function that reaches a <code>return</code> without freeing a tracked allocation — checked independently down every branch of every <code>if</code>.</p>
+      <p class="example-desc">A path through the function that reaches a <code>return</code> without freeing a tracked allocation.</p>
       <div class="example-io">
-        <div><span class="io-label">Input</span><pre>int* buf = new int[100];
-if (earlyExit) {
-    return -1; // buf never freed
-}
-delete[] buf;
-return 0;</pre></div>
-        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak].
-"buf" allocated on line 1 is not
-freed on this return path.
-(line 3)</pre></div>
+        <div><span class="io-label">Input</span><pre>
+          int basicTest() {
+            int* exampleptr = new int;
+            return 2;
+          }
+
+          void multipleFunctionCallPartialTest(){
+            int* exampleptr = new int;
+            int* exampleptrTwo = new int;
+            partialDeleterFunction(exampleptr, exampleptrTwo);
+            return;
+          }
+
+          void partialDeleterFunction(int* one, int* two){
+            delete one;
+          }
+        </pre></div>
+        <div>
+          <span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 3)</pre>
+          <span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak]. Unreleased memory allocated at line 8 does not reach a destructor.(line 10)</pre>
+        </div>
       </div>
     </div>
   </section>
@@ -890,7 +934,7 @@ freed on this return path.
   </section>
 
   <!-- ============================================================
-       ALGORITHMS (pseudocode)
+  ALGORITHMS (pseudocode)
   ============================================================ -->
   <section class="section section-wide" id="algorithms">
     <p class="section-label">// 04 &nbsp;algorithms</p>
@@ -1087,7 +1131,7 @@ freed on this return path.
   </section>
 
   <!-- ============================================================
-       OPTIMIZATIONS / REFACTORING
+  OPTIMIZATIONS / REFACTORING
   ============================================================ -->
   <section class="section" id="optimizations">
     <p class="section-label">// 05 &nbsp;performance</p>
@@ -1132,7 +1176,7 @@ freed on this return path.
   </section>
 
   <!-- ============================================================
-       TESTING
+  TESTING
   ============================================================ -->
   <section class="section" id="testing">
     <p class="section-label">// 06 &nbsp;quality</p>
@@ -1193,7 +1237,7 @@ freed on this return path.
   </section>
 
   <!-- ============================================================
-       BENCHMARKING
+  BENCHMARKING
   ============================================================ -->
   <section class="section" id="benchmarking">
     <p class="section-label">// 07 &nbsp;benchmarking</p>
@@ -1235,7 +1279,7 @@ freed on this return path.
   </section>
 
   <!-- ============================================================
-       LIMITATIONS
+  LIMITATIONS
   ============================================================ -->
   <section class="section" id="limitations">
     <p class="section-label">// 08 &nbsp;scope</p>
@@ -1245,52 +1289,41 @@ freed on this return path.
     <div class="type-grid" style="margin-bottom:2rem;">
       <article class="type-card type-class">
         <p class="type-kind">known limitation</p>
-        <h3>Unused-function detection is call-graph only</h3>
-        <ul>
-          <li><code>DeadCodeChecker</code> resolves direct calls and pointer-member calls with <code>PointsToAnalyzer</code>, including known concrete virtual overrides and callback targets. The analysis remains flow-insensitive, leaves nested blocks outside its points-to pass, and conservatively falls back to possible overrides when a pointer target is unknown. No auto-fix is offered for this check because an uncertain reachability result must not delete live code.</li>
-        </ul>
-      </article>
-      <article class="type-card type-class">
-        <p class="type-kind">known limitation</p>
-        <h3>Unreachable-code auto-fix is suppressed with goto/labels</h3>
-        <ul>
-          <li>If a function contains any <code>goto</code> or label, the reachability model can't account for jump targets, so the unreachable-code fix is skipped (the warning still prints) to avoid deleting a line another <code>goto</code> depends on.</li>
-        </ul>
-      </article>
-      <article class="type-card type-class">
-        <p class="type-kind">known limitation</p>
-        <h3>Chained if-return has no auto-fix</h3>
-        <ul>
-          <li>Collapsing consecutive if-returns into an if/else-if/else chain is a structural rewrite, not a safe text splice, so this check is warning-only.</li>
-        </ul>
-      </article>
-      <article class="type-card type-class">
-        <p class="type-kind">known limitation</p>
-        <h3>Single-file analysis</h3>
-        <ul>
-          <li>Detectors operate on one translation unit at a time; there's no cross-file/whole-project analysis (e.g. a function only called from a different file would look unused).</li>
-        </ul>
-      </article>
-      <article class="type-card type-class">
-        <p class="type-kind">known limitation</p>
         <h3>Scope limited to defined smell categories</h3>
         <ul>
           <li>The tool doesn't attempt full general-purpose C++ static analysis — only the specific smells each detector targets, per the team's original scope decision.</li>
         </ul>
       </article>
-    </div>
-
-    <div class="todo-card">
-      <span class="todo-badge">TODO — verify &amp; expand</span>
-      <h4>Confirm before publishing</h4>
-      <ul>
-        <li>Note any known false-positive patterns your team has observed while testing (e.g. macro-heavy code, templates, multiple inheritance edge cases).</li>
-      </ul>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>DeadCodeChecker</h3>
+        <ul>
+          <li>Check is skipped if there is no main.</li>
+          <li>Unreachable-code detection doesn't account for throw or infinite loops as exit paths.</li>
+          <li><code>DeadCodeChecker</code> resolves direct calls and pointer-member calls with <code>PointsToAnalyzer</code>, including known concrete virtual overrides and callback targets. The analysis remains flow-insensitive, leaves nested blocks outside its points-to pass, and conservatively falls back to possible overrides when a pointer target is unknown. No auto-fix is offered for this check because an uncertain reachability result must not delete live code.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>RedundantCodeChecker</h3>
+        <ul>
+          <li>Only catches the specific patterns it's built for (e.g. x == true/!= false, an if/else returning literal booleans, unconditional chained ifs), logically equivalent code written differently may not be flagged.</li>
+          <li>Collapsing consecutive if-returns into an if/else-if/else chain is a structural rewrite, not a safe text splice, so this check is warning-only.</li>
+          <li>Usage tracking can also misflag variables only touched through aliasing or macros.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>PoorNameChecker/ NameAnalyzer / FunctionAnalyzer</h3>
+        <ul>
+          <li>Uses naming heuristics rather than semantic understanding. Short names, generic verbs, and placeholder names can be intentional, while names hidden behind macros or unusual declarators may not be analyzed as expected.</li>
+        </ul>
+      </article>
     </div>
   </section>
 
   <!-- ============================================================
-       PROGRESS LOG (sprints)
+  PROGRESS LOG (sprints)
   ============================================================ -->
   <section class="section" id="sprints">
     <p class="section-label">// 09 &nbsp;progress log</p>
@@ -1414,8 +1447,9 @@ freed on this return path.
           <h3>// Rebecca Jennings</h3>
           <ul>
             <li>Expanded unreachable-code reporting to include affected line ranges.</li>
-            <li>Added shadowing-aware unused-variable handling, call-graph-based unused-function detection, and safe-fix overlap handling.</li>
+            <li>Added shadowing-aware unused-variable handling, call-graph-based unused-function detection, and safe-fix overlap handling. Implemented via pointsToAnalyzer.cpp to recognize function calls and relations via pointers and within other functions.</li>
             <li>Added dead-code and redundant-code flow diagrams and updated the website documentation.</li>
+            <li>Implemented FixApplier to copy source file and apple refactor suggestions for redundantCodeChecker (removing unused/dead variables, applying name suggestions as base case)</li>
           </ul>
           <h3>// Jimmy Munoz</h3>
           <ul>
@@ -1435,17 +1469,17 @@ freed on this return path.
   </section>
 
   <!-- ============================================================
-       TEAM
+  TEAM
   ============================================================ -->
   <section class="section" id="team">
     <p class="section-label">// 10 &nbsp;credits</p>
     <h2>Team</h2>
     <p class="section-intro">Our team's contributions to the project.</p>
     <div class="team-grid">
-      <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, GitHub Page Website</p></div>
+      <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, Points To Analyzer, Github Page Website</p></div>
       <div class="team-card"><h3>Jimmy Munoz</h3><p>Parser Architecture, Poor Name Checker, Data Clump Checker, GitHub Page Website</p></div>
       <div class="team-card"><h3>Aelynn Xu</h3><p>Parser Architecture, Comment Checker, Memory Leak Checker</p></div>
-      <div class="team-card"><h3>Stuart Arief</h3><p>Parser Architecture, Repeated Code Checker, Inheritance Checker</p></div>
+      <div class="team-card"><h3>Stuart Arief</h3><p>Parser Architecture, Repeated Code Checker, Long Param List Checker, Inheritance Checker</p></div>
     </div>
   </section>
 
