@@ -1203,33 +1203,41 @@ never uses it. (line 1)</pre></div>
     <h3 class="subhead">How the cases are executed</h3>
     <div class="todo-card">
       <span class="todo-badge">AUTOMATED + MANUAL</span>
-      <p>From the project root, build with <code>cmake --build build --config Debug</code>. Run the automated suites with <code>build/tests/Debug/project4_tests.exe --suite smoke</code> or <code>--suite edge</code>; select one case with <code>--case clean-control</code>. CTest exposes the same checks as <code>project4_smoke</code>, <code>project4_edge_cases</code>, and <code>project4_clean_control</code>. For exploratory runs, use <code>build/Debug/project4.exe</code> and enter fixture paths at its prompt.</p>
+      <ol>
+        <li>Build from the project root with <code>cmake --build build --config Debug</code>.</li>
+        <li>Run the test executable at <code>build/tests/Debug/project4_tests.exe</code>.</li>
+        <li>Choose a suite with <code>--suite smoke</code>, <code>--suite detectors</code>, <code>--suite edge</code>, <code>--suite implementation</code>, or <code>--suite all</code>.</li>
+        <li>Run one parameterized case with <code>--case NAME</code>, such as <code>--case clean-control</code>.</li>
+        <li>Use CTest names <code>project4_smoke</code>, <code>project4_detector_coverage</code>, <code>project4_edge_cases</code>, <code>project4_implementation</code>, and <code>project4_clean_control</code> from the CMake Testing panel.</li>
+        <li>For exploratory output or auto-fix prompts, run <code>build/Debug/project4.exe</code> and enter fixture paths manually.</li>
+      </ol>
     </div>
 
-    <h3 class="subhead">Passed test cases (current run)</h3>
+    <h3 class="subhead">Test suites and current results</h3>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>Test case</th><th>Fixture</th><th>Status</th><th>Observed evidence</th></tr>
+          <tr><th>Suite</th><th>How to run</th><th>Included cases</th><th>Current result</th><th>What it verifies</th></tr>
         </thead>
         <tbody>
-          <tr><td>Clean control</td><td>tests/fixtures/clean_test.cpp</td><td>Passed</td><td>Automated runner observed 0 warnings.</td></tr>
-          <tr><td>Repeated-code category</td><td>tests/fixtures/repeatedTest.cpp</td><td>Passed</td><td>Automated runner observed the expected <code>repeated-code</code> category.</td></tr>
-          <tr><td>Deep-if category</td><td>tests/fixtures/ifStatementTest.cpp</td><td>Passed</td><td>Automated runner observed the expected <code>deep-if</code> category.</td></tr>
-          <tr><td>Dead-function category</td><td>tests/fixtures/deadCodeTest.cpp</td><td>Passed</td><td>Automated runner observed the expected <code>unused-function</code> category.</td></tr>
+          <tr><td>Smoke</td><td><code>project4_tests --suite smoke</code><br><code>project4_smoke</code></td><td><code>clean-control</code></td><td>Passed <code>1/1</code></td><td>Clean control produces zero warnings.</td></tr>
+          <tr><td>Detector coverage</td><td><code>project4_tests --suite detectors</code><br><code>project4_detector_coverage</code></td><td><code>repeated-code</code>, <code>deep-if</code>, <code>dead-function</code>, <code>redundant-code</code>, <code>comment-detection</code>, <code>poor-naming</code>, <code>long-parameter-list</code>, <code>data-clump</code>, <code>inheritance</code>, <code>memory-leak</code>, <code>points-to-dispatch</code></td><td>Passed <code>11/11</code> coverage checks</td><td>Exercises every detector category, including repeated code, nesting, dead-code reachability, and points-to dispatch.</td></tr>
+          <tr><td>Edge cases</td><td><code>project4_tests --suite edge</code><br><code>project4_edge_cases</code></td><td><code>throw-exit-limit</code></td><td>Passed <code>1/1</code></td><td>Confirms the documented absence of <code>unreachable-code</code> modeling for <code>throw</code>.</td></tr>
+          <tr><td>Implementation</td><td><code>project4_tests --suite implementation</code><br><code>project4_implementation</code></td><td><code>redundant-auto-fix</code>, <code>unreachable-auto-fix</code></td><td>Passed <code>2/2</code></td><td>Verifies that fixable warnings expose auto-fix metadata.</td></tr>
+          <tr><td>All cases</td><td><code>project4_tests</code><br>No dedicated CTest entry</td><td>All 15 parameterized cases</td><td>Use targeted suites for reliable runs</td><td>Runs smoke, detector, edge, and implementation cases together; data-clump naming may require network/API access.</td></tr>
         </tbody>
       </table>
     </div>
 
-    <h3 class="subhead">Failed test cases (current run)</h3>
+    <h3 class="subhead">Failed and expected-limitation cases</h3>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>Test case</th><th>Fixture</th><th>Status</th><th>Observed evidence</th></tr>
+          <tr><th>Case</th><th>Fixture</th><th>Status</th><th>Explanation</th></tr>
         </thead>
         <tbody>
-          <tr><td>Legacy low-smell control should produce no warnings</td><td>tests/fixtures/cleanTest.cpp</td><td>Failed</td><td>Manual run observed 4 warnings: missing comments plus poor names for parameters <code>a</code>, <code>b</code>, and <code>c</code>. The new <code>clean_test.cpp</code> avoids those heuristic triggers.</td></tr>
-          <tr><td><code>throw</code> should imply unreachable code</td><td>tests/edge_cases/throw_exit.cpp</td><td>Expected limitation</td><td>No <code>unreachable-code</code> warning is currently reported; the edge suite passes by documenting this known gap.</td></tr>
+          <tr><td>Legacy low-smell control should produce no warnings</td><td>tests/fixtures/cleanTest.cpp</td><td>Manual failure</td><td>Observed 4 warnings: missing comments plus poor names for parameters <code>a</code>, <code>b</code>, and <code>c</code>. The automated clean baseline is <code>clean_test.cpp</code>.</td></tr>
+          <tr><td><code>throw</code> should imply unreachable code</td><td>tests/edge_cases/throw_exit.cpp</td><td>Expected limitation</td><td>No <code>unreachable-code</code> warning is currently reported; this is the expected result for the edge suite.</td></tr>
         </tbody>
       </table>
     </div>

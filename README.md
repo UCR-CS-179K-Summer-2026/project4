@@ -540,9 +540,11 @@ cmake --build build
 
 Run the automated suites from the build directory with `ctest -R project4_` (or use the CMake
 Testing panel in VS Code). The runner also supports `project4_tests --suite smoke`,
-`project4_tests --suite edge`, and `project4_tests --case clean-control`. It asserts expected
-warning-category presence or absence; it does not yet assert every warning line, fix output, or
-the full warning count for each fixture.
+`project4_tests --suite edge`, `project4_tests --suite detectors`,
+`project4_tests --suite implementation`, and `project4_tests --case clean-control`. It asserts
+expected warning-category presence or absence and, for implementation cases, auto-fix metadata;
+it does not yet assert every warning line, fixed-file contents, or the full warning count for
+each fixture.
 
 ## Architecture
 

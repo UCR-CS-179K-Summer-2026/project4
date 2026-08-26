@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -12,14 +13,25 @@ struct TestCase {
     std::string fixture;
     std::string expectedCategory;
     bool expectCategory;
+    std::optional<bool> expectedFix;
 };
 
 static const std::vector<TestCase> testCases = {
-    {"clean-control", "smoke", "tests/fixtures/clean_test.cpp", "", false},
-    {"repeated-code", "smoke", "tests/fixtures/repeatedTest.cpp", "repeated-code", true},
-    {"deep-if", "smoke", "tests/fixtures/ifStatementTest.cpp", "deep-if", true},
-    {"dead-function", "smoke", "tests/fixtures/deadCodeTest.cpp", "unused-function", true},
-    {"throw-exit-limit", "edge", "tests/edge_cases/throw_exit.cpp", "unreachable-code", false},
+    {"clean-control", "smoke", "tests/fixtures/clean_test.cpp", "", false, std::nullopt},
+    {"repeated-code", "detectors", "tests/fixtures/repeatedTest.cpp", "repeated-code", true, std::nullopt},
+    {"deep-if", "detectors", "tests/fixtures/ifStatementTest.cpp", "deep-if", true, std::nullopt},
+    {"dead-function", "detectors", "tests/fixtures/deadCodeTest.cpp", "unused-function", true, std::nullopt},
+    {"throw-exit-limit", "edge", "tests/edge_cases/throw_exit.cpp", "unreachable-code", false, std::nullopt},
+    {"redundant-code", "detectors", "tests/fixtures/redundantTest.cpp", "Redundant boolean comparison", true, std::nullopt},
+    {"comment-detection", "detectors", "tests/fixtures/commentTest.cpp", "Comments", true, std::nullopt},
+    {"poor-naming", "detectors", "tests/fixtures/poorNameTest.cpp", "Poor Naming", true, std::nullopt},
+    {"long-parameter-list", "detectors", "tests/fixtures/longParamTest.cpp", "Long Parameter List", true, std::nullopt},
+    {"data-clump", "detectors", "tests/fixtures/DataClumpTest.cpp", "Data Clump", true, std::nullopt},
+    {"inheritance", "detectors", "tests/fixtures/inheritanceTest.cpp", "unused-inheritance", true, std::nullopt},
+    {"memory-leak", "detectors", "tests/fixtures/memoryTest.cpp", "memory-leak", true, std::nullopt},
+    {"points-to-dispatch", "detectors", "tests/fixtures/pointsToTest.cpp", "unused-function", true, std::nullopt},
+    {"redundant-auto-fix", "implementation", "tests/fixtures/redundantTest.cpp", "Redundant boolean comparison", true, true},
+    {"unreachable-auto-fix", "implementation", "tests/fixtures/deadCodeTest.cpp", "unreachable-code", true, true},
 };
 
 static bool hasCategory(const std::vector<Warning>& warnings, const std::string& category) {
@@ -29,8 +41,15 @@ static bool hasCategory(const std::vector<Warning>& warnings, const std::string&
     return false;
 }
 
+static bool hasFix(const std::vector<Warning>& warnings) {
+    for (const Warning& warning : warnings) {
+        if (warning.fix.has_value()) return true;
+    }
+    return false;
+}
+
 static void printUsage() {
-    std::cout << "Usage: project4_tests [--suite smoke|edge|all] [--case NAME]\n";
+    std::cout << "Usage: project4_tests [--suite smoke|edge|detectors|implementation|all] [--case NAME]\n";
 }
 
 int main(int argc, char** argv) {
@@ -74,7 +93,10 @@ int main(int argc, char** argv) {
         const bool categoryFound = testCase.expectedCategory.empty()
             ? !detector.getWarnings().empty()
             : hasCategory(detector.getWarnings(), testCase.expectedCategory);
-        const bool passed = categoryFound == testCase.expectCategory;
+        const bool fixFound = hasFix(detector.getWarnings());
+        const bool categoryPassed = categoryFound == testCase.expectCategory;
+        const bool fixPassed = !testCase.expectedFix.has_value() || fixFound == *testCase.expectedFix;
+        const bool passed = categoryPassed && fixPassed;
 
         std::cout << (passed ? "[PASS] " : "[FAIL] ") << testCase.name;
         if (!testCase.expectedCategory.empty()) {
@@ -83,6 +105,7 @@ int main(int argc, char** argv) {
         } else {
             std::cout << " expected a clean report";
         }
+        if (testCase.expectedFix == true) std::cout << " with an auto-fix";
         std::cout << "; observed " << detector.getWarnings().size() << " warning(s)\n";
         if (!passed) ++failedCount;
     }
