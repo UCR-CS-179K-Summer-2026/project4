@@ -74,6 +74,7 @@
             <li>CMake (3.10+) — cmake.org/download, or <code>winget install Kitware.CMake</code> on Windows. Confirm with <code>cmake --version</code>.</li>
             <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
             <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code>.</li>
+            <li>Internet access during the first CMake configure if <code>nlohmann/json</code> must be downloaded. The vendored <code>libcurl</code> library is built automatically by the project.</li>
           </ul>
         </div>
       </li>
@@ -88,6 +89,7 @@
             <li><code>git submodule update --init --recursive</code></li>
           </ul>
           <p class="build-step-note">The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</p>
+          <p class="build-step-note">For data-clump name suggestions, create a root <code>.env</code> file with <code>GOOGLE_GEMINI_API_KEY=your-api-key-here</code>. Keep this file private; it is ignored by Git. The program searches from the project root or the Windows <code>build/Debug</code> launch directory. Gemini requests use a 30-second curl timeout; HTTP or transport failures fall back to <code>DefaultName</code>, while a missing key stops name generation with an error.</p>
         </div>
       </li>
 
@@ -101,7 +103,7 @@
             <li><code>cmake .. -DBUILD_SHARED_LIBS=OFF</code></li>
             <li><code>cmake --build .</code></li>
           </ul>
-          <p class="build-step-note">This builds the tree-sitter runtime, the C++ grammar, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</p>
+          <p class="build-step-note">This builds the tree-sitter runtime, the C++ grammar, vendored <code>libcurl</code>, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</p>
         </div>
       </li>
 
