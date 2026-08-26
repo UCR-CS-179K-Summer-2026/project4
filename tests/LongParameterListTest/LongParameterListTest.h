@@ -1,6 +1,4 @@
 #ifndef ROBOTICS_LONGPARAMETERLISTTEST_H
 #define ROBOTICS_LONGPARAMETERLISTTEST_H
-class LongParameterListTest{
-    void func1(int p1, int p2, int p3, int p4) {}
-};
+int calculateOrderTotal(int itemCount, int unitPrice, int discount, int tax, int shipping);
 #endif //ROBOTICS_LONGPARAMETERLISTTEST_H

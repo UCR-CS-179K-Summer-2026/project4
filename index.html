@@ -1252,7 +1252,13 @@ never uses it. (line 1)</pre></div>
   <section class="section" id="benchmarking">
     <p class="section-label">// 07 &nbsp;benchmarking</p>
     <h2>Benchmarking</h2>
-    <p class="section-intro">Complementary multi-file checks: real-world annotated applications and controlled universal scenarios covering every registered detector.</p>
+    <p class="section-intro">Complementary multi-file checks: real-world annotated applications and controlled universal scenarios covering every registered detector. </p>
+    <p class="section-intro">The test cases are a combination of modifications for our detector and the original set up that are credited to the following repositories:</p>
+    
+    <a href="https://github.com/Tomma94/CLEAN-Plus-Plus" class="button" target="_blank" rel="noopener">CLEAN-Plus-Plus GitHub Repository</a>
+    <a href="https://github.com/HRI-EU/SmellyCodeDataset" class="button" target="_blank" rel="noopener">SmellyCodeDataset GitHub Repository</a>
+    <h3></h3>
+    <h3></h3>
 
     <div class="todo-card">
       <h3>Shared run method</h3>
@@ -1315,48 +1321,72 @@ never uses it. (line 1)</pre></div>
     </div>
 
     <h3>SpaghettiCodeTest: classification check</h3>
-    <p class="section-intro">A three-file scenario with two files labeled as spaghetti-code cases and one labeled as a negative control. The current detector set has no dedicated spaghetti-code category.</p>
+    <p class="section-intro">A three-file comparison retaining the spaghetti-code theme while using the supported repeated-code detector as its measurable criterion.</p>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
           <tr><th>Scenario file</th><th>Expected label</th><th>Warnings</th><th>Observed result</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>SpaghettiCodeTest1.cpp</code></td><td>Positive</td><td>6</td><td>Generic warnings only; no spaghetti-code detection</td></tr>
-          <tr><td><code>SpaghettiCodeTest2.cpp</code></td><td>Positive</td><td>6</td><td>Generic warnings only; no spaghetti-code detection</td></tr>
-          <tr><td><code>NotSpaghettiCodeTest.cpp</code></td><td>Negative control</td><td>10</td><td>Generic warnings, so not a clean-control pass</td></tr>
-          <tr><td><strong>SpaghettiCodeTest total</strong></td><td>3 C++ source files</td><td><strong>22</strong></td><td><strong>No dedicated classification</strong></td></tr>
+          <tr><td><code>SpaghettiCodeTest1.cpp</code></td><td>Positive</td><td>2</td><td>Repeated-code detected</td></tr>
+          <tr><td><code>SpaghettiCodeTest2.cpp</code></td><td>Positive</td><td>2</td><td>Repeated-code detected</td></tr>
+          <tr><td><code>NotSpaghettiCodeTest.cpp</code></td><td>Negative control</td><td>0</td><td>Clean-control pass</td></tr>
+          <tr><td><strong>SpaghettiCodeTest total</strong></td><td>3 C++ source files</td><td><strong>4</strong></td><td><strong>2/2 proxy positives; clean control passed</strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="todo-card">
       <h4>SpaghettiCodeTest result</h4>
       <ul>
-        <li>The positive files each produced two missing-comment, two poor-name, and two repeated-code warnings.</li>
-        <li>The negative control produced 10 unrelated warnings, including an unused variable, so it did not pass as a zero-warning control.</li>
-        <li>This benchmark demonstrates a coverage gap rather than spaghetti-code precision or recall: the current detectors do not implement the dataset's class-level “two long methods” criterion.</li>
+        <li>Each positive file produced two repeated-code warnings and no unrelated comment or naming warnings.</li>
+        <li>The negative control produced 0 warnings, so it passed the clean-control check.</li>
+        <li>This is a supported proxy comparison, not dedicated spaghetti-code precision or recall: the current detectors do not implement the original class-level “two long methods” criterion.</li>
       </ul>
     </div>
 
     <h3>LongParameterListTest: threshold and input-layout check</h3>
-    <p class="section-intro">A five-file scenario with one positive case and four negative controls. The implementation methods are defined inline in the headers, so both source-only and header-inclusive results are recorded.</p>
+    <p class="section-intro">A five-file detector-aligned scenario with one five-parameter positive case and four clean controls. Headers provide declarations; implementations are in the analyzed source files.</p>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
           <tr><th>Run</th><th>Files analyzed</th><th>Expected</th><th>Warnings</th><th>Long Parameter List results</th></tr>
         </thead>
         <tbody>
-          <tr><td>Source-only</td><td>5 <code>.cpp</code> files</td><td>1 positive, 4 negative controls</td><td>0</td><td>Positive missed because definitions are in headers</td></tr>
-          <tr><td>Header-inclusive</td><td>5 <code>.h</code> files</td><td>1 positive, 4 negative controls</td><td>19</td><td>0 detected, including the four-parameter positive</td></tr>
+          <tr><td>Implementation run</td><td>5 <code>.cpp</code> files</td><td>1 positive, 4 negative controls</td><td>1</td><td>Positive detected; controls clean</td></tr>
         </tbody>
       </table>
     </div>
     <div class="todo-card">
       <h4>LongParameterListTest result</h4>
       <ul>
-        <li>The source-only run produced 0 warnings across all 5 files because the executable analyzes each <code>.cpp</code> input without automatically following its header.</li>
-        <li>The header-inclusive run produced 19 generic warnings: missing comments and poor parameter names. It produced no <code>Long Parameter List</code> warning.</li>
-        <li>This is a confirmed false negative against the folder's label: its positive method has 4 parameters, while the current detector flags only functions with more than 4 parameters.</li>
+        <li>The implementation run produced exactly one <code>Long Parameter List</code> warning for the five-parameter positive and zero warnings for all four controls.</li>
+        <li>The suite now matches the implementation threshold: the detector reports functions with more than four parameters.</li>
+      </ul>
+    </div>
+
+    <h3>DataClassTest: classification check</h3>
+    <p class="section-intro">A five-file data-oriented comparison whose positive cases exercise supported detectors rather than the unimplemented Data Class classification.</p>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Scenario file</th><th>Expected label</th><th>Warnings</th><th>Data Class result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>DataClassTest1.cpp</code></td><td>Positive: long parameters + redundant boolean</td><td>2</td><td>Both intended checks detected</td></tr>
+          <tr><td><code>DataClassTest2.cpp</code></td><td>Positive: deep-if + repeated code</td><td>2</td><td>Both intended checks detected</td></tr>
+          <tr><td><code>NotDataClassTest1.cpp</code></td><td>Negative control</td><td>3</td><td>No dedicated detection</td></tr>
+          <tr><td><code>NotDataClassTest2.cpp</code></td><td>Negative control</td><td>6</td><td>No dedicated detection</td></tr>
+          <tr><td><code>NotDataClassTest3.cpp</code></td><td>Negative control</td><td>1</td><td>No dedicated detection</td></tr>
+          <tr><td><strong>DataClassTest total</strong></td><td>5 C++ source files</td><td><strong>4</strong></td><td><strong>4/4 intended positive checks</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="todo-card">
+      <h4>DataClassTest result</h4>
+      <ul>
+        <li>The positive files produced exactly the intended supported warnings: one long-parameter and one redundant-boolean warning in the first, plus one deep-if and one repeated-code warning in the second.</li>
+        <li>All three negative controls produced 0 warnings.</li>
+        <li>The original Data Class smell remains unsupported; this folder is now a data-oriented detector comparison with explicit pass/fail criteria.</li>
       </ul>
     </div>
     <p class="section-intro">These benchmark results are exploratory measurements, not precision or recall studies. The projects do not have machine-readable expected-warning manifests.</p>

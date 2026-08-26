@@ -1,3 +1,6 @@
-// The class doesn't have a method with number of parameters bigger than the average or bigger than 3.
-// -> Has not long parameter list smell.
 #include "NotLongParameterListTest2.h"
+
+// Applies a discount using four or fewer values.
+int applyDiscount(int subtotal, int discount, int tax, int shipping) {
+	return subtotal - discount + tax + shipping;
+}

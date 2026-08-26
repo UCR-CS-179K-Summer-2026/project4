@@ -1,36 +1,24 @@
-// The class has at least 2 long methods that call to each other. (long method= longer than the average in the class)
-// -> Has spaghetti code smell.
 #include "SpaghettiCodeTest2.h"
 
-int SpaghettiCodeTest2 :: func1(){
-        int v = this->f1;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        return v;
+// Repeats the same preparation sequence inline.
+int SpaghettiCodeTest2::func1() {
+    int counter = this->f1;
+    counter += 1;
+    counter += 2;
+    counter += 3;
+    counter += 1;
+    counter += 2;
+    counter += 3;
+    return counter;
 }
-void SpaghettiCodeTest2 :: func2(){
-        int v = this->func1();
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
+
+// Repeats the same follow-up sequence inline.
+void SpaghettiCodeTest2::func2() {
+    int counter = this->func1();
+    counter += 1;
+    counter += 2;
+    counter += 3;
+    counter += 1;
+    counter += 2;
+    counter += 3;
 }

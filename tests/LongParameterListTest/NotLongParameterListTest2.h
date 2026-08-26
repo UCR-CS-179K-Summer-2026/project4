@@ -1,6 +1,4 @@
 #ifndef ROBOTICS_NOTLONGPARAMETERLISTTEST2_H
 #define ROBOTICS_NOTLONGPARAMETERLISTTEST2_H
-class NotLongParameterListTest2{
-    void func1(int p1) {}
-};
+int applyDiscount(int subtotal, int discount, int tax, int shipping);
 #endif //ROBOTICS_NOTLONGPARAMETERLISTTEST2_H

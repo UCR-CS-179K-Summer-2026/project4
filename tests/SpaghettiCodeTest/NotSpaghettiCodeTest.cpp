@@ -1,42 +1,22 @@
-// The class doesn't have 2 long methods that call to each other ot fall to the same field.
-// -> Has spaghetti code smell.
 #include "NotSpaghettiCodeTest.h"
-int NotSpaghettiCodeTest :: func1(){
-        int v = this->f1;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        return v;
-}
-void NotSpaghettiCodeTest :: func2(){
-        int v = this->f2;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-        v++;
-}
-void NotSpaghettiCodeTest :: func3(){
-        int v = this->f2;
+
+// Performs one focused inventory update.
+int NotSpaghettiCodeTest::func1() {
+    return this->f1 + 1;
 }
 
-void NotSpaghettiCodeTest :: func4(){
-        this->func2();
+// Performs one focused reservation update.
+void NotSpaghettiCodeTest::func2() {
+    this->f2 += 1;
+}
+
+// Reads the current reservation count.
+void NotSpaghettiCodeTest::func3() {
+    int reservationCount = this->f2;
+    (void) reservationCount;
+}
+
+// Delegates one operation through a named method.
+void NotSpaghettiCodeTest::func4() {
+    this->func2();
 }

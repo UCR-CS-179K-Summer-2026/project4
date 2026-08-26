@@ -1,6 +1,4 @@
 #ifndef ROBOTICS_NOTLONGPARAMETERLISTTEST1_H
 #define ROBOTICS_NOTLONGPARAMETERLISTTEST1_H
-class NotLongParameterListTest1{
-    void func1(int p1, int p2) {}
-};
+int calculateSubtotal(int itemCount, int unitPrice);
 #endif //ROBOTICS_NOTLONGPARAMETERLISTTEST1_H

@@ -1,6 +1,4 @@
 #ifndef ROBOTICS_NOTLONGPARAMETERLISTTEST3_H
 #define ROBOTICS_NOTLONGPARAMETERLISTTEST3_H
-class NotLongParameterListTest3{
-    void func1(int p1) {}
-};
+int convertPrice(int cents, int exchangeRate);
 #endif //ROBOTICS_NOTLONGPARAMETERLISTTEST3_H

@@ -1,6 +1,4 @@
 #ifndef ROBOTICS_NOTLONGPARAMETERLISTTEST4_H
 #define ROBOTICS_NOTLONGPARAMETERLISTTEST4_H
-class NotLongParameterListTest4{
-    void func1(int p1) {}
-};
+int combineInventory(int availableUnits, int reservedUnits);
 #endif //ROBOTICS_NOTLONGPARAMETERLISTTEST4_H
