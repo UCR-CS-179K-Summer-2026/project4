@@ -293,7 +293,7 @@ std::vector<Warning> RepeatedCodeChecker::analyzeSource(const ParsedSource& pars
 //Outputs the refactored message, showing a before and after of the detected code block, with refactor suggestion
 std::string RepeatedCodeChecker::offerRefactoring(const std::vector<TSNode>& statements, int windowSize, const std::vector<int>& startIndices, const std::string& functionName, const std::string& source) const{
     uint32_t startByte = ts_node_start_byte(statements[startIndices[0]]);
-    uint32_t endByte = ts_node_end_byte(statements[startIndices+windowSize -1]);
+    uint32_t endByte = ts_node_end_byte(statements[startIndices[0]+windowSize -1]);
     std::string repeatedText = source.substr(startByte, endByte- startByte);
 
     int firstLine = static_cast<int>(ts_node_start_point(statements[startIndices[0]]).row)+1;
