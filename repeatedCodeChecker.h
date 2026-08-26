@@ -32,6 +32,9 @@ private:
 
     void findRepeatedBlocks(const std::vector<TSNode>& statements, const std::string& functionName, const std::string& source, std::vector<Warning>& warnings) const;
     void scanBlocksForRepeats(TSNode node, const std::string& functionName, const std::string& source, std::vector<Warning>& warnings) const;
+
+    std::string offerRefactoring(const std::vector<TSNode>& statements, int windowSize, const std::vector<int>& startIndices, const std::string& functionName, const std::string& source) const;
+
 };
 
 #endif
