@@ -53,15 +53,14 @@ set(SOURCE_FILES
     deadCodeChecker/deadCodeChecker.cpp
     deadCodeChecker/pointsToAnalyzer.cpp
     repeatedCodeChecker.cpp
-    commentChecker.cpp
+    commentChecker/commentChecker.cpp
     FunctionAnalyzer.cpp
     NameAnalyzer.cpp
     DeepIfDetector.cpp
     DataClumpDetector.cpp
-    memoryChecker.cpp
+    memoryChecker/memoryChecker.cpp
     longParamList.cpp
     inheritanceChecker.cpp
-    inheritanceTest.cpp
     DataClumpNameGen.cpp
     FixApplier.cpp
 )

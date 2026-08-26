@@ -271,7 +271,10 @@ void InheritanceChecker::collectInstanceOfType(TSNode node, const std::string& s
         return;
     }
 
-    if (strcmp(ts_node_type(node),"declaration") == 0){
+    const char* nodeTypeStr = ts_node_type(node);
+
+
+    if (strcmp(nodeTypeStr, "declaration") == 0 || strcmp(nodeTypeStr, "parameter_declaration") == 0){
         TSNode typeNode = ts_node_child_by_field_name(node, "type", strlen("type"));
 
         if(!ts_node_is_null(typeNode) && nodeText(typeNode, source) == typeName){

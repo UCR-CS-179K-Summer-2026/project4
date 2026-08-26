@@ -22,10 +22,13 @@ std::string DataClumpNameGen::getKey() {
     file.open("../../.env");
 
     if (!file.is_open()) {
-        file.open("../env");
+        file.open("../.env");
         if(!file.is_open()) {
-            std::cerr << "Failed to open .env file." << std::endl;
-            return "";
+            file.open(".env");
+            if(!file.is_open()) {
+                std::cerr << "Failed to open .env file." << std::endl;
+                return "";
+            }
         }
     }
 

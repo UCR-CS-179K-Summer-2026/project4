@@ -56,9 +56,7 @@ identifier arguments rather than arbitrary expressions. Struct/class name sugges
 network access and a configured Gemini API key.
 
 ### InheritanceChecker
-- Refactoring output removes the redundant inheritance clause; it does not redesign the class.
-- Assignability analysis does not fully resolve ambiguity from parenthesis-style construction
-  (for example, `Animal a(d)` can be mistaken for a function declaration).
+Refactoring output removes the redundant inheritance clause; it does not redesign the class.Assignability analysis does not fully resolve ambiguity from parenthesis-style construction (for example, `Animal a(d)` can be mistaken for a function declaration).
 
 ### MemoryChecker
 Tracks direct `new`, `malloc`, and `calloc` allocations by variable name and checks return paths.
@@ -80,6 +78,7 @@ does not provide complete ownership, alias, interprocedural, or exception-path a
   - [Dead Code Blocks](#dead-code-blocks)
 
 - [Warning Output Format](#warning-output-format)
+- [Refactor Suggestion Format](#refactor-suggestion-format)
 - [Setup](#setup)
 - [Building](#building)
 - [Running](#running)
@@ -307,10 +306,22 @@ int basicTest(){
     int* exampleptr = new int;
     return 2;
 }
+
+void multipleFunctionCallPartialTest(){
+    int* exampleptr = new int;
+    int* exampleptrTwo = new int;
+    partialDeleterFunction(exampleptr, exampleptrTwo);
+    return;
+}
+
+void partialDeleterFunction(int* one, int* two){
+    delete one;
+}
 ```
 
 ```
-Warning: [memory-leak]. Unreleased memory allocated at  at line 2 does not reach a destructor.(line 3)
+Warning: [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 3)
+Warning: [memory-leak]. Unreleased memory allocated at line 8 does not reach a destructor.(line 10)
 ```
 
 ### Inheritance
@@ -354,7 +365,7 @@ int getStatus(int code) {
 ```
 
 ```
-Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
+Warning: [unreachable-code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
 ```
 
 **Unused functions** — free functions and recognized class methods defined in the file but
@@ -378,11 +389,12 @@ int main() {
 ```
 
 ```
-Warning: [Unused Function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
+Warning: [unused-function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
 ```
 
 ```cpp
 class Animal {
+public:
     virtual void makeSound();
 };
 class Dog : public Animal {
@@ -395,18 +407,18 @@ public:
 };
 void makeSounds(Animal *a) {
     a->makeSound();
+    a->makeSound();
 }
-int main() {
-    Dog *d;
-    Cat *c;
-    makeSounds(d);
-    return 0;
+void helper(Animal *x) {
+    Dog *e;
+    Cat *f;
+    Animal *y = std::rand() ? x : e;
+    makeSounds(y);
 }
-
 ```
 
 ```
-Warning: [Unused Function]. Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.(line 10)
+Warning: [unused-function]. Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.(line 11)
 ```
 
 ## Warning Output Format
@@ -433,7 +445,7 @@ Warnings print directly to the terminal, one per detected smell, with the offend
 
 The fix prompt appears independently for each successfully opened file. Choosing "y" writes a new file by appending .fixed.cpp to the original path, leaving the original untouched. Choosing "n" skips that file.
 
-Currently the features: Unused / Dead Variable, Redundant Boolean Comparison, Redundant If/Else Boolean Return, and Unreachable Code are auto-fixable. Data Clumps and Inhertiance suggest fixes in their warning output, but do not directly edit/genereate in the new file.
+Currently the features: Unused / Dead Variable, Redundant Boolean Comparison, Redundant If/Else Boolean Return, and Unreachable Code are auto-fixable and generate a new file. The other detectors still output warnings or suggest fixes in their warning output, but do not directly edit/genereate in the new file.
 
 After all files finish, the program prints the total smell count and total number of processed files. Missing or unreadable paths are reported and skipped; the run continues with the remaining files.
 
