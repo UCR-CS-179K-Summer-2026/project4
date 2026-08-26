@@ -110,5 +110,5 @@ std::string LongParamList::nodeText(TSNode node, const std::string& source) cons
     uint32_t startByte = ts_node_start_byte(node);
     uint32_t endByte = ts_node_end_byte(node);
     
-    return source.subtr(startByte, endByte-startByte);
+    return source.substr(startByte, endByte-startByte);
 }
