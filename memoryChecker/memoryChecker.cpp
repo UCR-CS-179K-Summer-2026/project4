@@ -195,7 +195,7 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
     for (const auto& alloc : trackedAllocations) {
 
         Warning warning = {
-            static_cast<int>(ts_node_start_point(node).row + 1),
+            alloc.second,
             "memory-leak",
             "Unreleased memory allocated at line " +
                 std::to_string(alloc.second) +
