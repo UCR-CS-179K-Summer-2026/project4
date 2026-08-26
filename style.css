@@ -381,13 +381,13 @@ h3.subhead:first-of-type { margin-top: 0; }
 --------------------------------------------- */
 .figure-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(600px, 10fr));
+  grid-template-columns: repeat(auto-fit, minmax(700px, 10fr));
   justify-content: center;
   gap: 4rem;
   text-align: left;
 }
 
-.figure-card { margin: 0 auto; width: 100%; max-width: 600px; }
+.figure-card { margin: 0 auto; width: 100%; }
 
 .figure-frame {
   border: 1px solid var(--border);
@@ -399,12 +399,12 @@ h3.subhead:first-of-type { margin-top: 0; }
   justify-content: center;
 }
 
-.figure-frame-horizontal { aspect-ratio: 4 / 2; }
-.figure-frame-square { aspect-ratio: 1 / 1; }
-.figure-frame-43 { aspect-ratio: 4 / 3; }
-.figure-frame-259 { aspect-ratio: 25 / 9; }
-.figure-frame-169 { aspect-ratio: 16 / 9; }
-.figure-frame-21 { aspect-ratio: 4 / 3; }
+.figure-frame-horizontal { margin: 0 auto; width: 100%; aspect-ratio: 4 / 2; max-width: 600px; }
+.figure-frame-square { margin: 0 auto; width: 100%; aspect-ratio: 1 / 1; max-width: 500px; }
+.figure-frame-43 { margin: 0 auto; width: 100%; aspect-ratio: 4 / 3; max-width: 600px; }
+.figure-frame-259 { margin: 0 auto; width: 100%; aspect-ratio: 25 / 9; max-width: 900px; }
+.figure-frame-169 { margin: 0 auto; width: 100%; aspect-ratio: 23 / 9; max-width: 900px; }
+.figure-frame-vertical { margin: 0 auto; width: 100%; aspect-ratio: 6 / 9; max-width: 600px; }
 
 .figure-frame img {
   width: 100%;
