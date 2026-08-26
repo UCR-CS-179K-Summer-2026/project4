@@ -1252,7 +1252,7 @@ never uses it. (line 1)</pre></div>
   <section class="section" id="benchmarking">
     <p class="section-label">// 07 &nbsp;benchmarking</p>
     <h2>Benchmarking</h2>
-    <p class="section-intro">Two complementary multi-file checks: a real-world annotated application and a controlled universal scenario covering every registered detector.</p>
+    <p class="section-intro">Complementary multi-file checks: real-world annotated applications and controlled universal scenarios covering every registered detector.</p>
 
     <div class="todo-card">
       <h3>Shared run method</h3>
@@ -1337,7 +1337,29 @@ never uses it. (line 1)</pre></div>
         <li>This benchmark demonstrates a coverage gap rather than spaghetti-code precision or recall: the current detectors do not implement the dataset's class-level “two long methods” criterion.</li>
       </ul>
     </div>
-    <p class="section-intro">Both benchmark results are exploratory measurements, not precision or recall studies. The projects do not have machine-readable expected-warning manifests.</p>
+
+    <h3>LongParameterListTest: threshold and input-layout check</h3>
+    <p class="section-intro">A five-file scenario with one positive case and four negative controls. The implementation methods are defined inline in the headers, so both source-only and header-inclusive results are recorded.</p>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Run</th><th>Files analyzed</th><th>Expected</th><th>Warnings</th><th>Long Parameter List results</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Source-only</td><td>5 <code>.cpp</code> files</td><td>1 positive, 4 negative controls</td><td>0</td><td>Positive missed because definitions are in headers</td></tr>
+          <tr><td>Header-inclusive</td><td>5 <code>.h</code> files</td><td>1 positive, 4 negative controls</td><td>19</td><td>0 detected, including the four-parameter positive</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="todo-card">
+      <h4>LongParameterListTest result</h4>
+      <ul>
+        <li>The source-only run produced 0 warnings across all 5 files because the executable analyzes each <code>.cpp</code> input without automatically following its header.</li>
+        <li>The header-inclusive run produced 19 generic warnings: missing comments and poor parameter names. It produced no <code>Long Parameter List</code> warning.</li>
+        <li>This is a confirmed false negative against the folder's label: its positive method has 4 parameters, while the current detector flags only functions with more than 4 parameters.</li>
+      </ul>
+    </div>
+    <p class="section-intro">These benchmark results are exploratory measurements, not precision or recall studies. The projects do not have machine-readable expected-warning manifests.</p>
   </section>
 
   <!-- ============================================================
