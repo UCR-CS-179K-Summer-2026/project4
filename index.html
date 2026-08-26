@@ -1206,9 +1206,9 @@ never uses it. (line 1)</pre></div>
       <ol>
         <li>Build from the project root with <code>cmake --build build --config Debug</code>.</li>
         <li>Run the test executable at <code>build/tests/Debug/project4_tests.exe</code>.</li>
-        <li>Choose a suite with <code>--suite smoke</code>, <code>--suite detectors</code>, <code>--suite edge</code>, <code>--suite implementation</code>, or <code>--suite all</code>.</li>
+        <li>Choose a suite with <code>--suite smoke</code>, <code>--suite detectors</code>, <code>--suite edge</code>, <code>--suite implementation</code>, <code>--suite known-failures</code>, or <code>--suite all</code>.</li>
         <li>Run one parameterized case with <code>--case NAME</code>, such as <code>--case clean-control</code>.</li>
-        <li>Use CTest names <code>project4_smoke</code>, <code>project4_detector_coverage</code>, <code>project4_edge_cases</code>, <code>project4_implementation</code>, and <code>project4_clean_control</code> from the CMake Testing panel.</li>
+        <li>Use CTest names <code>project4_smoke</code>, <code>project4_detector_coverage</code>, <code>project4_edge_cases</code>, <code>project4_implementation</code>, <code>project4_known_failures</code>, and <code>project4_clean_control</code> from the CMake Testing panel.</li>
         <li>For exploratory output or auto-fix prompts, run <code>build/Debug/project4.exe</code> and enter fixture paths manually.</li>
       </ol>
     </div>
@@ -1222,9 +1222,10 @@ never uses it. (line 1)</pre></div>
         <tbody>
           <tr><td>Smoke</td><td><code>project4_tests --suite smoke</code><br><code>project4_smoke</code></td><td><code>clean-control</code></td><td>Passed <code>1/1</code></td><td>Clean control produces zero warnings.</td></tr>
           <tr><td>Detector coverage</td><td><code>project4_tests --suite detectors</code><br><code>project4_detector_coverage</code></td><td><code>repeated-code</code>, <code>deep-if</code>, <code>dead-function</code>, <code>redundant-code</code>, <code>comment-detection</code>, <code>poor-naming</code>, <code>long-parameter-list</code>, <code>data-clump</code>, <code>inheritance</code>, <code>memory-leak</code>, <code>points-to-dispatch</code></td><td>Passed <code>11/11</code> coverage checks</td><td>Exercises every detector category, including repeated code, nesting, dead-code reachability, and points-to dispatch.</td></tr>
-          <tr><td>Edge cases</td><td><code>project4_tests --suite edge</code><br><code>project4_edge_cases</code></td><td><code>throw-exit-limit</code></td><td>Passed <code>1/1</code></td><td>Confirms the documented absence of <code>unreachable-code</code> modeling for <code>throw</code>.</td></tr>
+          <tr><td>Edge cases</td><td><code>project4_tests --suite edge</code><br><code>project4_edge_cases</code></td><td><code>throw-exit-limit</code>, <code>branch-exit-negative</code></td><td>Passed <code>2/2</code></td><td>Checks <code>throw</code> limitation and confirms a non-exhaustive <code>if</code> does not create a false unreachable warning.</td></tr>
           <tr><td>Implementation</td><td><code>project4_tests --suite implementation</code><br><code>project4_implementation</code></td><td><code>redundant-auto-fix</code>, <code>unreachable-auto-fix</code></td><td>Passed <code>2/2</code></td><td>Verifies that fixable warnings expose auto-fix metadata.</td></tr>
-          <tr><td>All cases</td><td><code>project4_tests</code><br>No dedicated CTest entry</td><td>All 15 parameterized cases</td><td>Use targeted suites for reliable runs</td><td>Runs smoke, detector, edge, and implementation cases together; data-clump naming may require network/API access.</td></tr>
+          <tr><td>Known failures</td><td><code>project4_tests --suite known-failures</code><br><code>project4_known_failures</code></td><td><code>throw-exit-known-failure</code>, <code>infinite-loop-known-failure</code></td><td>Expected <code>0/2</code>; CTest marked <code>WILL_FAIL</code></td><td>Tracks missing <code>unreachable-code</code> detection for <code>throw</code> and infinite loops.</td></tr>
+          <tr><td>All cases</td><td><code>project4_tests</code><br>No dedicated CTest entry</td><td>All 17 parameterized cases</td><td>Includes 2 expected failures</td><td>Runs every case together; data-clump naming may require network/API access, and known gaps intentionally return failures.</td></tr>
         </tbody>
       </table>
     </div>

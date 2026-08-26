@@ -22,6 +22,7 @@ static const std::vector<TestCase> testCases = {
     {"deep-if", "detectors", "tests/fixtures/ifStatementTest.cpp", "deep-if", true, std::nullopt},
     {"dead-function", "detectors", "tests/fixtures/deadCodeTest.cpp", "unused-function", true, std::nullopt},
     {"throw-exit-limit", "edge", "tests/edge_cases/throw_exit.cpp", "unreachable-code", false, std::nullopt},
+    {"branch-exit-negative", "edge", "tests/edge_cases/branch_exit.cpp", "unreachable-code", false, std::nullopt},
     {"redundant-code", "detectors", "tests/fixtures/redundantTest.cpp", "Redundant boolean comparison", true, std::nullopt},
     {"comment-detection", "detectors", "tests/fixtures/commentTest.cpp", "Comments", true, std::nullopt},
     {"poor-naming", "detectors", "tests/fixtures/poorNameTest.cpp", "Poor Naming", true, std::nullopt},
@@ -32,6 +33,8 @@ static const std::vector<TestCase> testCases = {
     {"points-to-dispatch", "detectors", "tests/fixtures/pointsToTest.cpp", "unused-function", true, std::nullopt},
     {"redundant-auto-fix", "implementation", "tests/fixtures/redundantTest.cpp", "Redundant boolean comparison", true, true},
     {"unreachable-auto-fix", "implementation", "tests/fixtures/deadCodeTest.cpp", "unreachable-code", true, true},
+    {"throw-exit-known-failure", "known-failures", "tests/edge_cases/throw_exit.cpp", "unreachable-code", true, std::nullopt},
+    {"infinite-loop-known-failure", "known-failures", "tests/edge_cases/infinite_loop.cpp", "unreachable-code", true, std::nullopt},
 };
 
 static bool hasCategory(const std::vector<Warning>& warnings, const std::string& category) {
@@ -49,7 +52,7 @@ static bool hasFix(const std::vector<Warning>& warnings) {
 }
 
 static void printUsage() {
-    std::cout << "Usage: project4_tests [--suite smoke|edge|detectors|implementation|all] [--case NAME]\n";
+    std::cout << "Usage: project4_tests [--suite smoke|edge|detectors|implementation|known-failures|all] [--case NAME]\n";
 }
 
 int main(int argc, char** argv) {
