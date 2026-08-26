@@ -109,14 +109,31 @@ void partialDeleterFunction(int* one, int* two){//function that takes multiple p
     delete one;
 }
 
-void foo(int* a);
-void bar(int* b) {
-    foo(b);
+void foo(int* one);//foo and bar are for testing nested deallocating functions, should pass
+void bar(int* two) {
+    foo(two);
 }
-void foo(int* a) {
-    delete a;
+void foo(int* one) {
+    delete one;
 }
 
-void testBar(int* c) {
-    bar(c);
+void testBar(int* three) {
+    bar(three);
+    return;
+}
+
+void aliasingPassingTest(){//for testing aliasing, should pass
+    int* exampleptr = new int;
+    int* exampleptrTwo = exampleptr;
+    nestedAliasDeallocator(exampleptrTwo);
+    return;
+}
+
+void AliasDeallocator(int *p) {
+    delete p;
+}
+
+void nestedAliasDeallocator(int *p) {
+    int *q = p;
+    AliasDeallocator(q);
 }

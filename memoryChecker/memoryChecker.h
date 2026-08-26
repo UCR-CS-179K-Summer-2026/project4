@@ -16,13 +16,14 @@ class memoryChecker : public Detector {
         void visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) override;
         void traverse(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);//traversal helper
         std::string getNode(TSNode node, const std::string& src);
-        bool checkIfBodyDeallocates(TSNode node, const std::string& paramName, const std::string& src);
+        bool checkIfBodyDeallocates(TSNode node, const std::string& paramName, const std::string& src, std::set<std::string>& parameterAliases);
         void collectDeallocatingFunctions(TSNode node, const ParsedSource& parsedSource);
         std::string getAllocationVariable(TSNode node, const std::string& src);//gets variable that corresponds to an allocation
-        //void analyzeFunction(TSNode functionNode, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
+        std::string resolveAlias(const std::string& variable);//helper function for aliasing issue
         
         std::unordered_map<std::string, int> trackedAllocations;//variable names and line numbers for each memory allocation detected
         std::unordered_map<std::string, std::set<int>> deallocatingFunctions;//list of deallocating functions
+        std::unordered_map<std::string, std::string> pointerAliases;//for aliasing issue
 
     public: 
         std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;

@@ -14,11 +14,36 @@ std::string memoryChecker::getNode(TSNode node, const std::string& src) {
     return src.substr(start, end - start);
 }
 
+//ROUND 2: helper to resolve aliases. Goes through pointerAliases to find what the initial allocation name (the one that would be in trackedAllocations) is
+std::string memoryChecker::resolveAlias(const std::string& variable) {
+
+    std::string current = variable;//start with given variable
+
+    
+    std::set<std::string> visited;//keep track of visited for preventing infinite loops
+
+    //while an alias for current exists, keep going
+    while (pointerAliases.find(current) != pointerAliases.end()) {
+
+        if (visited.count(current) > 0) {//already visited this variable means infinite loop, break
+            break;
+        }
+
+        visited.insert(current);//mark this variable as visited
+
+        current = pointerAliases[current];//follow alias to next pointer
+    }
+
+    return current;
+}
+
 //ROUND 2
 void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
 
     //string to hold node type for comparison
     std::string nodeType = ts_node_type(node);
+
+
 
     // detect allocations
     if (nodeType == "new_expression" || nodeType == "call_expression") {
@@ -48,6 +73,30 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
     }
 
     
+    //detect aliases
+    if (nodeType == "init_declarator") {
+
+        TSNode declarator = ts_node_child_by_field_name(node, "declarator", 10);
+        TSNode value = ts_node_child_by_field_name(node, "value", 5);
+
+        if (!ts_node_is_null(declarator) && !ts_node_is_null(value)) {
+
+            std::string lhs = getNode(declarator, parsedSource.source);//get name of new pointer
+            std::string rhs = getNode(value, parsedSource.source);//get name of what it's being initialized with
+
+            
+            size_t firstRealChar = lhs.find_first_not_of(" \t*&");//strip pointer/reference symbols from lhs
+            if (firstRealChar != std::string::npos) {
+                lhs = lhs.substr(firstRealChar);
+            }
+            std::string original = resolveAlias(rhs);//resolve rhs in case it's already an alias, to find what the original allocation would be called in trackedAllocations
+
+            if (trackedAllocations.find(original) != trackedAllocations.end()) {//only create alias if original is already an allocation we are tracking
+                pointerAliases[lhs] = rhs;//add alias to pointerAliases. do not link to original because resolveAlias can be used to find the root of the chain
+            }
+        }
+    }
+
 
     // check for deletes, added support for free(), fixed errors with variable recognition
     if (nodeType == "delete_expression" || nodeType == "call_expression") {
@@ -78,20 +127,14 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
                                 continue;
                             }
                             std::string argumentText = getNode(argument, parsedSource.source);
-                            
+
+                            std::string originalPointer = resolveAlias(argumentText);//find original pointer in trackedAllocations
+
                             //search through trackedAllocations for the argument, delete is found
-                            for (auto it =
-                                     trackedAllocations.begin();
-                                 it != trackedAllocations.end();) {
+                            auto allocation = trackedAllocations.find(originalPointer);
 
-                                if (argumentText == it->first) {
-
-                                    it =
-                                        trackedAllocations.erase(it);
-                                }
-                                else {
-                                    ++it;
-                                }
+                            if (allocation != trackedAllocations.end()) {
+                                trackedAllocations.erase(allocation);
                             }
                         }
                     }
@@ -109,14 +152,13 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
 
             if (!ts_node_is_null(argument)) {
 
-                std::string argumentText =
-                    getNode(argument, parsedSource.source);
+                std::string argumentText = getNode(argument, parsedSource.source);
+                
+                std::string originalPointer = resolveAlias(argumentText);//use resolveAlias to find original allocation
 
-                //search for matching variable and remove from trackedAllocations
-                auto allocation =
-                    trackedAllocations.find(argumentText);
+                auto allocation = trackedAllocations.find(originalPointer);//find in trackedAllocations
 
-                if (allocation != trackedAllocations.end()) {
+                if (allocation != trackedAllocations.end()) {//delete from trackedAllocations
                     trackedAllocations.erase(allocation);
                 }
             }
@@ -135,9 +177,12 @@ void memoryChecker::visitNode(TSNode node, const ParsedSource& parsedSource, std
                     TSNode argument = ts_node_named_child(argumentList, 0);
 
                     std::string argumentText = getNode(argument, parsedSource.source);
-                    //search for variable names and erase from trackedAllocations
-                    auto allocation = trackedAllocations.find(argumentText);
 
+                    std::string originalPointer = resolveAlias(argumentText);//find alias original name
+
+                    auto allocation = trackedAllocations.find(originalPointer);//find in trackedAllocations
+                    
+                    //if found, delete from trackedAllocations
                     if (allocation != trackedAllocations.end()) {
                         trackedAllocations.erase(allocation);
                     }
@@ -219,7 +264,8 @@ void memoryChecker::traverse(TSNode node, const ParsedSource& parsedSource, std:
 
 std::vector<Warning> memoryChecker::analyzeSource(const ParsedSource& parsedSource) {
     trackedAllocations.clear();
-    deallocatingFunctions.clear();//make sure that the map is empty at the start
+    deallocatingFunctions.clear();
+    pointerAliases.clear();//make sure that the map is empty at the start
     std::vector<Warning> warnings;
 
     TSNode rootNode = ts_tree_root_node(parsedSource.tree);
@@ -245,11 +291,33 @@ std::vector<Warning> memoryChecker::analyzeSource(const ParsedSource& parsedSour
 
 
 // ROUND 1: helper function to scan a function's body to see if it deletes a specific parameter
-bool memoryChecker::checkIfBodyDeallocates(TSNode node, const std::string& paramName, const std::string& src) {
+bool memoryChecker::checkIfBodyDeallocates(TSNode node, const std::string& paramName, const std::string& src, std::set<std::string>& parameterAliases) {
     if (ts_node_is_null(node)) return false;
 
     std::string type = ts_node_type(node);
     std::string text = getNode(node, src);
+
+
+    //look for aliasing
+    if (type == "init_declarator") {
+        TSNode declarator = ts_node_child_by_field_name(node, "declarator", 10);//get variable being declared
+        TSNode value = ts_node_child_by_field_name(node, "value", 5);//get value used for variable initialization
+
+        if (!ts_node_is_null(declarator) && !ts_node_is_null(value)) {
+
+            std::string lhs = getNode(declarator, src);//get name of lhs variable
+            std::string rhs = getNode(value, src);//get value being assigned to it
+
+            size_t firstRealChar = lhs.find_first_not_of(" \t*&");//remove pointer symbols
+            if (firstRealChar != std::string::npos) {
+                lhs = lhs.substr(firstRealChar);
+            }
+
+            if (parameterAliases.count(rhs) > 0) {//if rhs is a previously known parameter name/alias
+                parameterAliases.insert(lhs);//record alias
+            }
+        }
+    }
 
     //search for delete expressions corresponding to paramName
     if (type == "delete_expression") {
@@ -260,36 +328,40 @@ bool memoryChecker::checkIfBodyDeallocates(TSNode node, const std::string& param
 
             std::string argumentText = getNode(argumentNode, src);
 
-            if (argumentText == paramName) {
+            if (parameterAliases.count(argumentText) > 0) {//if it's a known parameter name/alias, return true
                 return true;
             }
         }
     }
     
-    //search for free() calls containing param name
-    if (type == "call_expression" &&
-        (text.rfind("free(", 0) == 0 ||
-         text.rfind("std::free(", 0) == 0)) {
+    //check for free() calls containing param name
+    if (type == "call_expression" && (text.rfind("free(", 0) == 0 || text.rfind("std::free(", 0) == 0)) {
 
-        TSNode argListNode = ts_node_child_by_field_name(node, "arguments", 9);
+        TSNode argListNode = ts_node_child_by_field_name(node, "arguments", 9);//get arguments from function call
 
         if (!ts_node_is_null(argListNode)) {
 
             uint32_t argCount = ts_node_named_child_count(argListNode);
 
+
+            //check every argument of free()
             for (uint32_t i = 0; i < argCount; ++i) {
 
+                //get current argument
                 TSNode argNode = ts_node_named_child(argListNode, i);
+
+                if(ts_node_is_null(argNode)) continue;
+                
                 std::string argText = getNode(argNode, src);
 
-                if (argText == paramName) {
+                if (parameterAliases.count(argText) > 0) {//if it's a known parameter name/alias, return true
                     return true;
                 }
             }
         }
     }
 
-    //check if a known deallocator is used
+    //check if a previously known deallocator is used
     if (type == "call_expression") {
 
         TSNode functionNode = ts_node_child_by_field_name(node, "function", 8);
@@ -300,32 +372,31 @@ bool memoryChecker::checkIfBodyDeallocates(TSNode node, const std::string& param
 
             std::string calledFunction = getNode(functionNode, src);//get name of called function
 
-            auto it = deallocatingFunctions.find(calledFunction);//check if called function is in deallocatingFunctions
+            auto it = deallocatingFunctions.find(calledFunction);//check if called function is already in deallocatingFunctions
 
             if (it != deallocatingFunctions.end()) {
 
-                uint32_t argumentCount =
-                    ts_node_named_child_count(argumentList);
+                uint32_t argumentCount = ts_node_named_child_count(argumentList);//get number of args
 
+                //check each argument
                 for (uint32_t i = 0; i < argumentCount; ++i) {
 
-                    //does calledFunction deallocate this argument?
+                    //do we already know that calledFunction deallocate this argument?
                     if (it->second.count(static_cast<int>(i)) == 0) {
                         continue;
                     }
 
-                    TSNode argument =
-                        ts_node_named_child(argumentList, i);
+                    //get this argument
+                    TSNode argument = ts_node_named_child(argumentList, i);
 
                     if (ts_node_is_null(argument)) {
                         continue;
                     }
 
-                    std::string argumentText =
-                        getNode(argument, src);
+                    std::string argumentText = getNode(argument, src);//get argument name
 
                     //is our parameter being passed to it?
-                    if (argumentText == paramName) {
+                    if (parameterAliases.count(argumentText) > 0) {//is this argument name in our known aliases for the parameter
                         return true;
                     }
                 }
@@ -336,7 +407,7 @@ bool memoryChecker::checkIfBodyDeallocates(TSNode node, const std::string& param
     // recursively check all children inside the function
     uint32_t count = ts_node_child_count(node);
     for (uint32_t i = 0; i < count; ++i) {
-        if (checkIfBodyDeallocates(ts_node_child(node, i), paramName, src)) {
+        if (checkIfBodyDeallocates(ts_node_child(node, i), paramName, src, parameterAliases)) {
             return true;
         }
     }
@@ -385,9 +456,11 @@ void memoryChecker::collectDeallocatingFunctions(TSNode node, const ParsedSource
                                 paramName = paramName.substr(aster);
                             }
 
+                            std::set<std::string> parameterAliases;//for local parameter aliases
+                            parameterAliases.insert(paramName);
 
                             //check if body deallocates this parameter
-                            if (!paramName.empty() && checkIfBodyDeallocates(bodyNode, paramName, parsedSource.source)) {
+                            if (!paramName.empty() && checkIfBodyDeallocates(bodyNode, paramName, parsedSource.source, parameterAliases)) {
 
                                 deallocatingFunctions[funcName].insert(currentParamIndex);
                             }
