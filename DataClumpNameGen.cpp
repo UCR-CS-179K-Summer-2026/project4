@@ -48,7 +48,7 @@ std::string DataClumpNameGen::generateName(const std::string& variableList) {
     std::string apiKey = getKey();
     if (apiKey.empty()) {
         std::cout << "GOOGLE_GEMINI_API_KEY is not set in .env file." << std::endl;
-        throw std::runtime_error("GOOGLE_GEMINI_API_KEY is not set.");
+        return "DataGroup";
     }
 
     CURLcode initialize = curl_global_init(CURL_GLOBAL_DEFAULT);
