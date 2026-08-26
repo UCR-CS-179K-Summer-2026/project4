@@ -136,7 +136,10 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<TSNode>& stateme
 
     uint32_t startBlockByte = ts_node_start_byte(statements[startIndices[0]]);
     uint32_t endBlockByte = ts_node_end_byte(statements[startIndices[0] + windowSize - 1]);
+
     msg << source.substr(startBlockByte, endBlockByte - startBlockByte) << "\n";
+    msg << offerRefactoring(statements, windowSize, startIndices, functionName, source);
+    
     int firstOccurrenceLine = static_cast<int>(ts_node_start_point(statements[startIndices[0]]).row) + 1;
 
     warnings.push_back({
