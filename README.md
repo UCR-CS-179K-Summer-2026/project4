@@ -306,10 +306,22 @@ int basicTest(){
     int* exampleptr = new int;
     return 2;
 }
+
+void multipleFunctionCallPartialTest(){
+    int* exampleptr = new int;
+    int* exampleptrTwo = new int;
+    partialDeleterFunction(exampleptr, exampleptrTwo);
+    return;
+}
+
+void partialDeleterFunction(int* one, int* two){
+    delete one;
+}
 ```
 
 ```
-Warning: [memory-leak]. Unreleased memory allocated at  at line 2 does not reach a destructor.(line 3)
+Warning: [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 3)
+Warning: [memory-leak]. Unreleased memory allocated at line 8 does not reach a destructor.(line 10)
 ```
 
 ### Inheritance
@@ -353,7 +365,7 @@ int getStatus(int code) {
 ```
 
 ```
-Warning: [Unreachable Code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
+Warning: [unreachable-code]. This code can never execute because a previous statement in this block always exits via return/break/continue/goto.(line 3)
 ```
 
 **Unused functions** — free functions and recognized class methods defined in the file but
@@ -377,11 +389,12 @@ int main() {
 ```
 
 ```
-Warning: [Unused Function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
+Warning: [unused-function]. Function "cube" is never called from main (directly or indirectly) and is dead code.(line 5)
 ```
 
 ```cpp
 class Animal {
+public:
     virtual void makeSound();
 };
 class Dog : public Animal {
@@ -394,18 +407,18 @@ public:
 };
 void makeSounds(Animal *a) {
     a->makeSound();
+    a->makeSound();
 }
-int main() {
-    Dog *d;
-    Cat *c;
-    makeSounds(d);
-    return 0;
+void helper(Animal *x) {
+    Dog *e;
+    Cat *f;
+    Animal *y = std::rand() ? x : e;
+    makeSounds(y);
 }
-
 ```
 
 ```
-Warning: [Unused Function]. Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.(line 10)
+Warning: [unused-function]. Function "Cat::makeSound" is never called from main (directly or indirectly) and is dead code.(line 11)
 ```
 
 ## Warning Output Format
@@ -447,6 +460,9 @@ After all files finish, the program prints the total smell count and total numbe
   targets.
 - **Git** — needed to pull in the tree-sitter runtime and grammar, which are vendored as
   submodules under `tree-sitter/` and `tree-sitter-cpp/`.
+- **Internet access** — required during CMake configuration if `nlohmann/json` must be
+    downloaded through `FetchContent`. The project builds its vendored libcurl dependency
+    automatically; no separate curl installation is required.
 
 ### Getting the Code
 
@@ -459,6 +475,20 @@ git submodule update --init --recursive
 The submodule step is required — without it, `tree-sitter/` and `tree-sitter-cpp/` will be
 empty and the CMake configure step will fail with a "not an existing directory" error.
 
+### Gemini API setup
+
+Data-clump detection uses Google Gemini to suggest a struct/class name. Create a `.env` file in
+the project root and add your key without quotes:
+
+```text
+GOOGLE_GEMINI_API_KEY=your-api-key-here
+```
+
+Keep `.env` private; it is ignored by Git. The program searches for this file from the project
+root and from the usual `build/Debug` launch directory. A data-clump run requires network access
+to the Gemini API and uses a 30-second curl timeout. HTTP or transport failures use the fallback
+name `DefaultName`; a missing key stops name generation with an error.
+
 ## Building
 
 ```bash
@@ -468,7 +498,7 @@ cmake .. -DBUILD_SHARED_LIBS=OFF
 cmake --build .
 ```
 
-This builds the tree-sitter runtime, the C++ grammar, and `project4` itself. On Windows
+This builds the tree-sitter runtime, the C++ grammar, vendored libcurl, and `project4` itself. On Windows
 with the Visual Studio generator, the executable lands in a `Debug` subfolder.
 
 ## Running
@@ -559,6 +589,3 @@ dropped.
 The current implementation is intentionally limited to the detector categories listed above.
 Potential future work includes a regression-test harness, benchmark measurements, broader
 cross-file analysis, and additional C++ control-flow and ownership cases.
-
-
-

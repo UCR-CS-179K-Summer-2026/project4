@@ -108,3 +108,32 @@ void multipleFunctionCallPartialTest(){//test with multiple function call that o
 void partialDeleterFunction(int* one, int* two){//function that takes multiple params and only deletes some, reference by different names from the original
     delete one;
 }
+
+void nested(int* one);//nested deallocation function testing, should pass
+void outer(int* two) {
+    nested(two);
+}
+void nested(int* one) {
+    delete one;
+}
+
+void testBar(int* three) {
+    outer(three);
+    return;
+}
+
+void aliasingPassingTest(){//for testing aliasing, should pass
+    int* exampleptr = new int;
+    int* exampleptrTwo = exampleptr;
+    nestedAliasDeallocator(exampleptrTwo);
+    return;
+}
+
+void AliasDeallocator(int *p) {
+    delete p;
+}
+
+void nestedAliasDeallocator(int *p) {
+    int *q = p;
+    AliasDeallocator(q);
+}
