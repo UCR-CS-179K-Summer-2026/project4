@@ -1,4 +1,4 @@
-#include "DataClassTest1.h"
+#include "data_detector_positive_1.h"
 
 // Builds a record total from all values supplied by the data object.
 int buildRecordTotal(int firstValue, int secondValue, int thirdValue, int fourthValue, int fifthValue) {

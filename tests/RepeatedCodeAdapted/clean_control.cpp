@@ -1,4 +1,4 @@
-#include "NotSpaghettiCodeTest.h"
+#include "clean_control.h"
 
 // Performs one focused inventory update.
 int NotSpaghettiCodeTest::func1() {

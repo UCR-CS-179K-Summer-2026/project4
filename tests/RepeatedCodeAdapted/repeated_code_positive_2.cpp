@@ -1,4 +1,4 @@
-#include "SpaghettiCodeTest2.h"
+#include "repeated_code_positive_2.h"
 
 // Repeats the same preparation sequence inline.
 int SpaghettiCodeTest2::func1() {

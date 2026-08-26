@@ -1,4 +1,4 @@
-#include "SpaghettiCodeTest1.h"
+#include "repeated_code_positive_1.h"
 
 // Repeats the same checkout steps inline.
 void SpaghettiCodeTest1::func1() {

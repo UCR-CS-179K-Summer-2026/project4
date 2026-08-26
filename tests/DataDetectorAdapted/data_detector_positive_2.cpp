@@ -1,4 +1,4 @@
-#include "DataClassTest2.h"
+#include "data_detector_positive_2.h"
 
 // Processes nested record validation rules.
 int processRecord(int recordValue) {

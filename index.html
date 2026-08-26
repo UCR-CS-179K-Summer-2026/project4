@@ -50,6 +50,7 @@
     </p>
     <div class="hero-cta">
       <a href="https://github.com/UCR-CS-179K-Summer-2026/project4" class="button" target="_blank" rel="noopener">GitHub Repository</a>
+      <a href="" class="button" target="_blank" rel="noopener">Demo Video</a>
       <a href="#tutorial" class="button button-ghost">Get Started →</a>
     </div>
   </section>
@@ -1320,71 +1321,77 @@ never uses it. (line 1)</pre></div>
       </ul>
     </div>
 
-    <h3>SpaghettiCodeTest: classification check</h3>
-    <p class="section-intro">A three-file comparison retaining the spaghetti-code theme while using the supported repeated-code detector as its measurable criterion.</p>
+    <h3>RepeatedCodeAdapted: repeated-code comparison</h3>
+    <p class="section-intro">A four-file suite adapted from the existing real-world <code>SpaghettiCodeTest</code> cases. It retains their tangled-code theme while measuring supported repeated-code detection alongside a broad detector-variety case.</p>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
           <tr><th>Scenario file</th><th>Expected label</th><th>Warnings</th><th>Observed result</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>SpaghettiCodeTest1.cpp</code></td><td>Positive</td><td>2</td><td>Repeated-code detected</td></tr>
-          <tr><td><code>SpaghettiCodeTest2.cpp</code></td><td>Positive</td><td>2</td><td>Repeated-code detected</td></tr>
-          <tr><td><code>NotSpaghettiCodeTest.cpp</code></td><td>Negative control</td><td>0</td><td>Clean-control pass</td></tr>
-          <tr><td><strong>SpaghettiCodeTest total</strong></td><td>3 C++ source files</td><td><strong>4</strong></td><td><strong>2/2 proxy positives; clean control passed</strong></td></tr>
+          <tr><td><code>repeated_code_positive_1.cpp</code></td><td>Positive</td><td>2</td><td>Repeated-code detected</td></tr>
+          <tr><td><code>repeated_code_positive_2.cpp</code></td><td>Positive</td><td>2</td><td>Repeated-code detected</td></tr>
+          <tr><td><code>clean_control.cpp</code></td><td>Negative control</td><td>0</td><td>Clean-control pass</td></tr>
+          <tr><td><code>detector_variety.cpp</code></td><td>Multi-detector positive</td><td>9</td><td>9 intentional warnings</td></tr>
+          <tr><td><strong>RepeatedCodeAdapted total</strong></td><td>4 C++ source files</td><td><strong>13</strong></td><td><strong>2 proxy positives, 1 variety case; clean control passed</strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="todo-card">
-      <h4>SpaghettiCodeTest result</h4>
+      <h4>RepeatedCodeAdapted result</h4>
       <ul>
-        <li>Each positive file produced two repeated-code warnings and no unrelated comment or naming warnings.</li>
+        <li>Each focused positive file produced two repeated-code warnings and no unrelated comment or naming warnings.</li>
+        <li>The variety file produced Data Clump, Long Parameter List, redundant boolean, repeated-code, deep-if, memory-leak, unused-function, and unused-inheritance warnings.</li>
         <li>The negative control produced 0 warnings, so it passed the clean-control check.</li>
         <li>This is a supported proxy comparison, not dedicated spaghetti-code precision or recall: the current detectors do not implement the original class-level “two long methods” criterion.</li>
       </ul>
     </div>
 
-    <h3>LongParameterListTest: threshold and input-layout check</h3>
-    <p class="section-intro">A five-file detector-aligned scenario with one five-parameter positive case and four clean controls. Headers provide declarations; implementations are in the analyzed source files.</p>
+    <h3>ParameterListAdapted: long-parameter comparison</h3>
+    <p class="section-intro">A six-file suite adapted from the existing real-world <code>LongParameterListTest</code> cases. It keeps one focused five-parameter positive, one multi-detector variety case, and four clean controls.</p>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
           <tr><th>Run</th><th>Files analyzed</th><th>Expected</th><th>Warnings</th><th>Long Parameter List results</th></tr>
         </thead>
         <tbody>
-          <tr><td>Implementation run</td><td>5 <code>.cpp</code> files</td><td>1 positive, 4 negative controls</td><td>1</td><td>Positive detected; controls clean</td></tr>
+          <tr><td>Implementation run</td><td><code>long_parameter_positive.cpp</code> + 4 clean controls</td><td>1 positive, 4 negative controls</td><td>1</td><td>Positive detected; controls clean</td></tr>
+          <tr><td>Variety run</td><td><code>detector_variety.cpp</code></td><td>Multi-detector positive</td><td>9</td><td>9 intentional warnings across supported categories</td></tr>
+          <tr><td><strong>ParameterListAdapted total</strong></td><td>6 C++ source files</td><td>2 positives, 4 negative controls</td><td><strong>10</strong></td><td><strong>Both positives detected; controls clean</strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="todo-card">
-      <h4>LongParameterListTest result</h4>
+      <h4>ParameterListAdapted result</h4>
       <ul>
         <li>The implementation run produced exactly one <code>Long Parameter List</code> warning for the five-parameter positive and zero warnings for all four controls.</li>
+        <li>The variety file added 9 intentional warnings across Data Clump, Long Parameter List, redundant boolean, repeated code, deep-if, memory leak, unused functions, and unused inheritance.</li>
         <li>The suite now matches the implementation threshold: the detector reports functions with more than four parameters.</li>
       </ul>
     </div>
 
-    <h3>DataClassTest: classification check</h3>
-    <p class="section-intro">A five-file data-oriented comparison whose positive cases exercise supported detectors rather than the unimplemented Data Class classification.</p>
+    <h3>DataDetectorAdapted: data-oriented comparison</h3>
+    <p class="section-intro">A six-file suite adapted from the existing real-world <code>DataClassTest</code> cases. Its focused positives and variety case exercise supported detectors rather than the unimplemented Data Class classification.</p>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
           <tr><th>Scenario file</th><th>Expected label</th><th>Warnings</th><th>Data Class result</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>DataClassTest1.cpp</code></td><td>Positive: long parameters + redundant boolean</td><td>2</td><td>Both intended checks detected</td></tr>
-          <tr><td><code>DataClassTest2.cpp</code></td><td>Positive: deep-if + repeated code</td><td>2</td><td>Both intended checks detected</td></tr>
-          <tr><td><code>NotDataClassTest1.cpp</code></td><td>Negative control</td><td>3</td><td>No dedicated detection</td></tr>
-          <tr><td><code>NotDataClassTest2.cpp</code></td><td>Negative control</td><td>6</td><td>No dedicated detection</td></tr>
-          <tr><td><code>NotDataClassTest3.cpp</code></td><td>Negative control</td><td>1</td><td>No dedicated detection</td></tr>
-          <tr><td><strong>DataClassTest total</strong></td><td>5 C++ source files</td><td><strong>4</strong></td><td><strong>4/4 intended positive checks</strong></td></tr>
+          <tr><td><code>data_detector_positive_1.cpp</code></td><td>Positive: long parameters + redundant boolean</td><td>2</td><td>Both intended checks detected</td></tr>
+          <tr><td><code>data_detector_positive_2.cpp</code></td><td>Positive: deep-if + repeated code</td><td>2</td><td>Both intended checks detected</td></tr>
+          <tr><td><code>detector_variety.cpp</code></td><td>Multi-detector positive</td><td>9</td><td>9 intentional warnings</td></tr>
+          <tr><td><code>clean_control_1.cpp</code></td><td>Negative control</td><td>0</td><td>Clean-control pass</td></tr>
+          <tr><td><code>clean_control_2.cpp</code></td><td>Negative control</td><td>0</td><td>Clean-control pass</td></tr>
+          <tr><td><code>clean_control_3.cpp</code></td><td>Negative control</td><td>0</td><td>Clean-control pass</td></tr>
+          <tr><td><strong>DataDetectorAdapted total</strong></td><td>6 C++ source files</td><td><strong>3 positives, 3 negative controls</strong></td><td><strong>13</strong></td><td><strong>All intended checks detected; controls clean</strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="todo-card">
-      <h4>DataClassTest result</h4>
+      <h4>DataDetectorAdapted result</h4>
       <ul>
-        <li>The positive files produced exactly the intended supported warnings: one long-parameter and one redundant-boolean warning in the first, plus one deep-if and one repeated-code warning in the second.</li>
+        <li>The two focused positive files produced exactly their intended supported warnings; the variety file added 9 warnings across eight supported categories.</li>
         <li>All three negative controls produced 0 warnings.</li>
         <li>The original Data Class smell remains unsupported; this folder is now a data-oriented detector comparison with explicit pass/fail criteria.</li>
       </ul>
