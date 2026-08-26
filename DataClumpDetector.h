@@ -20,6 +20,7 @@ class DataClumpDetector : public Detector {
             int counter = 0;
         };
         static const int MAX_GROUPS = 1024;
+        std::unordered_map<std::string, std::unordered_map<std::string, int>> variableGraphMap;
         NameAnalyzer nameAnalyzer;
         std::map<std::vector<std::string>, ClumpInfo> variableClumps;
         std::vector<std::unordered_set<std::string>> variableGroups;
@@ -35,6 +36,8 @@ class DataClumpDetector : public Detector {
         void checkForDataClumps(std::vector<Warning>& warnings);
         void storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
         void createBitsets();
+        void expandNode(const std::string& nodeName, std::vector<std::string>& candidates);
+        bool connectsToAll(const std::vector<std::string>& group, const std::string& candidate);
     public:
         DataClumpDetector() = default;
         std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
