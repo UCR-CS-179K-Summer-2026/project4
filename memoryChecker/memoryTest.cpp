@@ -109,16 +109,16 @@ void partialDeleterFunction(int* one, int* two){//function that takes multiple p
     delete one;
 }
 
-void foo(int* one);//foo and bar are for testing nested deallocating functions, should pass
-void bar(int* two) {
-    foo(two);
+void nested(int* one);//nested deallocation function testing, should pass
+void outer(int* two) {
+    nested(two);
 }
-void foo(int* one) {
+void nested(int* one) {
     delete one;
 }
 
 void testBar(int* three) {
-    bar(three);
+    outer(three);
     return;
 }
 
