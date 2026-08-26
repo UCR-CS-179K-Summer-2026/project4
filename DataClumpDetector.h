@@ -20,6 +20,7 @@ class DataClumpDetector : public Detector {
             int counter = 0;
         };
         static const int MAX_GROUPS = 1024;
+        std::unordered_map<std::string, std::unordered_map<std::string, int>> variableGraphMap;
         NameAnalyzer nameAnalyzer;
         std::map<std::vector<std::string>, ClumpInfo> variableClumps;
         std::vector<std::unordered_set<std::string>> variableGroups;
@@ -33,8 +34,12 @@ class DataClumpDetector : public Detector {
         void checkCallExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         std::unordered_set<std::string> checkBinaryExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkForDataClumps(std::vector<Warning>& warnings);
-        void storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
+        void storeClumpInfo(std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
         void createBitsets();
+        void expandNode(const std::vector<std::string>& variables, std::vector<std::string>& candidates, int index);
+        bool connectsToAll(const std::vector<std::string>& group, const std::string& candidate);
+        bool isSubset(const std::vector<std::string>& subset, const std::vector<std::string>& superset);
+        void removeSubsetsFromClumps();
     public:
         DataClumpDetector() = default;
         std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;

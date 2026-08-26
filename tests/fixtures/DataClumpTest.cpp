@@ -45,6 +45,17 @@ void getStreetNumber(std::string streetName, std::string city, std::string state
     std::cout << city << ", " << state << std::endl;
 }
 
+void getSomeInfo(std::string streetName, std::string city, std::string state, std::string country) {
+    std::cout << streetName << std::endl;
+    std::cout << city << ", " << state << " " << country << std::endl;
+}
+
+void dataClumpOfEight(int employeeId, std::string firstName, std::string lastName, std::string middleName, std::string streetName, std::string city, std::string state, int zip) {
+    std::cout << employeeId << ": " << firstName << " " << middleName << " " << lastName << std::endl;
+    std::cout << streetName << std::endl;
+    std::cout << city << ", " << state << " " << zip << std::endl;
+}
+
 // Holds duplicates of the same data: streetName, city, state, zip. Also has a declaration
 // of firstName, lastName, middleName in a nested if statement.
 int someFunction() {
@@ -52,28 +63,24 @@ int someFunction() {
     std::string city;
     std::string state;
     std::string country;
+    int zip;
     int first;
     int second;
     int third;
 
     if(true) {
+        int employeeId;
         std::string firstName;
         std::string lastName;
         std::string middleName;
         
         getName(firstName, lastName, middleName);
-        // getPersonAddress(streetName, city, state, firstName, lastName, middleName);
+        dataClumpOfEight(employeeId, firstName, lastName, middleName, streetName, city, state, zip);
+        dataClumpOfEight(employeeId, firstName, lastName, middleName, streetName, city, state, zip);
     }
     std::string secondStreetName;
-
     std::string secondCity;
-
-    // address(streetName, city, state);
-    
     std::string secondState;
-    
-    // getAddress(streetName, city, state);
-    
     std::string secondZip;
 
     address(secondStreetName, secondCity, secondState);
@@ -85,6 +92,9 @@ int someFunction() {
     getStreetNumber(streetName, city, state, first, second);
     getStreetNumber(streetName, city, state, second, third);
     getStreetNumber(streetName, city, state, third, first);
+
+    getSomeInfo(streetName, city, state, country);
+    getSomeInfo(streetName, city, state, country);
 
 	return 0;
 }
