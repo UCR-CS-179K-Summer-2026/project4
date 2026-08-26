@@ -139,7 +139,7 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<TSNode>& stateme
 
     msg << source.substr(startBlockByte, endBlockByte - startBlockByte) << "\n";
     msg << offerRefactoring(statements, windowSize, startIndices, functionName, source);
-    
+
     int firstOccurrenceLine = static_cast<int>(ts_node_start_point(statements[startIndices[0]]).row) + 1;
 
     warnings.push_back({
@@ -300,7 +300,7 @@ std::string RepeatedCodeChecker::offerRefactoring(const std::vector<TSNode>& sta
     std::string repeatedText = source.substr(startByte, endByte- startByte);
 
     int firstLine = static_cast<int>(ts_node_start_point(statements[startIndices[0]]).row)+1;
-    std::string helperName = functionName + "Helper" + std::to_string(firstLine);
+    std::string helperName = functionName + "Helper";
 
     std::ostringstream out;
     out << "\nSuggested refactor: extract this repeated block and turn into a helper function.\n";
