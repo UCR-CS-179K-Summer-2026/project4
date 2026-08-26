@@ -1148,28 +1148,25 @@ never uses it. (line 1)</pre></div>
       <div class="tag-card"><h3>Call-graph reachability</h3><p><code>DeadCodeChecker</code> builds a directed call graph from the file's function definitions and runs an iterative, stack-based DFS from <code>main</code>, tracking visited functions in a <code>set</code> — any defined function the DFS never reaches is unused/dead code.</p></div>
       <div class="tag-card"><h3>Centralized sort &amp; print</h3><p>Detectors return warnings rather than printing them, so <code>SmellyCodeDetector::runDetectors()</code> can merge everything and sort once by line (then category) before printing a single ordered report.</p></div>
       <div class="tag-card"><h3>Parallelism</h3><p><code>runDetectors()</code> currently runs each detector's <code>analyzeSource()</code> sequentially — a candidate for future parallel work.</p></div>
-    </div>
-
-    <div class="tag-grid">
       <div class="tag-card"><h3>Pairs for triples</h3><p><code>DataClumpDetector</code> first creates bitsets for variables in <code>O(n^2)</code>, then stores frequent pairs in a vector. Bitset intersection for a potential pair is <code>O(1)</code>. For triples, the detector loops through frequent pairs and all variables, costing <code>O(F * N)</code>. It supports data clumps of three variables rather than every possible repeated subset, which would cost at least <code>O(2^n)</code>.</p></div>
       <div class="tag-card"><h3>API-based name generation</h3><p>After a data clump is identified, <code>DataClumpDetector</code> delegates struct/class name generation to <code>DataClumpNameGen</code>, which uses curl to communicate with Google Gemini and Nlohmann/json to parse the response.</p></div>
     </div>
-
-    <h3 class="subhead">Measured benefits</h3>
-    <div class="todo-card">
-      <span class="todo-badge">TODO — fill in</span>
-      <h4>Before/after numbers not yet collected</h4>
-      <p>Each optimization above should be backed by a measurement of what it actually saved. Time the naive version (e.g. re-parsing per detector, pairwise statement comparison in <code>RepeatedCodeChecker</code>) against the optimized version on the same input file(s), and drop the numbers into the table below.</p>
-    </div>
+    <h3></h3>
+    <h3 class="subhead">Algorithmic benefits</h3>
+    <p class="section-intro">Scroll through the table to see optimization/refactoring benefits.</p>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
           <tr><th>Optimization</th><th>Before</th><th>After</th><th>Improvement</th></tr>
         </thead>
         <tbody>
-          <tr><td>Single parse vs. re-parse per detector</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>Structural hashing vs. pairwise comparison (repeated-code)</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
-          <tr><td>Call-graph DFS vs. naive reachability scan</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td>Single parse vs. re-parse per detector</td><td>10 file reads, parser builds, and AST constructions</td><td>1 file read, parser build, and shared AST; 10 detector traversals</td><td>Removes 9 redundant parse pipelines and keeps all detectors on the same tree</td></tr>
+          <tr><td>Structural hashing vs. pairwise comparison (repeated-code)</td><td>Compares many statement/window pairs; repeated structural work grows quadratically with candidates</td><td>Hashes each statement once, buckets windows in <code>unordered_map</code>, then structurally checks only same-hash candidates</td><td>Most non-matching windows are rejected by hash; equality checks remain as collision protection</td></tr>
+          <tr><td>Call-graph DFS vs. naive reachability scan</td><td>Repeatedly scans definitions/calls to rediscover direct and transitive reachability</td><td>Builds edges once, then visits each reachable function at most once with a visited set</td><td>Linear graph walk, <code>O(F + E)</code>, handles chains and recursion without revisiting work</td></tr>
+          <tr><td>Depth-tracked traversal (deep-if)</td><td>Recomputes parent depth separately for each <code>if_statement</code></td><td>One recursive AST traversal increments and decrements a depth counter</td><td>Checks nesting in one pass, <code>O(N)</code>, with no per-node depth pass</td></tr>
+          <tr><td>Bitset intersections (data-clump)</td><td>Tests every possible repeated variable subset; arbitrary subsets grow at least <code>O(2^n)</code></td><td>Uses constant-time bitset intersections for pairs, then tests triples only from frequent pairs in <code>O(N^2 + F * N)</code></td><td>Prunes rare candidates early and keeps the supported search bounded to pairs and triples</td></tr>
+          <tr><td>Two-pass points-to analysis (dead-code dispatch)</td><td>Treats pointer targets as immediate names or repeatedly rescans code while resolving aliases</td><td>Collects references, builds flow edges, and solves points-to sets to a fixpoint before call-graph construction</td><td>Resolves transitive aliases and conditional targets consistently before one reachability walk</td></tr>
+          <tr><td>Centralized warning aggregation</td><td>Detectors print independently, producing multiple output paths and no global ordering</td><td>Detectors return warnings; one coordinator merges and sorts by line and category</td><td>Produces one deterministic report and confines output work to a single reporting phase</td></tr>
         </tbody>
       </table>
     </div>
