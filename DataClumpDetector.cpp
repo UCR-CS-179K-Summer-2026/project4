@@ -6,122 +6,106 @@
 #include <set>
 #include <utility>
 
-bool DataClumpDetector::connectsToAll(const std::vector<std::string>& group, const std::string& candidate) {
-    for(const auto& variable : group) {
-        auto it = variableGraphMap[variable].find(candidate);
-        if(it == variableGraphMap[variable].end()) {
-            return false;
-        }
+void DataClumpDetector::removeSubsetsFromClumps() {
+    std::vector<std::vector<std::string>> clumpKeys;
 
-        if(it->second < 3) {
-            return false;
-        }
+    for (const auto& entry : variableClumps) {
+        clumpKeys.push_back(entry.first);
     }
 
-    return true;
+    for (size_t i = 0; i < clumpKeys.size(); ++i) {
+        const std::vector<std::string>& subset = clumpKeys[i];
+        for (size_t j = 0; j < clumpKeys.size(); ++j) {
+            const std::vector<std::string>& superset = clumpKeys[j];
+            if (i != j && isSubset(clumpKeys[i], clumpKeys[j])) {
+                std::bitset<MAX_GROUPS> subsetBitset = variableBitsets[subset[0]];
+                for (size_t k = 1; k < subset.size(); ++k) {
+                    subsetBitset &= variableBitsets[subset[k]];
+                }
+
+                std::bitset<MAX_GROUPS> supersetBitset = variableBitsets[superset[0]];
+                for (size_t k = 1; k < superset.size(); ++k) {
+                    supersetBitset &= variableBitsets[superset[k]];
+                }
+
+                std::bitset<MAX_GROUPS> intersectionBitset = subsetBitset & ~supersetBitset;
+                if(intersectionBitset.count() < 3) {
+                    variableClumps.erase(subset);
+                    break;
+                }
+            }
+        }
+    }
 }
 
-void DataClumpDetector::expandNode(const std::string& nodeName, std::vector<std::string>& candidates) {
-    for(const auto& entry : variableGraphMap[nodeName]) {
-        const std::string& neighbor = entry.first;
+bool DataClumpDetector::isSubset(const std::vector<std::string>& subset, const std::vector<std::string>& superset) {
+    if(subset.size() >= superset.size()) {
+        return false;
+    }
 
-        if(std::find(candidates.begin(), candidates.end(), neighbor) != candidates.end()) {
-            continue;
-        }
+    return std::includes(superset.begin(), superset.end(), subset.begin(), subset.end());
+}
+
+bool DataClumpDetector::connectsToAll(const std::vector<std::string>& group, const std::string& candidate) {
+    std::bitset<MAX_GROUPS> candidateBitset = variableBitsets[candidate];
+    for(const auto& member : group) {
+        candidateBitset &= variableBitsets[member];
+    }
+
+    return candidateBitset.count() > 2;
+}
+
+void DataClumpDetector::expandNode(const std::vector<std::string>& variables, std::vector<std::string>& candidates, int index) {
+    for(int i = index; i < variables.size(); ++i) {
+        const std::string& neighbor = variables[i];
         
         if(connectsToAll(candidates, neighbor)) {
             candidates.push_back(neighbor);
 
             if(candidates.size() > 2) {
-                // Check if the neighbor is used multiple times with the current candidates using the bitset representation
                 std::bitset<MAX_GROUPS> combinedBitset = variableBitsets[candidates[0]];
-                for(int i = 1; i < candidates.size(); ++i) {
-                    combinedBitset &= variableBitsets[candidates[i]];
+                for(int j = 1; j < candidates.size(); ++j) {
+                    combinedBitset &= variableBitsets[candidates[j]];
                 }
     
                 if(combinedBitset.count() > 2) {
                     std::vector<std::string> sortedCandidates = candidates;
                     std::sort(sortedCandidates.begin(), sortedCandidates.end());
+
                     ClumpInfo& clumpInfo = variableClumps[sortedCandidates];
                     clumpInfo.counter = static_cast<int>(combinedBitset.count());
                     clumpInfo.lineNumbers.clear();
 
-                    for(int i = 0; i < variableGroups.size(); ++i) {
-                        if(combinedBitset.test(i)) {
-                            variableClumps[sortedCandidates].lineNumbers.push_back(groupLineNumbers[i]);
+                    for(int k = 0; k < variableGroups.size(); ++k) {
+                        if(combinedBitset.test(k)) {
+                            variableClumps[sortedCandidates].lineNumbers.push_back(groupLineNumbers[k]);
                         }
                     }
                 }
             }
 
-
-            expandNode(neighbor, candidates);
+            expandNode(variables, candidates, i + 1);
             candidates.pop_back();
         }
     }
 }
 
 void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
-    struct CandidateInfo {
-        std::unordered_set<std::string> variableNames;
-        std::vector<int> lineNumbers;
-        int counter = 0;
-    };
-
     if(variableGroups.size() < 2) {
         return;
     }
 
     createBitsets();
+    std::vector<std::string> variables;
     for(const auto& entry : variableGraphMap) {
-        std::string nodeName = entry.first;
-        std::vector<std::string> candidates = {nodeName};
-
-        expandNode(nodeName, candidates);
+        variables.push_back(entry.first);
     }
+    sort(variables.begin(), variables.end());
 
-    std::map<std::vector<std::string>, CandidateInfo> candidateMap;
-    std::vector<std::string> sortedVariables;
+    std::vector<std::string> candidates;
+    expandNode(variables, candidates, 0);
 
-        // for(const auto& variable : variableBitsets) {
-        //     sortedVariables.push_back(variable.first);
-        // }
-        // sort(sortedVariables.begin(), sortedVariables.end());
-
-        // // Get pairs from frequent pairs
-        // std::vector<std::pair<std::string, std::string>> frequentPairs;
-        // for(int i = 0; i < sortedVariables.size(); ++i) {
-        //     for(int j = i + 1; j < sortedVariables.size(); ++j) {
-        //         auto bitsOfPair = variableBitsets[sortedVariables[i]] & variableBitsets[sortedVariables[j]];
-        //         if(bitsOfPair.count() > 2) {
-        //             frequentPairs.push_back({sortedVariables[i], sortedVariables[j]});
-        //         }
-        //     }
-        // }
-
-
-        // // Get triples from frequent pairs
-        // for(int i = 0; i < frequentPairs.size(); ++i) {
-        //     for(int j = 0; j < sortedVariables.size(); ++j) {
-        //         if(sortedVariables[j] != frequentPairs[i].first && sortedVariables[j] != frequentPairs[i].second) {
-        //             auto bitsOfTriple = variableBitsets[frequentPairs[i].first] & variableBitsets[frequentPairs[i].second] & variableBitsets[sortedVariables[j]];
-        //             if(bitsOfTriple.count() > 2) {
-        //                 std::vector<std::string> triple = {frequentPairs[i].first, frequentPairs[i].second, sortedVariables[j]};
-        //                 std::sort(triple.begin(), triple.end());
-
-        //                 if(candidateMap.find(triple) == candidateMap.end()) {
-        //                     for(int k = 0; k < variableGroups.size(); ++k) {
-        //                         if(bitsOfTriple.test(k)) {
-        //                             candidateMap[triple].lineNumbers.push_back(groupLineNumbers[k]);
-        //                         }
-        //                     }
-        //                     candidateMap[triple].variableNames.insert(triple.begin(), triple.end());
-        //                     candidateMap[triple].counter = bitsOfTriple.count();
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
+    removeSubsetsFromClumps();
         
     for (const auto& entry : variableClumps) {
 

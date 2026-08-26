@@ -36,8 +36,10 @@ class DataClumpDetector : public Detector {
         void checkForDataClumps(std::vector<Warning>& warnings);
         void storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
         void createBitsets();
-        void expandNode(const std::string& nodeName, std::vector<std::string>& candidates);
+        void expandNode(const std::vector<std::string>& variables, std::vector<std::string>& candidates, int index);
         bool connectsToAll(const std::vector<std::string>& group, const std::string& candidate);
+        bool isSubset(const std::vector<std::string>& subset, const std::vector<std::string>& superset);
+        void removeSubsetsFromClumps();
     public:
         DataClumpDetector() = default;
         std::vector<Warning> analyzeSource(const ParsedSource& parsedSource) override;
