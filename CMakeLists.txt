@@ -43,11 +43,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(json)
 
-set(SOURCE_FILES
-    main.cpp
+set(DETECTOR_SOURCES
     parser.cpp
     poorNameChecker.cpp
-    poorNameTest.cpp
     SmellyCodeDetector.cpp
     redundantCodeChecker/redundantCodeChecker.cpp
     deadCodeChecker/deadCodeChecker.cpp
@@ -65,15 +63,25 @@ set(SOURCE_FILES
     FixApplier.cpp
 )
 
-add_executable(project4 ${SOURCE_FILES})
+add_library(detector_core ${DETECTOR_SOURCES})
+target_include_directories(detector_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(project4 main.cpp)
 
 target_include_directories(tree-sitter-cpp PUBLIC
     tree-sitter-cpp/src
 )
 
-target_link_libraries(project4 PRIVATE
+target_link_libraries(detector_core PUBLIC
     tree-sitter
     tree-sitter-cpp
     libcurl
     nlohmann_json::nlohmann_json
 )
+
+target_link_libraries(project4 PRIVATE detector_core)
+
+enable_testing()
+add_subdirectory(tests)
