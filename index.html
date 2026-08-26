@@ -74,6 +74,7 @@
             <li>CMake (3.10+) — cmake.org/download, or <code>winget install Kitware.CMake</code> on Windows. Confirm with <code>cmake --version</code>.</li>
             <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
             <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code>.</li>
+            <li>Internet access during the first CMake configure if <code>nlohmann/json</code> must be downloaded. The vendored <code>libcurl</code> library is built automatically by the project.</li>
           </ul>
         </div>
       </li>
@@ -88,6 +89,7 @@
             <li><code>git submodule update --init --recursive</code></li>
           </ul>
           <p class="build-step-note">The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</p>
+          <p class="build-step-note">For data-clump name suggestions, create a root <code>.env</code> file with <code>GOOGLE_GEMINI_API_KEY=your-api-key-here</code>. Keep this file private; it is ignored by Git. The program searches from the project root or the Windows <code>build/Debug</code> launch directory. Gemini requests use a 30-second curl timeout; HTTP or transport failures fall back to <code>DefaultName</code>, while a missing key stops name generation with an error.</p>
         </div>
       </li>
 
@@ -101,7 +103,7 @@
             <li><code>cmake .. -DBUILD_SHARED_LIBS=OFF</code></li>
             <li><code>cmake --build .</code></li>
           </ul>
-          <p class="build-step-note">This builds the tree-sitter runtime, the C++ grammar, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</p>
+          <p class="build-step-note">This builds the tree-sitter runtime, the C++ grammar, vendored <code>libcurl</code>, and project4 itself. On Windows with the Visual Studio generator, the executable lands in a Debug subfolder.</p>
         </div>
       </li>
 
@@ -1186,14 +1188,14 @@ never uses it. (line 1)</pre></div>
         <ul>
           <li>Each fixture isolates one detector or a small related group of smells, with comments marking cases that should be flagged and cases that should remain quiet.</li>
           <li>Positive cases cover unused variables, redundant logic, unreachable statements, dead functions, pointer/virtual dispatch, poor names, missing comments, repeated AST blocks, deep nesting, long parameter lists, data clumps, inheritance, and memory paths.</li>
-          <li>Negative cases are embedded beside positives: scope shadowing, non-exhaustive conditionals, recursion, reordered or whitespace-varied code, valid inheritance use, and a low-smell <code>cleanTest.cpp</code> control.</li>
+          <li>Negative cases are embedded beside positives: scope shadowing, non-exhaustive conditionals, recursion, reordered or whitespace-varied code, valid inheritance use, and a low-smell <code>cleanTest.cpp</code> control. A separate <code>tests/fixtures/clean_test.cpp</code> is the clean baseline for the automated suite.</li>
         </ul>
       </article>
       <article class="type-card type-class">
         <p class="type-kind">limitations</p>
         <h3>What the fixtures do not prove</h3>
         <ul>
-          <li>These are single-file integration fixtures, not an automated unit-test or CTest suite. Results below were checked from terminal output, so they are not machine-asserted regression results.</li>
+          <li>Most fixtures are single-file integration inputs. The parameterized <code>project4_tests</code> runner now asserts selected warning categories and is registered with CTest, but it does not yet assert every warning line, fix output, or full warning count.</li>
           <li>The cases do not cover macros, templates, multiple translation units, all C++ control-flow exits, or broad semantic equivalence. Points-to analysis is flow-insensitive and intentionally leaves nested blocks outside its pass.</li>
           <li>Data-clump naming can require <code>GOOGLE_GEMINI_API_KEY</code> and network access; the detector can fall back to a default name when the request fails.</li>
         </ul>
@@ -1202,40 +1204,43 @@ never uses it. (line 1)</pre></div>
 
     <h3 class="subhead">How the cases are executed</h3>
     <div class="todo-card">
-      <span class="todo-badge">MANUAL INTEGRATION RUN</span>
-      <p>From the project root, build with <code>cmake --build build --config Debug</code>. Run <code>build/Debug/project4.exe</code>, enter one or more fixture paths at the prompt, and answer <code>n</code> to the optional auto-fix prompt when checking detection output. A case passes when the expected warning category is present and the documented negative case is not flagged. The current executable does not compare expected output automatically.</p>
+      <span class="todo-badge">AUTOMATED + MANUAL</span>
+      <ol>
+        <li>Build from the project root with <code>cmake --build build --config Debug</code>.</li>
+        <li>Run the test executable at <code>build/tests/Debug/project4_tests.exe</code>.</li>
+        <li>Choose a suite with <code>--suite smoke</code>, <code>--suite detectors</code>, <code>--suite edge</code>, <code>--suite implementation</code>, <code>--suite known-failures</code>, or <code>--suite all</code>.</li>
+        <li>Run one parameterized case with <code>--case NAME</code>, such as <code>--case clean-control</code>.</li>
+        <li>Use CTest names <code>project4_smoke</code>, <code>project4_detector_coverage</code>, <code>project4_edge_cases</code>, <code>project4_implementation</code>, <code>project4_known_failures</code>, and <code>project4_clean_control</code> from the CMake Testing panel.</li>
+        <li>For exploratory output or auto-fix prompts, run <code>build/Debug/project4.exe</code> and enter fixture paths manually.</li>
+      </ol>
     </div>
 
-    <h3 class="subhead">Passed test cases (current run)</h3>
+    <h3 class="subhead">Test suites and current results</h3>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>Test case</th><th>Fixture</th><th>Status</th><th>Observed evidence</th></tr>
+          <tr><th>Suite</th><th>How to run</th><th>Included cases</th><th>Current result</th><th>What it verifies</th></tr>
         </thead>
         <tbody>
-          <tr><td>Redundant patterns and scope cases</td><td>redundantCodeChecker/redundantTest.cpp</td><td>Passed</td><td>65 warnings observed, including the targeted redundant-code categories.</td></tr>
-          <tr><td>Unreachable statements and transitive/recursive functions</td><td>deadCodeChecker/deadCodeTest.cpp</td><td>Passed</td><td>36 warnings observed; fixture includes direct, indirect, self-recursive, mutual-recursive, and dead-chain cases.</td></tr>
-          <tr><td>Pointer and virtual-dispatch reachability</td><td>deadCodeChecker/pointsToTest.cpp</td><td>Passed</td><td>36 warnings observed while exercising points-to and dispatch cases.</td></tr>
-          <tr><td>Poor identifier names</td><td>poorNameTest.cpp</td><td>Passed</td><td>20 warnings observed for the naming fixture.</td></tr>
-          <tr><td>Comment detection</td><td>commentChecker/commentTest.cpp</td><td>Passed</td><td>4 warnings observed; the repository path is under <code>commentChecker</code>.</td></tr>
-          <tr><td>Repeated code, whitespace, order, and overlap cases</td><td>repeatedTest.cpp</td><td>Passed</td><td>16 warnings observed for repeated-block cases.</td></tr>
-          <tr><td>Nested-if threshold</td><td>ifStatementTest.cpp</td><td>Passed</td><td>2 warnings observed; the deeper nesting case was flagged.</td></tr>
-          <tr><td>Long parameter lists</td><td>longParamTest.cpp</td><td>Passed</td><td>8 warnings observed for the parameter-list fixture.</td></tr>
-          <tr><td>Data-clump pairs/triples</td><td>DataClumpTest.cpp</td><td>Passed</td><td>12 warnings observed; generated names returned successfully in this run.</td></tr>
-          <tr><td>Inheritance usage cases</td><td>inheritanceTest.cpp</td><td>Passed</td><td>32 warnings observed for the inheritance fixture.</td></tr>
-          <tr><td>Memory-path cases</td><td>memoryChecker/memoryTest.cpp</td><td>Passed</td><td>10 warnings observed for the memory fixture.</td></tr>
+          <tr><td>Smoke</td><td><code>project4_tests --suite smoke</code><br><code>project4_smoke</code></td><td><code>clean-control</code></td><td>Passed <code>1/1</code></td><td>Clean control produces zero warnings.</td></tr>
+          <tr><td>Detector coverage</td><td><code>project4_tests --suite detectors</code><br><code>project4_detector_coverage</code></td><td><code>repeated-code</code>, <code>deep-if</code>, <code>dead-function</code>, <code>redundant-code</code>, <code>comment-detection</code>, <code>poor-naming</code>, <code>long-parameter-list</code>, <code>data-clump</code>, <code>inheritance</code>, <code>memory-leak</code>, <code>points-to-dispatch</code></td><td>Passed <code>11/11</code> coverage checks</td><td>Exercises every detector category, including repeated code, nesting, dead-code reachability, and points-to dispatch.</td></tr>
+          <tr><td>Edge cases</td><td><code>project4_tests --suite edge</code><br><code>project4_edge_cases</code></td><td><code>throw-exit-limit</code>, <code>branch-exit-negative</code></td><td>Passed <code>2/2</code></td><td>Checks <code>throw</code> limitation and confirms a non-exhaustive <code>if</code> does not create a false unreachable warning.</td></tr>
+          <tr><td>Implementation</td><td><code>project4_tests --suite implementation</code><br><code>project4_implementation</code></td><td><code>redundant-auto-fix</code>, <code>unreachable-auto-fix</code></td><td>Passed <code>2/2</code></td><td>Verifies that fixable warnings expose auto-fix metadata.</td></tr>
+          <tr><td>Known failures</td><td><code>project4_tests --suite known-failures</code><br><code>project4_known_failures</code></td><td><code>throw-exit-known-failure</code>, <code>infinite-loop-known-failure</code></td><td>Expected <code>0/2</code>; CTest marked <code>WILL_FAIL</code></td><td>Tracks missing <code>unreachable-code</code> detection for <code>throw</code> and infinite loops.</td></tr>
+          <tr><td>All cases</td><td><code>project4_tests</code><br>No dedicated CTest entry</td><td>All 17 parameterized cases</td><td>Includes 2 expected failures</td><td>Runs every case together; data-clump naming may require network/API access, and known gaps intentionally return failures.</td></tr>
         </tbody>
       </table>
     </div>
 
-    <h3 class="subhead">Failed test cases (current run)</h3>
+    <h3 class="subhead">Failed and expected-limitation cases</h3>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>Test case</th><th>Fixture</th><th>Status</th><th>Observed evidence</th></tr>
+          <tr><th>Case</th><th>Fixture</th><th>Status</th><th>Explanation</th></tr>
         </thead>
         <tbody>
-          <tr><td>Low-smell clean control should produce no warnings</td><td>cleanTest.cpp</td><td>Failed</td><td>4 warnings observed: missing comments plus poor names for parameters <code>a</code>, <code>b</code>, and <code>c</code>. This indicates a false-positive/fixture-design gap for the clean control.</td></tr>
+          <tr><td>Legacy low-smell control should produce no warnings</td><td>tests/fixtures/cleanTest.cpp</td><td>Manual failure</td><td>Observed 4 warnings: missing comments plus poor names for parameters <code>a</code>, <code>b</code>, and <code>c</code>. The automated clean baseline is <code>clean_test.cpp</code>.</td></tr>
+          <tr><td><code>throw</code> should imply unreachable code</td><td>tests/edge_cases/throw_exit.cpp</td><td>Expected limitation</td><td>No <code>unreachable-code</code> warning is currently reported; this is the expected result for the edge suite.</td></tr>
         </tbody>
       </table>
     </div>
