@@ -45,6 +45,11 @@ void getStreetNumber(std::string streetName, std::string city, std::string state
     std::cout << city << ", " << state << std::endl;
 }
 
+void getSomeInfo(std::string streetName, std::string city, std::string state, std::string country) {
+    std::cout << streetName << std::endl;
+    std::cout << city << ", " << state << " " << country << std::endl;
+}
+
 // Holds duplicates of the same data: streetName, city, state, zip. Also has a declaration
 // of firstName, lastName, middleName in a nested if statement.
 int someFunction() {
@@ -85,6 +90,9 @@ int someFunction() {
     getStreetNumber(streetName, city, state, first, second);
     getStreetNumber(streetName, city, state, second, third);
     getStreetNumber(streetName, city, state, third, first);
+
+    getSomeInfo(streetName, city, state, country);
+    getSomeInfo(streetName, city, state, country);
 
 	return 0;
 }

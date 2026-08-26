@@ -68,18 +68,16 @@ void DataClumpDetector::expandNode(const std::vector<std::string>& variables, st
                     combinedBitset &= variableBitsets[candidates[j]];
                 }
     
-                if(combinedBitset.count() > 2) {
-                    std::vector<std::string> sortedCandidates = candidates;
-                    std::sort(sortedCandidates.begin(), sortedCandidates.end());
+                std::vector<std::string> sortedCandidates = candidates;
+                std::sort(sortedCandidates.begin(), sortedCandidates.end());
 
-                    ClumpInfo& clumpInfo = variableClumps[sortedCandidates];
-                    clumpInfo.counter = static_cast<int>(combinedBitset.count());
-                    clumpInfo.lineNumbers.clear();
+                ClumpInfo& clumpInfo = variableClumps[sortedCandidates];
+                clumpInfo.counter = static_cast<int>(combinedBitset.count());
+                clumpInfo.lineNumbers.clear();
 
-                    for(int k = 0; k < variableGroups.size(); ++k) {
-                        if(combinedBitset.test(k)) {
-                            variableClumps[sortedCandidates].lineNumbers.push_back(groupLineNumbers[k]);
-                        }
+                for(int k = 0; k < variableGroups.size(); ++k) {
+                    if(combinedBitset.test(k)) {
+                        variableClumps[sortedCandidates].lineNumbers.push_back(groupLineNumbers[k]);
                     }
                 }
             }
@@ -108,12 +106,8 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
     removeSubsetsFromClumps();
         
     for (const auto& entry : variableClumps) {
-
-        const std::vector<std::string>& variables =
-            entry.first;
-
-        const ClumpInfo& clumpInfo =
-            entry.second;
+        const std::vector<std::string>& variables = entry.first;
+        const ClumpInfo& clumpInfo = entry.second;
 
         if (clumpInfo.counter < 3) {
             continue;
@@ -126,12 +120,10 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
         }
 
         if (!variableList.empty()) {
-            variableList.erase(
-                variableList.length() - 2);
+            variableList.erase(variableList.length() - 2);
         }
 
         std::string lineList;
-
         for (const auto& line : clumpInfo.lineNumbers) {
             lineList += std::to_string(line) + ", ";
         }
@@ -171,8 +163,6 @@ void DataClumpDetector::storeClumpInfo(std::vector<std::string>& currentVariable
     if(variablesInScope.size() > 1 && !currentLines.empty()) {
         currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
         currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
-        std::vector<std::string> sortedVariables = {variablesInScope.begin(), variablesInScope.end()};
-        std::sort(sortedVariables.begin(), sortedVariables.end());
 
         std::vector<int> lineNumbers = currentLines;
         lineNumbers.erase(std::unique(lineNumbers.begin(), lineNumbers.end()), lineNumbers.end());
