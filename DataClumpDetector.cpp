@@ -15,8 +15,10 @@ void DataClumpDetector::removeSubsetsFromClumps() {
 
     for (size_t i = 0; i < clumpKeys.size(); ++i) {
         const std::vector<std::string>& subset = clumpKeys[i];
+
         for (size_t j = 0; j < clumpKeys.size(); ++j) {
             const std::vector<std::string>& superset = clumpKeys[j];
+
             if (i != j && isSubset(clumpKeys[i], clumpKeys[j])) {
                 std::bitset<MAX_GROUPS> subsetBitset = variableBitsets[subset[0]];
                 for (size_t k = 1; k < subset.size(); ++k) {
@@ -93,18 +95,19 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
         return;
     }
 
+    // First create the bitsets for each variable, then expand all nodes
     createBitsets();
     std::vector<std::string> variables;
     for(const auto& entry : variableGraphMap) {
         variables.push_back(entry.first);
     }
-    sort(variables.begin(), variables.end());
 
     std::vector<std::string> candidates;
     expandNode(variables, candidates, 0);
 
     removeSubsetsFromClumps();
         
+    // Generate warnings for each clump found
     for (const auto& entry : variableClumps) {
         const std::vector<std::string>& variables = entry.first;
         const ClumpInfo& clumpInfo = entry.second;
@@ -137,13 +140,13 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
         std::string generatedName = "Test";
 
         warnings.push_back({
-            0,
+            clumpInfo.lineNumbers.front(),
             "Data Clump",
             "The following lines share the same set of "
             "variables: " + lineList +
             ". Variables: " + variableList +
             ". Consider converting this to a struct or "
-            "class with the name: " + generatedName
+            "class with the name: " + generatedName + " "
         });
     }
 }
@@ -159,9 +162,8 @@ void DataClumpDetector::createBitsets() {
     }
 }
 
-void DataClumpDetector::storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope) {
+void DataClumpDetector::storeClumpInfo(std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope) {
     if(variablesInScope.size() > 1 && !currentLines.empty()) {
-        currentVariables.erase(std::unique(currentVariables.begin(), currentVariables.end()), currentVariables.end());
         currentLines.erase(std::unique(currentLines.begin(), currentLines.end()), currentLines.end());
 
         std::vector<int> lineNumbers = currentLines;
@@ -209,7 +211,7 @@ void DataClumpDetector::checkFunctionParams(TSNode node, const ParsedSource& par
         }
 
         std::vector<int> lineNumbers = {nameAnalyzer.getLineNumber(parsedSource, node)};
-        storeClumpInfo(paramNames, lineNumbers, variablesInScope);
+        storeClumpInfo(lineNumbers, variablesInScope);
     }
 }
 
@@ -235,7 +237,7 @@ void DataClumpDetector::checkCallExpression(TSNode node, const ParsedSource& par
             }
 
             std::vector<int> lineNumbers = {nameAnalyzer.getLineNumber(parsedSource, node)};
-            storeClumpInfo(argNames, lineNumbers, variablesInScope);
+            storeClumpInfo(lineNumbers, variablesInScope);
         }
     }
 }
@@ -285,13 +287,13 @@ void DataClumpDetector::checkInsideFunction(TSNode node, const ParsedSource& par
                 currentLines = {nameAnalyzer.getLineNumber(parsedSource, expressionNode)};
             }
 
-            storeClumpInfo(currentVariables, currentLines, variablesInScope);
+            storeClumpInfo(currentLines, variablesInScope);
             
             currentVariables.clear();
             currentLines.clear();
         }
         else {
-            storeClumpInfo(currentVariables, currentLines, variablesInScope);
+            storeClumpInfo(currentLines, variablesInScope);
             
             currentVariables.clear();
             currentLines.clear();
@@ -299,7 +301,7 @@ void DataClumpDetector::checkInsideFunction(TSNode node, const ParsedSource& par
         }
     }
 
-    storeClumpInfo(currentVariables, currentLines, variablesInScope);
+    storeClumpInfo(currentLines, variablesInScope);
 
     currentVariables.clear();
     currentLines.clear();

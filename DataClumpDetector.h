@@ -34,7 +34,7 @@ class DataClumpDetector : public Detector {
         void checkCallExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         std::unordered_set<std::string> checkBinaryExpression(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings);
         void checkForDataClumps(std::vector<Warning>& warnings);
-        void storeClumpInfo(std::vector<std::string>& currentVariables, std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
+        void storeClumpInfo(std::vector<int>& currentLines, std::unordered_set<std::string>& variablesInScope);
         void createBitsets();
         void expandNode(const std::vector<std::string>& variables, std::vector<std::string>& candidates, int index);
         bool connectsToAll(const std::vector<std::string>& group, const std::string& candidate);
