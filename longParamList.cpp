@@ -1,6 +1,7 @@
 #include "longParamList.h"
 
 #include <iostream>
+#include <sstream>
 #include <cstring>
 #include<tree_sitter/api.h>
 
@@ -27,7 +28,9 @@ void longParamList::visitNode(TSNode node, const ParsedSource& parsedSource, std
             }
 
             int line = static_cast<int>(ts_node_start_point(node).row)+1;
-            reportLongParamList(functionName, paramCount, line, warnings);
+            std::string refactoredCode = offerRefactoring(node, paramListNode, functionName, parsedSource.source);
+
+            reportLongParamList(functionName, paramCount, line, refactoredCode, warnings);
             }
         }
     }
@@ -79,11 +82,13 @@ std::string longParamList::extractFunctionName(TSNode functionDefNode, const std
 }
 
 //Reports a warning message to the console when a function has too many parameters. It includes the function name, the number of parameters, and the line number where the function is defined.
-void longParamList::reportLongParamList(const std::string& functionName, int paramCount, int line, std::vector<Warning>& warnings) const{
+void longParamList::reportLongParamList(const std::string& functionName, int paramCount, int line, const std::string& refactored, std::vector<Warning>& warnings) const{
+    std::string message = "Function: " + functionName + " has " + std::to_string(paramCount) + " parameters. Consider reducing the number of parameters to improve code readability." + refactored;
+
     warnings.push_back({
         line,
         "Long Parameter List",
-        "Function: " + functionName + " has " + std::to_string(paramCount) + " parameters. Consider reducing the number of parameters to improve code readability.",
+        message
     });
 }
 
@@ -98,4 +103,66 @@ std::vector<Warning> longParamList::analyzeSource(const ParsedSource& source){
     visitNode(rootNode, source, warnings);
 
     return warnings;
+}
+
+//Outputs the refactored code (puts the paramlist into a struct), alongside original code block
+std::string longParamList::offerRefactoring(TSNode functionDefNode, TSNode paramListNode,const std::string& functionName, const std::string& source) const{
+      std::string structName = functionName + "Params";
+
+    uint32_t namedCount = ts_node_named_child_count(paramListNode);
+    std::vector<std::string> paramNames;
+
+    std::ostringstream structDef;
+    structDef << "struct " << structName << " {\n";
+
+    for(uint32_t i = 0; i< namedCount; ++i){
+        TSNode paramNode = ts_node_named_child(paramListNode, i);
+        structDef << " " << nodeText(paramNode, source) << ";\n";
+
+        TSNode idNode = findIDNode(paramNode);
+        if(!ts_node_is_null(idNode)){
+            paramNames.push_back(nodeText(idNode, source));
+        }
+    }
+
+    structDef << "};";
+
+    TSNode bodyNode = ts_node_child_by_field_name(functionDefNode, "body", strlen("body"));
+    uint32_t functionStart = ts_node_start_byte(functionDefNode);
+    uint32_t headerEnd = ts_node_is_null(bodyNode) ? ts_node_end_byte(functionDefNode) : ts_node_start_byte(bodyNode);
+
+    std::string originalHeader = source.substr(functionStart, headerEnd- functionStart);
+
+    uint32_t paramStart = ts_node_start_byte(paramListNode);
+    uint32_t paramEnd = ts_node_end_byte(paramListNode);
+    size_t relStart = paramStart - functionStart;
+    size_t relLen = paramEnd - paramStart;
+
+    std::string refactoredHeader = originalHeader.substr(0, relStart) + "(" + structName + " params" + originalHeader.substr(relStart + relLen);
+
+    std::ostringstream out;
+
+    out << "\nSuggested refactor: group the long list of parameters into a struct.\n";
+    out << "\n--- Original ---\n" << originalHeader << "\n";
+    out << "\n--- Suggested struct ---\n" << structDef.str() << "\n";
+    out << "\n--- Refactored ---\n" << refactoredHeader << ")" << "\n";
+    out << "\nThen update the function body to access each parameter through "
+        << "'params.' instead of by name directly";
+    
+    if (!paramNames.empty()) {
+        out << " (e.g. '" << paramNames[0] << "' becomes 'params." << paramNames[0] << "')";
+    }
+    
+    out << ", and update the calls to pass a single " << structName << " argument instead of "
+        << namedCount << " separate ones.\n";
+ 
+    return out.str();
+}
+
+//Returns the the raw text stored within a passed in node
+std::string longParamList::nodeText(TSNode node, const std::string& source) const{
+    uint32_t startByte = ts_node_start_byte(node);
+    uint32_t endByte = ts_node_end_byte(node);
+    
+    return source.substr(startByte, endByte-startByte);
 }
