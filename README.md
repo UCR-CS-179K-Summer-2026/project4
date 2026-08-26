@@ -521,11 +521,15 @@ an error when a name is requested.
 
 ## Testing
 
-The repository currently provides detector-specific C++ fixture files rather than a separate
-automated unit-test or CTest harness. Fixtures include `redundantCodeChecker/redundantTest.cpp`,
-`deadCodeChecker/deadCodeTest.cpp`, `deadCodeChecker/pointsToTest.cpp`, `poorNameTest.cpp`,
-`commentTest.cpp`, `repeatedTest.cpp`, `ifStatementTest.cpp`, `longParamTest.cpp`,
-`DataClumpTest.cpp`, `inheritanceTest.cpp`, `memoryTest.cpp`, and `cleanTest.cpp`.
+The repository provides detector-specific C++ fixtures under `tests/fixtures/`, plus
+`tests/edge_cases/` for documented analysis limitations. The `project4_tests` CTest runner
+executes parameterized smoke and edge-case suites and reports pass/fail results. Fixtures include
+`tests/fixtures/redundantTest.cpp`, `tests/fixtures/deadCodeTest.cpp`,
+`tests/fixtures/pointsToTest.cpp`, `tests/fixtures/poorNameTest.cpp`,
+`tests/fixtures/commentTest.cpp`, `tests/fixtures/repeatedTest.cpp`,
+`tests/fixtures/ifStatementTest.cpp`, `tests/fixtures/longParamTest.cpp`,
+`tests/fixtures/DataClumpTest.cpp`, `tests/fixtures/inheritanceTest.cpp`,
+`tests/fixtures/memoryTest.cpp`, and `tests/fixtures/clean_test.cpp`.
 
 Build the target, run it from the project root, and enter fixture paths at the prompt:
 
@@ -534,8 +538,11 @@ cmake --build build
 ./build/Debug/project4.exe
 ```
 
-Expected warnings are currently checked from terminal output. There is no committed script that
-automatically asserts warning categories, line numbers, or generated fixed-file contents.
+Run the automated suites from the build directory with `ctest -R project4_` (or use the CMake
+Testing panel in VS Code). The runner also supports `project4_tests --suite smoke`,
+`project4_tests --suite edge`, and `project4_tests --case clean-control`. It asserts expected
+warning-category presence or absence; it does not yet assert every warning line, fix output, or
+the full warning count for each fixture.
 
 ## Architecture
 

@@ -1186,14 +1186,14 @@ never uses it. (line 1)</pre></div>
         <ul>
           <li>Each fixture isolates one detector or a small related group of smells, with comments marking cases that should be flagged and cases that should remain quiet.</li>
           <li>Positive cases cover unused variables, redundant logic, unreachable statements, dead functions, pointer/virtual dispatch, poor names, missing comments, repeated AST blocks, deep nesting, long parameter lists, data clumps, inheritance, and memory paths.</li>
-          <li>Negative cases are embedded beside positives: scope shadowing, non-exhaustive conditionals, recursion, reordered or whitespace-varied code, valid inheritance use, and a low-smell <code>cleanTest.cpp</code> control.</li>
+          <li>Negative cases are embedded beside positives: scope shadowing, non-exhaustive conditionals, recursion, reordered or whitespace-varied code, valid inheritance use, and a low-smell <code>cleanTest.cpp</code> control. A separate <code>tests/fixtures/clean_test.cpp</code> is the clean baseline for the automated suite.</li>
         </ul>
       </article>
       <article class="type-card type-class">
         <p class="type-kind">limitations</p>
         <h3>What the fixtures do not prove</h3>
         <ul>
-          <li>These are single-file integration fixtures, not an automated unit-test or CTest suite. Results below were checked from terminal output, so they are not machine-asserted regression results.</li>
+          <li>Most fixtures are single-file integration inputs. The parameterized <code>project4_tests</code> runner now asserts selected warning categories and is registered with CTest, but it does not yet assert every warning line, fix output, or full warning count.</li>
           <li>The cases do not cover macros, templates, multiple translation units, all C++ control-flow exits, or broad semantic equivalence. Points-to analysis is flow-insensitive and intentionally leaves nested blocks outside its pass.</li>
           <li>Data-clump naming can require <code>GOOGLE_GEMINI_API_KEY</code> and network access; the detector can fall back to a default name when the request fails.</li>
         </ul>
@@ -1202,8 +1202,8 @@ never uses it. (line 1)</pre></div>
 
     <h3 class="subhead">How the cases are executed</h3>
     <div class="todo-card">
-      <span class="todo-badge">MANUAL INTEGRATION RUN</span>
-      <p>From the project root, build with <code>cmake --build build --config Debug</code>. Run <code>build/Debug/project4.exe</code>, enter one or more fixture paths at the prompt, and answer <code>n</code> to the optional auto-fix prompt when checking detection output. A case passes when the expected warning category is present and the documented negative case is not flagged. The current executable does not compare expected output automatically.</p>
+      <span class="todo-badge">AUTOMATED + MANUAL</span>
+      <p>From the project root, build with <code>cmake --build build --config Debug</code>. Run the automated suites with <code>build/tests/Debug/project4_tests.exe --suite smoke</code> or <code>--suite edge</code>; select one case with <code>--case clean-control</code>. CTest exposes the same checks as <code>project4_smoke</code>, <code>project4_edge_cases</code>, and <code>project4_clean_control</code>. For exploratory runs, use <code>build/Debug/project4.exe</code> and enter fixture paths at its prompt.</p>
     </div>
 
     <h3 class="subhead">Passed test cases (current run)</h3>
@@ -1213,17 +1213,10 @@ never uses it. (line 1)</pre></div>
           <tr><th>Test case</th><th>Fixture</th><th>Status</th><th>Observed evidence</th></tr>
         </thead>
         <tbody>
-          <tr><td>Redundant patterns and scope cases</td><td>redundantCodeChecker/redundantTest.cpp</td><td>Passed</td><td>65 warnings observed, including the targeted redundant-code categories.</td></tr>
-          <tr><td>Unreachable statements and transitive/recursive functions</td><td>deadCodeChecker/deadCodeTest.cpp</td><td>Passed</td><td>36 warnings observed; fixture includes direct, indirect, self-recursive, mutual-recursive, and dead-chain cases.</td></tr>
-          <tr><td>Pointer and virtual-dispatch reachability</td><td>deadCodeChecker/pointsToTest.cpp</td><td>Passed</td><td>36 warnings observed while exercising points-to and dispatch cases.</td></tr>
-          <tr><td>Poor identifier names</td><td>poorNameTest.cpp</td><td>Passed</td><td>20 warnings observed for the naming fixture.</td></tr>
-          <tr><td>Comment detection</td><td>commentChecker/commentTest.cpp</td><td>Passed</td><td>4 warnings observed; the repository path is under <code>commentChecker</code>.</td></tr>
-          <tr><td>Repeated code, whitespace, order, and overlap cases</td><td>repeatedTest.cpp</td><td>Passed</td><td>16 warnings observed for repeated-block cases.</td></tr>
-          <tr><td>Nested-if threshold</td><td>ifStatementTest.cpp</td><td>Passed</td><td>2 warnings observed; the deeper nesting case was flagged.</td></tr>
-          <tr><td>Long parameter lists</td><td>longParamTest.cpp</td><td>Passed</td><td>8 warnings observed for the parameter-list fixture.</td></tr>
-          <tr><td>Data-clump pairs/triples</td><td>DataClumpTest.cpp</td><td>Passed</td><td>12 warnings observed; generated names returned successfully in this run.</td></tr>
-          <tr><td>Inheritance usage cases</td><td>inheritanceTest.cpp</td><td>Passed</td><td>32 warnings observed for the inheritance fixture.</td></tr>
-          <tr><td>Memory-path cases</td><td>memoryChecker/memoryTest.cpp</td><td>Passed</td><td>10 warnings observed for the memory fixture.</td></tr>
+          <tr><td>Clean control</td><td>tests/fixtures/clean_test.cpp</td><td>Passed</td><td>Automated runner observed 0 warnings.</td></tr>
+          <tr><td>Repeated-code category</td><td>tests/fixtures/repeatedTest.cpp</td><td>Passed</td><td>Automated runner observed the expected <code>repeated-code</code> category.</td></tr>
+          <tr><td>Deep-if category</td><td>tests/fixtures/ifStatementTest.cpp</td><td>Passed</td><td>Automated runner observed the expected <code>deep-if</code> category.</td></tr>
+          <tr><td>Dead-function category</td><td>tests/fixtures/deadCodeTest.cpp</td><td>Passed</td><td>Automated runner observed the expected <code>unused-function</code> category.</td></tr>
         </tbody>
       </table>
     </div>
@@ -1235,7 +1228,8 @@ never uses it. (line 1)</pre></div>
           <tr><th>Test case</th><th>Fixture</th><th>Status</th><th>Observed evidence</th></tr>
         </thead>
         <tbody>
-          <tr><td>Low-smell clean control should produce no warnings</td><td>cleanTest.cpp</td><td>Failed</td><td>4 warnings observed: missing comments plus poor names for parameters <code>a</code>, <code>b</code>, and <code>c</code>. This indicates a false-positive/fixture-design gap for the clean control.</td></tr>
+          <tr><td>Legacy low-smell control should produce no warnings</td><td>tests/fixtures/cleanTest.cpp</td><td>Failed</td><td>Manual run observed 4 warnings: missing comments plus poor names for parameters <code>a</code>, <code>b</code>, and <code>c</code>. The new <code>clean_test.cpp</code> avoids those heuristic triggers.</td></tr>
+          <tr><td><code>throw</code> should imply unreachable code</td><td>tests/edge_cases/throw_exit.cpp</td><td>Expected limitation</td><td>No <code>unreachable-code</code> warning is currently reported; the edge suite passes by documenting this known gap.</td></tr>
         </tbody>
       </table>
     </div>
