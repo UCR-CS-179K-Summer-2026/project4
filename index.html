@@ -1313,6 +1313,30 @@ never uses it. (line 1)</pre></div>
         <li>Data-clump naming runs offline with the deterministic <code>DataGroup</code> fallback when no Gemini API key is configured.</li>
       </ul>
     </div>
+
+    <h3>SpaghettiCodeTest: classification check</h3>
+    <p class="section-intro">A three-file scenario with two files labeled as spaghetti-code cases and one labeled as a negative control. The current detector set has no dedicated spaghetti-code category.</p>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Scenario file</th><th>Expected label</th><th>Warnings</th><th>Observed result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>SpaghettiCodeTest1.cpp</code></td><td>Positive</td><td>6</td><td>Generic warnings only; no spaghetti-code detection</td></tr>
+          <tr><td><code>SpaghettiCodeTest2.cpp</code></td><td>Positive</td><td>6</td><td>Generic warnings only; no spaghetti-code detection</td></tr>
+          <tr><td><code>NotSpaghettiCodeTest.cpp</code></td><td>Negative control</td><td>10</td><td>Generic warnings, so not a clean-control pass</td></tr>
+          <tr><td><strong>SpaghettiCodeTest total</strong></td><td>3 C++ source files</td><td><strong>22</strong></td><td><strong>No dedicated classification</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="todo-card">
+      <h4>SpaghettiCodeTest result</h4>
+      <ul>
+        <li>The positive files each produced two missing-comment, two poor-name, and two repeated-code warnings.</li>
+        <li>The negative control produced 10 unrelated warnings, including an unused variable, so it did not pass as a zero-warning control.</li>
+        <li>This benchmark demonstrates a coverage gap rather than spaghetti-code precision or recall: the current detectors do not implement the dataset's class-level “two long methods” criterion.</li>
+      </ul>
+    </div>
     <p class="section-intro">Both benchmark results are exploratory measurements, not precision or recall studies. The projects do not have machine-readable expected-warning manifests.</p>
   </section>
 
