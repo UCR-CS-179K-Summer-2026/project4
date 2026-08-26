@@ -6,9 +6,9 @@
 #include <regex>
 #include <string>
 #include <vector>
-#include "ParsedSource.h"
-#include "Detector.h"
-#include "parser.h"
+#include "../ParsedSource.h"
+#include "../Detector.h"
+#include "../Parser.h"
 #include <tree_sitter/api.h>
 
 class commentChecker : public Detector {

@@ -4,9 +4,9 @@
 #include <tree_sitter/api.h>
 #include <vector>
 #include <unordered_map>
-#include "Detector.h"
-#include "Parser.h"
-#include "ParsedSource.h"
+#include "../ParsedSource.h"
+#include "../Detector.h"
+#include "../Parser.h"
 #include <set>
 #include <iostream>
 #include <algorithm>

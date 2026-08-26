@@ -106,7 +106,7 @@ void DeadCodeChecker::checkUnreachableCode(TSNode blockNode, const ParsedSource&
                 std::to_string(rangeEnd) + ".";
         }
 
-        Warning w{ rangeStart, "Unreachable Code", message };
+        Warning w{ rangeStart, "unreachable-code", message };
 
         if (!suppressFix) {
             uint32_t start = ts_node_start_byte(rangeStartNode);
@@ -385,7 +385,7 @@ void DeadCodeChecker::checkUnusedFunctions(const ParsedSource& parsedSource, std
         int line = ts_node_start_point(node).row + 1;
         warnings.push_back({
             line,
-            "Unused/Dead Function",
+            "unused-function",
             "Function \"" + name + "\" is never called from main (directly or indirectly) and is dead code."
         });
     }
@@ -407,7 +407,6 @@ void DeadCodeChecker::visitNode(TSNode node, const ParsedSource& parsedSource, s
 
 // ---------- Analyze Source ----------
 std::vector<Warning> DeadCodeChecker::analyzeSource(const ParsedSource& parsedSource) {
-    std::cerr << "###### BUILD CHECK: THIS IS THE NEW FILE ######\n";
     std::vector<Warning> warnings;
     if (parsedSource.tree == nullptr) return warnings;
     TSNode rootNode = ts_tree_root_node(parsedSource.tree);
