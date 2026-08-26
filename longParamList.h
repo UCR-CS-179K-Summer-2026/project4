@@ -20,5 +20,6 @@ private:
     std::string extractFunctionName(TSNode functionDefNode, const std::string& source) const;
 
     void reportLongParamList(const std::string& functionName, int paramCount, int line, std::vector<Warning>& warnings) const;
+    std::string offerRefactoring(TSNode functionDefNode, TSNode paramListNode,const std::string& functionName, const std::string& source) const;
 };
 #endif 

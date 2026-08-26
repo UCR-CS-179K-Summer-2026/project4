@@ -99,3 +99,7 @@ std::vector<Warning> longParamList::analyzeSource(const ParsedSource& source){
 
     return warnings;
 }
+
+std::string longParamList::offerRefactoring(TSNode functionDefNode, TSNode paramListNode,const std::string& functionName, const std::string& source) const{
+    
+}
