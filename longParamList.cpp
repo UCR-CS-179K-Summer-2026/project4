@@ -1,6 +1,7 @@
 #include "longParamList.h"
 
 #include <iostream>
+#include <sstream>
 #include <cstring>
 #include<tree_sitter/api.h>
 
@@ -100,6 +101,14 @@ std::vector<Warning> longParamList::analyzeSource(const ParsedSource& source){
     return warnings;
 }
 
+//Outputs the refactored code (puts the paramlist into a struct), alongside original code block
 std::string longParamList::offerRefactoring(TSNode functionDefNode, TSNode paramListNode,const std::string& functionName, const std::string& source) const{
+}
+
+//Returns the the raw text stored within a passed in node
+std::string LongParamList::nodeText(TSNode node, const std::string& source) const{
+    uint32_t startByte = ts_node_start_byte(node);
+    uint32_t endByte = ts_node_end_byte(node);
     
+    return source.subtr(startByte, endByte-startByte);
 }
