@@ -1252,22 +1252,68 @@ never uses it. (line 1)</pre></div>
   <section class="section" id="benchmarking">
     <p class="section-label">// 07 &nbsp;benchmarking</p>
     <h2>Benchmarking</h2>
+    <p class="section-intro">Two complementary multi-file checks: a real-world annotated application and a controlled universal scenario covering every registered detector.</p>
 
     <div class="todo-card">
-      <span class="todo-badge">TODO — fill in</span>
-      <h4>Detected / refactored code from real-world C++ projects</h4>
-      <p>Run the tool against a real open-source C++ repository (or a few files pulled from one) and report what it actually found — true positives, false positives you noticed, and what the auto-fix changed. This is the strongest evidence the tool works outside your own test fixtures.</p>
+      <h3>Shared run method</h3>
+      <ul>
+        <li>Built executable: <code>build/Debug/project4.exe</code>.</li>
+        <li>Source paths were entered as one space-separated line. Every automatic-fix prompt was answered <code>n</code>, so all scenario files remained unchanged.</li>
+      </ul>
     </div>
+
+    <h3>SmellyAnnotated: real-world application</h3>
+    <p class="section-intro">A small pizza-shop application distributed across seven implementation files. Headers, object files, and the dataset's prebuilt executable were not analyzed.</p>
     <div class="data-table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>Project</th><th>File(s) analyzed</th><th>Smells found</th><th>Auto-fixed</th></tr>
+          <tr><th>File analyzed</th><th>Warnings</th><th>Auto-fixed</th></tr>
         </thead>
         <tbody>
-          <tr><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td><td class="tbd">TBD</td></tr>
+          <tr><td><code>Cashier.cpp</code></td><td>22</td><td>0</td></tr>
+          <tr><td><code>Chef.cpp</code></td><td>9</td><td>0</td></tr>
+          <tr><td><code>Customer.cpp</code></td><td>20</td><td>0</td></tr>
+          <tr><td><code>Drink.cpp</code></td><td>10</td><td>0</td></tr>
+          <tr><td><code>main.cpp</code></td><td>2</td><td>0</td></tr>
+          <tr><td><code>Pizza.cpp</code></td><td>16</td><td>0</td></tr>
+          <tr><td><code>Shop.cpp</code></td><td>7</td><td>0</td></tr>
+          <tr><td><strong>SmellyAnnotated total</strong></td><td><strong>86</strong></td><td><strong>0</strong></td></tr>
         </tbody>
       </table>
     </div>
+    <div class="todo-card">
+      <h4>SmellyAnnotated audit</h4>
+      <ul>
+        <li>73 missing-comment warnings, 6 long-parameter-list warnings, and 5 poor-name warnings.</li>
+        <li>2 memory-leak warnings and 1 deeply nested conditional warning.</li>
+        <li>Likely false negatives include constructor ownership, cross-file unused methods, repeated calls, and header-only data clumps. Likely false positives include descriptive boolean names and an <code>else-if</code> chain reported as deep.</li>
+        <li>These are raw detector reports, not confirmed true-positive counts. The source annotations also include smell categories that the current detectors do not implement.</li>
+      </ul>
+    </div>
+
+    <h3>UniversalAnnotated: detector coverage</h3>
+    <p class="section-intro">A controlled multi-file scenario designed to exercise all 10 currently registered detectors, paired with a longer clean control.</p>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Scenario file</th><th>Purpose</th><th>Warnings</th><th>Auto-fixed</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>universal_smelly.cpp</code></td><td>Positive coverage case for all registered detectors</td><td>20</td><td>0</td></tr>
+          <tr><td><code>universal_clean.cpp</code></td><td>Long, documented clean control</td><td>0</td><td>0</td></tr>
+          <tr><td><strong>UniversalAnnotated total</strong></td><td>2 C++ source files</td><td><strong>20</strong></td><td><strong>0</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="todo-card">
+      <h4>UniversalAnnotated result</h4>
+      <ul>
+        <li>The smelly file produced at least one warning in each of the 10 registered categories.</li>
+        <li>The expanded clean control passed with 0 warnings.</li>
+        <li>Data-clump naming runs offline with the deterministic <code>DataGroup</code> fallback when no Gemini API key is configured.</li>
+      </ul>
+    </div>
+    <p class="section-intro">Both benchmark results are exploratory measurements, not precision or recall studies. The projects do not have machine-readable expected-warning manifests.</p>
   </section>
 
   <!-- ============================================================
