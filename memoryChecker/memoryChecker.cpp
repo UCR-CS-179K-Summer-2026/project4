@@ -228,7 +228,14 @@ std::vector<Warning> memoryChecker::analyzeSource(const ParsedSource& parsedSour
     }
 
     //ROUND 1: gather info on deallocating functions
-    collectDeallocatingFunctions(rootNode, parsedSource);
+    size_t previousCount;
+    //do while loop that catches nested deallocating functions
+    do {
+        previousCount = deallocatingFunctions.size();
+
+        collectDeallocatingFunctions(rootNode, parsedSource);
+
+    } while (deallocatingFunctions.size() > previousCount);
 
     //ROUND 2: now knowing which functions are deallocating, go through and catch leaks
     traverse(rootNode, parsedSource, warnings);
@@ -282,6 +289,49 @@ bool memoryChecker::checkIfBodyDeallocates(TSNode node, const std::string& param
         }
     }
 
+    //check if a known deallocator is used
+    if (type == "call_expression") {
+
+        TSNode functionNode = ts_node_child_by_field_name(node, "function", 8);
+
+        TSNode argumentList = ts_node_child_by_field_name(node, "arguments", 9);
+
+        if (!ts_node_is_null(functionNode) && !ts_node_is_null(argumentList)) {
+
+            std::string calledFunction = getNode(functionNode, src);//get name of called function
+
+            auto it = deallocatingFunctions.find(calledFunction);//check if called function is in deallocatingFunctions
+
+            if (it != deallocatingFunctions.end()) {
+
+                uint32_t argumentCount =
+                    ts_node_named_child_count(argumentList);
+
+                for (uint32_t i = 0; i < argumentCount; ++i) {
+
+                    //does calledFunction deallocate this argument?
+                    if (it->second.count(static_cast<int>(i)) == 0) {
+                        continue;
+                    }
+
+                    TSNode argument =
+                        ts_node_named_child(argumentList, i);
+
+                    if (ts_node_is_null(argument)) {
+                        continue;
+                    }
+
+                    std::string argumentText =
+                        getNode(argument, src);
+
+                    //is our parameter being passed to it?
+                    if (argumentText == paramName) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
 
     // recursively check all children inside the function
     uint32_t count = ts_node_child_count(node);

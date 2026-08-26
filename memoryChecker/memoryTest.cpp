@@ -108,3 +108,15 @@ void multipleFunctionCallPartialTest(){//test with multiple function call that o
 void partialDeleterFunction(int* one, int* two){//function that takes multiple params and only deletes some, reference by different names from the original
     delete one;
 }
+
+void foo(int* a);
+void bar(int* b) {
+    foo(b);
+}
+void foo(int* a) {
+    delete a;
+}
+
+void testBar(int* c) {
+    bar(c);
+}
