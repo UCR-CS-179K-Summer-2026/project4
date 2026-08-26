@@ -136,8 +136,7 @@ void DataClumpDetector::checkForDataClumps(std::vector<Warning>& warnings) {
                 lineList.length() - 2);
         }
 
-        // std::string generatedName = nameGenerator.generateName(variableList);
-        std::string generatedName = "Test";
+        std::string generatedName = nameGenerator.generateName(variableList);
 
         warnings.push_back({
             clumpInfo.lineNumbers.front(),
