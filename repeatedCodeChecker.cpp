@@ -137,7 +137,6 @@ void RepeatedCodeChecker::reportRepeatedBlock(const std::vector<TSNode>& stateme
     uint32_t startBlockByte = ts_node_start_byte(statements[startIndices[0]]);
     uint32_t endBlockByte = ts_node_end_byte(statements[startIndices[0] + windowSize - 1]);
     msg << source.substr(startBlockByte, endBlockByte - startBlockByte) << "\n";
-
     int firstOccurrenceLine = static_cast<int>(ts_node_start_point(statements[startIndices[0]]).row) + 1;
 
     warnings.push_back({
@@ -291,11 +290,24 @@ std::vector<Warning> RepeatedCodeChecker::analyzeSource(const ParsedSource& pars
     return warnings;
 }
 
+//Outputs the refactored message, showing a before and after of the detected code block, with refactor suggestion
 std::string RepeatedCodeChecker::offerRefactoring(const std::vector<TSNode>& statements, int windowSize, const std::vector<int>& startIndices, const std::string& functionName, const std::string& source) const{
     uint32_t startByte = ts_node_start_byte(statements[startIndices[0]]);
     uint32_t endByte = ts_node_end_byte(statements[startIndices+windowSize -1]);
     std::string repeatedText = source.substr(startByte, endByte- startByte);
 
-    int firstLine = static_cast<int>(ts_node_start_point(statements[startIndices[0]].row)+1);
+    int firstLine = static_cast<int>(ts_node_start_point(statements[startIndices[0]]).row)+1;
+    std::string helperName = functionName + "Helper" + std::to_string(firstLine);
 
+    std::ostringstream out;
+    out << "\nSuggested refactor: extract this repeated block and turn into a helper function.\n";
+    out << "\nExample:\n\n";
+    out << "void " << helperName << "(/* add parameters as needed */) {\n";
+    out << "    " << repeatedText << "\n";
+    out << "}\n";
+    out << "\nThen replace each repeated occurrence with a single call:\n";
+    out << "    " << helperName << "(/* matching arguments */);\n";
+    out << "\nNote: this is a suggestion for function: " << functionName << " only";
+ 
+    return out.str();
 }
