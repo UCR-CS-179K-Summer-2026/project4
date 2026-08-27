@@ -948,7 +948,7 @@ never uses it. (line 1)</pre></div>
   <section class="section section-wide" id="algorithms">
     <p class="section-label">// 04 &nbsp;algorithms</p>
     <h2>Algorithms</h2>
-    <p class="section-intro">Pseudocode for the core algorithms behind parsing and detection.</p>
+    <p class="section-intro">Short pseudocode for the implementation paths that drive detection.</p>
 
     <div class="pseudocode-card">
       <h4>Parse — build the shared AST once</h4>
@@ -1072,6 +1072,20 @@ never uses it. (line 1)</pre></div>
     </div>
 
     <div class="pseudocode-card">
+      <h4>CommentChecker</h4>
+      <pre>function visitNode(node, warnings):
+    if node is a function definition:
+        if no comment before, inside, or after node:
+            warnings.append("Function has no comments.")
+    for child in node.children:
+        visitNode(child, warnings)
+
+function analyzeSource(source):
+    visitNode(parse(source).root, warnings)
+    return warnings</pre>
+    </div>
+
+    <div class="pseudocode-card">
       <h4>RepeatedCodeChecker — structural-hash sliding window</h4>
       <pre>function findRepeatedBlocks(statements[], warnings[]):
     covered ← set()
@@ -1091,35 +1105,126 @@ never uses it. (line 1)</pre></div>
                 warnings.append(reportRepeatedBlock(confirmed, windowSize))</pre>
     </div>
 
+     <div class="pseudocode-card">
+      <h4>PoorVariableNames</h4>
+      <pre>function isPoorName(name, type):
+	if name length < 3 and not equal to "id", "i", "j", and "k"
+		return true
+	
+	declare valid boolean prefix regex
+	if type == "bool" and name does not match the prefix pattern
+		return true
+	
+	declare poor function name regex
+	if type == "function" and name is in the poor function name regex
+		return true;
+	
+	declare poor variable name regex
+	if name is in poor variable name regex
+		return true;
+
+	return false</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>DeepIf</h4>
+      <pre>function visitNode(node, parsedSource, warnings):
+	return if node is null
+	
+	nodeType <-- ts_node_type(node)
+	if nodeType == "if_statement"
+		depth++
+		
+		if depth > MAX_DEPTH
+			line <-- getLineNumber(parsedSource, node)
+			warnings.push_back({line, "deep-if", Deeply nested if statement})
+
+	for every child in node:
+		visitNode(child, parsedSource, warnings)
+	
+	if nodeType == "if_statement"
+		depth–</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>LongParamList</h4>
+      <pre>function analyzeFunction(functionNode, warnings):
+    parameters ← functionNode.parameter_declaration_list
+    if count(parameters) > MAX_PARAMETERS:
+        name ← text(firstIdentifier(functionNode.declarator))
+        warnings.append(Warning(line(functionNode), "long-param-list", name))
+
+function firstIdentifier(node):
+    if node.type == "identifier": return node
+    for child in node.children:
+        result ← firstIdentifier(child)
+        if result is not null: return result
+    return null</pre>
+    </div>
+
     <div class="pseudocode-card">
       <h4>DataClumpDetector — pairs for triples</h4>
-      <pre>function findDataClumps(variables):
-    create a bitset for each variable
-    // 1 = variable is in the set, 0 = variable is not in the set
-
-    frequentPairs ← []
-    for each pair of variables:
-        intersect their bitsets
-        if the pair appears more than two times:
-            frequentPairs.append(pair)
-
-    frequentTriples ← {}
-    for each pair in frequentPairs:
-        for each variable:
-            if the three variables appear together more than two times:
-                frequentTriples.add(pair + variable)
-
-    store line numbers for each triple
-    format the warning
-    call Google Gemini API to recommend a struct/class name</pre>
-      <p class="section-intro" style="margin-top:1rem;">
-        The bitsets and frequent-pair search each cost <code>O(n^2)</code>. Intersecting the bits for a
-        potential pair costs <code>O(1)</code>. Searching for triples costs <code>O(F * N)</code>,
-        where <code>F</code> is the number of frequent pairs and <code>N</code> is the number of variables.
-        The detector supports data clumps of three variables; checking every possible repeated subset
-        would cost at least <code>O(2^n)</code>.
-      </p>
+      <pre>function expandNode(variables[], candidates[], index)
+	for all variables i starting from index
+		neighbor <-- current variable from variables
+		
+		if neighbor connects to all candidates in the graph
+			candidates.push_back(neighbor)
+			
+			if candidates.size() > 2
+				combinedBitset <-- combine all bit sets from each candidate
+				sortedCandidates <-- sort current candidates
+				
+				clumpInfo <-- variableClumps[sortedCandidates]
+				clumpInfo.counter <-- static_cast<int>(combinedBitset.count())
+				
+				for all group in variableGroups
+					if combinedBitset.test(group)
+	variableClumps[sortedCandidates].lineNumbers.push_back(groupLineNumbers[group])
+			
+			expandNode(variables, candidates, i + 1)
+			candidates.pop_back()</pre>
     </div>
+
+    <div class="pseudocode-card">
+      <h4>InheritanceChecker - TSNode traversal to determine inheritance</h4>
+      <pre>function scanForInheritance(node, baseNames, baseUsed, overrideFound):
+//Traverse entire tree for the class body
+  IF node is "Base::something" call:
+    mark matching baseName as used
+  ELSE IF node is a constructor call:
+    mark matching baseName as used
+  ELSE IF node is overriding or has a "final" specifier:
+    overrideFound = true
+  FOR EACH child of node:
+    scanForInheritance(child, baseNames, baseUsed, overrideFound)</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>MemoryChecker</h4>
+      <pre>function analyzeSource(source):
+    deallocators ← findFunctionsThatFreeParameters(source)
+    traverse(source.root, allocations, aliases, deallocators, warnings)
+    return warnings
+
+function visitNode(node):
+    if node allocates with new, malloc, or calloc:
+        track(allocationVariable(node), line(node))
+    if node assigns alias = source:
+        aliases[alias] ← source
+    if node deallocates a tracked variable or alias:
+        removeTrackedAllocation(resolveAlias(variable(node)))
+    if node is return:
+        warnForEach(trackedAllocation)
+
+function traverse(node):
+    if node is if_statement:
+        merge(traverse(trueBranch), traverse(falseBranch))
+    else:
+        visitNode(node)
+        for child in node.children: traverse(child)</pre>
+    </div>
+
 
     <div class="pseudocode-card">
       <h4>FixApplier — apply all safe edits without corrupting offsets</h4>
