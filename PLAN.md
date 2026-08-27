@@ -1,117 +1,129 @@
-# Week 1 Sprint Goals
+# Project Plan Summary
 
-Stuart Arief:
+The SmellyCodeDetector project was built as a multi-detector static analysis tool for C++ code smells. The overall plan was to create a shared parser and AST pipeline, then implement a set of detectors that each identify a different smell, unify their warnings, and give users safe refactoring suggestions when possible.
 
-* Implement working ‘proof of concept’ for the entire detector.  
-* Partially functional detection of ‘multiple lines of repeated code’ with basic base cases (If a block of code containing 3 lines of code is repeated in different parts of the input file, emit the warning message).
+The project evolved from a basic proof-of-concept into a working tool with architecture documentation, detector flow diagrams, multi-file input support, and finishing touches for documentation, edge cases, and demo readiness.
 
-Rebecca Jennings:
+## Sprint 1: Proof of Concept and Initial Detectors
 
-* Implement a basic detector for the redundant code case of unused/dead code (variables).
-* Test with C++ file to identify one unused/dead code in main() . 
-* Test with C++ file to identify multiple unused/dead code in main() . 
-* Test C++ file to identify multiple unused/dead code across multiple functions, conditional statements, etc.
+### Stuart Arief
+- Implement a working proof of concept for the entire detector.
+- Build initial repeated-code detection for repeated blocks of 3+ lines.
 
-Jimmy Munoz:
+### Rebecca Jennings
+- Create the first unused/dead variable detector.
+- Test detection with one unused variable in main().
+- Test detection with multiple unused variables in main().
+- Test detection across multiple functions and conditional blocks.
 
-* Implement the basic functionality to identify a poor variable name. Will focus on loops for now.  
-* Once identified, recommend a more sufficient variable name rather than an ambiguous one.
-* Expand to more test cases in this scope. Find a way to analyze the code to recommend a more sufficient variable name when necessary.
+### Jimmy Munoz
+- Build a basic poor-name detector focused on loop variables.
+- Recommend more descriptive names when weak identifiers are found.
+- Expand tests for poor naming detection and naming suggestions.
 
-Aelynn Xu:
+### Aelynn Xu
+- Read the input file and identify functions using regex.
+- Identify comment placement and usage.
+- Start basic detection of whether each function has at least one comment.
 
-* Implement reading through the input file and identifying functions with regex.
-* Identify comments.
-* If there is time, begin basic work on detecting if each function has at least one comment.
+## Sprint 2: Parser Improvements and Better Core Checks
 
-# Week 2 Sprint Goals
+### Stuart Arief
+- Add repeated-code detection that handles same logic with different variable names.
+- Update main.cpp to accept multiple input files.
+- Improve the overall system architecture.
+- Extend test coverage for more edge cases.
 
-Stuart Arief:
+### Rebecca Jennings
+- Update the redundant code checker after the parser transition.
+- Add a base case for redundant boolean logic.
+- Expand tests for unused variables and redundant boolean logic.
+- Update UML diagrams and project documentation.
 
-* Implement functionality to allow for repeated blocks of code with same logic but different variable names to be detected.
-* Modify main.cpp so that it could process multiple input files as opposed to just one.
-* Update system architecture.
-* Update test cases to cover more edge cases.
+### Jimmy Munoz
+- Replace map-based name matching with regex-based poor-name detection.
+- Add more tests for function parameter names, boolean names, and abbreviations.
+- Update the parser to include function parameters in the variable analysis.
 
-Rebecca Jennings:
+### Aelynn Xu
+- Add a function to strip strings from the source code in the parser.
+- Expose parser functions for use across detectors.
+- Update comment checking to ignore brackets in string literals.
+- Update comment checking to ignore brackets in single quotes and comments.
 
-* Modify redundantCodeChecker.cpp when we shift to new parser library.
-* Modify redundantCodeChecker.cpp to identify a base case for redundant boolean logic.
-* Implement extensive test cases for identifying unused/dead variables and redundant boolean logic.
-* Update UML Diagram and documentation.
+## Sprint 3: More Detectors and Validation Work
 
-Jimmy Munoz:
+### Stuart Arief
+- Fix repeated-code detection by removing whitespace sensitivity using TSNode instead of regex.
+- Create a long-parameter-list detector.
+- Create a detector for unnecessary or excessive primitive data usage.
+- Remove unused files.
+- Add comments across cpp files to improve readability.
 
-* Use regex for finding poor variable names instead of relying on a map with every possible case.
-* Add more test cases (function parameter names, boolean names, and abbreviations).
-* Update parser to include function parameters in the DeclaredVariable array.
+### Rebecca Jennings
+- Revise test cases for multiple edge conditions.
+- Create a universal test file for all detectors.
+- Improve dead/unused-variable detection for variables reinitialized in different scopes.
+- Add warning aggregation and sorting utilities.
+- Implement dead/unused code block detection.
 
-Aelynn Xu:
+### Jimmy Munoz
+- Create a deeply nested if detector with a threshold beyond 3 levels.
+- Create a function-length detector for long functions.
+- Create a literal-value detector that flags unexplained magic numbers and recommends constants.
 
-* Write function to strip strings from source code in parser.
-* Modify parser so its functions are available for separate use in detectors.
-* Update commentchecker using aforementioned function so it will not be tripped up by brackets in string literals.
-* Update commentChecker so that it will not be tripped up by brackets in ‘’ chars.
-* Update commentchecker so that it will not be tripped up by brackets in comments.
+### Aelynn Xu
+- Categorize memory leak scenarios.
+- Implement a memory leak detector for various memory allocation cases.
 
-# Week 3 Sprint Goals
+## Sprint 4: Current Implementation Expansion
 
-Stuart Arief:
+### Stuart Arief
+- Expand inheritance analysis to handle external base-member access, object slicing, assignment, and base-constructor usage.
+- Add refactoring output for inheritance with original code, revised code, and changelog.
+- Add detector flow diagrams and expanded implementation documentation.
 
-* Fix repeatedCodeDetector.cpp not ignoring whitespaces by using TSNode instead of old regex functions.
-* Transition to a new lint: Create a class that detects function headers that have unnecessarily long list of parameters.
-* Transition to a new lint: Create a class that detects unnecessary links between two classes.
-* Delete unused files in the project directory.
-* Add comments to cpp files to improve readability.
+### Rebecca Jennings
+- Expand unreachable-code reporting to include affected line ranges.
+- Add shadowing-aware unused-variable handling and call-graph unused-function detection.
+- Implement points-to analysis for pointer and function-call relationships.
+- Add fix application support for safe source rewrites.
+- Add flow diagrams and update the website documentation.
 
-Rebecca Jennings:
+### Jimmy Munoz
+- Expand data-clump detection for recurring variable groups in parameters, calls, and expressions.
+- Add API-backed naming suggestions for data clumps.
+- Add flow diagrams for detector work.
 
-* Revise redundantTest.cpp to account for multiple edge cases and combine cases for each of the checks implemented.
-* Create a Universal Test file to detect and output warnings for all our code detectors.
-* Revised Dead/Unused Variable case to account for same variable names that are dead, despite being reinitialized in a different scope.
-* Implement helper function to add our warnings to a vector and sort in ascending order.
-* Implement logic to detect Dead/Unused Code Blocks.
+### Aelynn Xu
+- Expand memory analysis to check conditional paths and recognize delete, free, and custom deallocation functions.
+- Add memory-leak flow diagrams and edge-case coverage.
 
-Jimmy Munoz:
+## Sprint 5: Final Implementation and Demo Polish
 
-* Create a new lint to detect nested if-statements that are too long. Any nested if-statements longer than 3 will be flagged.
-* Create a new lint that detects the length of each function. If a function is too long, about more than 50 - 100 lines, the function will be flagged.
-* Create a new lint to find literal values that are not explained. If found, flag it and recommend the user to use a constant.
+### Stuart Arief
+- Fix inheritance bugs related to derived-class object usage and non-virtual base members.
+- Add more varied inheritance tests.
+- Record demo video for final documentation.
+- Add refactoring features for repeated-code detection and long parameter lists.
 
-Aelynn Xu:
+### Rebecca Jennings
+- Add test cases for each code checker.
+- Create a universal real-world test suite.
+- Continue iterative website updates.
+- Record demo video for final documentation.
 
-* List out and categorize cases for memory leaks.
-* Implement memory leak detector to account for various cases.
+### Jimmy Munoz
+- Improve data-clump detection to identify groups of three or more variables.
+- Add more variable-clump tests.
+- Record demo video for final documentation.
 
- # Week 4 Sprint Sprint Goals
+### Aelynn Xu
+- Solve pointer aliasing issues.
+- Fix nested function support.
+- Record demo video for final documentation.
 
-Stuart Arief:
+## Overall Project Goal
 
-* Create pseudocode flow chart for all of my implemented features 
-* Handle an edge case for inheritanceChecker that accounts for subclasses that do not use anything from the base class but when an object of the subclass is made in a different function like main(), it uses the object to call a function from its base class, thus not being a candidate for detection.
-* Add more comprehensive comments to all the features made, based on what I have written on the documentation.
-* Handle an edge case of assignability. Both cases: one where we use the assignment operator “Animal a = Dog d;” and one where we use a function to assign it (this one is challenging).
-* Basically the first edge case is for calling members of the baseClass in a different function. While the second case is assignment in a different function.
-
-Rebecca Jennings:
-
-* Create flow charts for redundantCodeChecker and deadCodeChecker.
-* Modify Unreachable Code warning outputs to display the range lines of effected.
-* Work on combining and documenting shared control flow analysis.
-* Research point to analysis to expan DeadCodeBlocks - unused function feature to recognize pointers and references.
-
-Jimmy Munoz:
-
-* Create a flowchart for the detectors I created.
-* Solve the edge case of a variable in a block of variable declarations that is not used with that block. Consider counting the amount of declarations instead of searching for groups.
-
-Aelynn Xu:
-
-* Edge cases for memory leak (interprocedural, etc).
-* Shared functions from redundantCode.
-* Documentation updates.
-
-
-
-
+The project’s main goal was to build a practical static analysis tool that catches common C++ code smells using tree-sitter AST traversal, shared detector architecture, and safe fix suggestions. The final site and documentation reflect the finished implementation and the iterative improvements made across these five sprint phases.
 
