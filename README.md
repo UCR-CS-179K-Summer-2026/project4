@@ -1,17 +1,13 @@
 # SmellyCodeDetector
 
-> Important: This tool is intentionally heuristic-based and does not fully model every C++ edge case.
-> The detector is designed for practical static-analysis warnings, not complete semantic understanding of all C++ programs.
+A C++ static analysis tool that scans one or more source files, parses them once with tree-sitter,
+and reports code smells directly in the terminal. The project is built around a shared AST so each
+checker reuses the same parse result instead of re-reading or pattern-matching raw text.
 
-A C++ static analysis tool that reads one or more source files, parses them once with tree-sitter,
-and reports code smells as terminal warnings. The project is organized around a shared syntax tree,
-so each detector reuses the same parsed AST rather than re-reading the file or regex-matching raw text.
+> Scope note: this project is intentionally heuristic-based. It is designed to catch common code smells
+> and support practical refactoring suggestions, but it does not attempt to fully model every C++ edge case.
 
-The current implementation includes a full detector framework, a shared warning model, and safe
-fix generation for several checks. The website in [index.html](index.html) also documents the
-system architecture, major modules, diagrams, and current project status.
-
-## Detector Limitations
+## Current Limitations
 
 - Some checks are pattern-based rather than full semantic analysis.
 - Call-graph and points-to analysis is conservative and partial.
@@ -19,21 +15,41 @@ system architecture, major modules, diagrams, and current project status.
 - Some warnings are informational only and do not include automatic fixes.
 - The project focuses on the implemented smell types rather than every possible C++ code pattern.
 
-## Team
+## Table of Contents
 
-- Stuart Arief
-- Rebecca Jennings
-- Jimmy Munoz
-- Aelynn Xu
+- [Overview](#overview)
+- [Highlights](#highlights)
+- [Architecture](#architecture)
+- [System Requirements](#system-requirements)
+- [Setup](#setup)
+- [Quick Start](#quick-start)
+- [Testing](#testing)
+- [Current Limitations](#current-limitations)
+- [Team](#team)
 
-## Current Status
+## Overview
 
-The project is currently in a working detector and documentation phase. The tool covers the
-following smell checks:
+SmellyCodeDetector is a static analysis project for C++ code quality. It analyzes source files with a
+shared tree-sitter parse tree and runs a set of independent detectors to identify common smells such as
+poor names, dead variables, redundant logic, repeated code, memory leaks, long parameter lists, and
+inheritance misuse.
+
+The project also supports safe auto-fixes for some warnings, producing a copy of the file with a
+`.fixed.cpp` suffix when the fix is straightforward and low-risk.
+
+## Highlights
+
+- Shared parser and AST pipeline across all detectors
+- Multiple smell checks in one run
+- Warning output with source line numbers
+- Auto-fix support for selected warning types
+- Website documentation with architecture diagrams and implementation notes
+
+### Implemented detectors
 
 - Poor Naming
 - Redundant Code
-- Dead/Unreachable Code
+- Dead / Unreachable Code
 - Repeated Code
 - Missing Comments
 - Deeply Nested Conditionals
@@ -42,40 +58,54 @@ following smell checks:
 - Redundant Inheritance
 - Unfreed Memory
 
-The project also includes a site-level project overview and architecture pages that describe the
-core design, detector modules, explanations, and limit assumptions.
+## Architecture
 
-## Project Structure
+The system is organized around a small set of shared structures and a detector framework:
 
-- `main.cpp` � entry point and CLI flow
-- `SmellyCodeDetector.*` � orchestrates all detectors and merges warnings
-- `Parser.*` � reads/parses source files once
-- `Detector.h` / `FixApplier.cpp` � common warning and fix infrastructure
-- Detector implementations for each smell category
-- `index.html` / `style.css` � project website and documentation
+- `Parser` reads the input file once and builds the tree-sitter `TSTree`
+- `ParsedSource` holds the original source plus the parse tree
+- `Detector` is the abstract base class for each smell checker
+- `Warning` stores the category, message, source line, and optional fix
+- `SmellyCodeDetector` runs every detector, merges their warnings, sorts them, and prints the final report
+- `FixApplier` applies safe edits back to a copy of the source when a fix is available
 
-## Quick Start
+This design keeps the analysis consistent and avoids repeated parsing for each detector.
 
-### Prerequisites
+## System Requirements
 
 - CMake 3.10+
 - C++17 compiler
 - Git
 - Optional: Google Gemini API key for data-clump naming suggestions
 
-### Build
+## Setup
+
+### Clone and initialize submodules
 
 ```bash
 git clone <repo-url>
 cd project4
 git submodule update --init --recursive
+```
+
+### Build
+
+```bash
 mkdir build
 cd build
 cmake .. -DBUILD_SHARED_LIBS=OFF
 cmake --build .
 ```
 
-### Run
+### Gemini setup (optional)
+
+If you want data-clump naming suggestions to use the Gemini API, create a `.env` file in the project root:
+
+```text
+GOOGLE_GEMINI_API_KEY=your-api-key-here
+```
+
+## Quick Start
 
 From the project root:
 
@@ -83,64 +113,34 @@ From the project root:
 ./build/Debug/project4.exe
 ```
 
-or from the build directory:
+Or from the build directory:
 
 ```bash
 cd build/Debug
 ./project4.exe
 ```
 
-The program will prompt for source files to analyze, then print warnings and offer fix application
-for any check that supports automatic fixes.
+The program will prompt for one or more source files to analyze. It prints warnings to the terminal and,
+for files with safe auto-fixes, asks whether to write a `.fixed.cpp` version.
 
-## Build Notes
+## Testing
 
-- The project uses tree-sitter and the C++ grammar.
-- The repo includes vendored submodules under `tree-sitter/` and `tree-sitter-cpp/`.
-- Data-clump naming suggestions require a `.env` file in the project root with:
+The project uses fixture-based checks rather than a full CTest suite. The repository includes detector-specific
+C++ test files and the application can be run against them from the command line to inspect warnings and output.
 
-```text
-GOOGLE_GEMINI_API_KEY=your-api-key-here
-```
+## Current Limitations
 
-## Detection Coverage
+- Some detectors are pattern-based rather than full semantic analysis.
+- Call-graph and points-to analysis is conservative and partial.
+- Data-clump naming depends on network access and a valid Gemini API key.
+- Some warnings are informational and do not include automated edits.
+- The project is focused on the implemented smell checks rather than every possible C++ code pattern.
 
-### Implemented checks
+## Team
 
-- Poor naming heuristics for variable, parameter, and function names
-- Dead/unused variable detection with shadowing awareness
-- Redundant boolean comparisons
-- Redundant if/else boolean-return folding
-- Chained if-return detection
-- Unreachable code detection
-- Unused functions via call-graph reachability checks
-- Repeated statement block detection
-- Missing comment detection for functions
-- Deeply nested if detection
-- Long parameter list detection
-- Data clump detection with naming suggestions
-- Redundant inheritance detection
-- Memory leak detection for tracked allocations
+- Stuart Arief
+- Rebecca Jennings
+- Jimmy Munoz
+- Aelynn Xu
 
-### Auto-fix support
-
-The following warnings currently support fix generation:
-
-- Unused/dead variables
-- Redundant boolean comparisons
-- Redundant if/else boolean returns
-- Unreachable code
-
-Other checks still report warnings and/or suggestions without rewriting the file automatically.
-
-## Website and Documentation
-
-The project website is the current source for the detailed architecture and detector breakdown.
-It contains the most up-to-date overview of the modules, diagrams, algorithms, and project timeline.
-The README is kept as a concise developer-facing summary and setup guide.
-
-## License and Project Context
-
-This project was developed for CS179K as a software engineering and static analysis exercise.
-The implementation intentionally focuses on practical detection patterns and system architecture over
-full C++ language completeness.
+The project website in [index.html](index.html) contains the most detailed architecture notes, diagrams, and project progress log.
