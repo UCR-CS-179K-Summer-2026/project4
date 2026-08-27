@@ -128,14 +128,6 @@ for files with safe auto-fixes, asks whether to write a `.fixed.cpp` version.
 The project uses fixture-based checks rather than a full CTest suite. The repository includes detector-specific
 C++ test files and the application can be run against them from the command line to inspect warnings and output.
 
-## Current Limitations
-
-- Some detectors are pattern-based rather than full semantic analysis.
-- Call-graph and points-to analysis is conservative and partial.
-- Data-clump naming depends on network access and a valid Gemini API key.
-- Some warnings are informational and do not include automated edits.
-- The project is focused on the implemented smell checks rather than every possible C++ code pattern.
-
 ## Team
 
 - Stuart Arief
@@ -143,4 +135,5 @@ C++ test files and the application can be run against them from the command line
 - Jimmy Munoz
 - Aelynn Xu
 
-The project website in [index.html](index.html) contains the most detailed architecture notes, diagrams, and project progress log.
+The project website in [CS179K Project 4 Webpage](https://ucr-cs-179k-summer-2026.github.io/project4/) contains the most detailed architecture notes, diagrams, and project progress log.
+The project demo can be found here [Demo Video](https://drive.google.com/file/d/1XDLA2aHsjqoeCwnOCrOhaK50HWiwtUj0/view?usp=sharing) and contains a run through of our main features and optimizations.
