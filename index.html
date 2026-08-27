@@ -76,6 +76,7 @@
             <li>A C++17 compiler — on Windows, Visual Studio 2022 (Community is free) with the "Desktop development with C++" workload, which provides MSVC and the generator CMake targets.</li>
             <li>Git — needed to pull in the tree-sitter runtime and grammar, which are vendored as submodules under <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code>.</li>
             <li>Internet access during the first CMake configure if <code>nlohmann/json</code> must be downloaded. The vendored <code>libcurl</code> library is built automatically by the project.</li>
+            <li>Account for https://aistudio.google.com to create a project and API key.</li>  
           </ul>
         </div>
       </li>
@@ -90,7 +91,7 @@
             <li><code>git submodule update --init --recursive</code></li>
           </ul>
           <p class="build-step-note">The submodule step is required — without it, <code>tree-sitter/</code> and <code>tree-sitter-cpp/</code> will be empty and the CMake configure step will fail with a "not an existing directory" error.</p>
-          <p class="build-step-note">For data-clump name suggestions, create a root <code>.env</code> file with <code>GOOGLE_GEMINI_API_KEY=your-api-key-here</code>. Keep this file private; it is ignored by Git. The program searches from the project root or the Windows <code>build/Debug</code> launch directory. Gemini requests use a 30-second curl timeout; HTTP or transport failures fall back to <code>DefaultName</code>, while a missing key stops name generation with an error.</p>
+          <p class="build-step-note">For data-clump name suggestions, create a root <code>.env</code> file with <code>GOOGLE_GEMINI_API_KEY=your-api-key-here</code>. After you create/name your API key and choose an imported project paste your key in the <code>.env</code> file. Keep this file private; it is ignored by Git. The program searches from the project root or the Windows <code>build/Debug</code> launch directory. Gemini requests use a 30-second curl timeout; HTTP or transport failures fall back to <code>DefaultName</code>, while a missing key stops name generation with an error.</p>
         </div>
       </li>
 
@@ -384,7 +385,7 @@ never uses it. (line 1)</pre></div>
       <p class="example-desc">A path through the function that reaches a <code>return</code> without freeing a tracked allocation.</p>
       <div class="example-io">
         <div><span class="io-label">Input</span><pre>
-          int basicTest() {
+          int basicTest(){
             int* exampleptr = new int;
             return 2;
           }
@@ -399,10 +400,11 @@ never uses it. (line 1)</pre></div>
           void partialDeleterFunction(int* one, int* two){
             delete one;
           }
+
         </pre></div>
         <div>
-          <span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 3)</pre>
-          <span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak]. Unreleased memory allocated at line 8 does not reach a destructor.(line 10)</pre>
+          <span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak]. Unreleased memory allocated at line 2 does not reach a destructor.(line 2)</pre>
+          <span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [memory-leak]. Unreleased memory allocated at line 8 does not reach a destructor.(line 8)</pre>
         </div>
       </div>
     </div>
@@ -424,7 +426,7 @@ never uses it. (line 1)</pre></div>
 
       <figure class="figure-card">
         <div class="figure-frame figure-frame-259">
-          <img src="./images/CS179KFlowDiagram.png" alt="Flow diagram of the code smell detector">
+          <img src="./images/FlowDiagram.png" alt="Flow diagram of the code smell detector">
         </div>
         <figcaption>Flow Diagram (data flow)</figcaption>
       </figure>
@@ -632,6 +634,7 @@ never uses it. (line 1)</pre></div>
           <li><code>scanBlocksForRepeats(...)</code> — recurses into <code>compound_statement</code> blocks (skipping nested functions) and runs <code>findRepeatedBlocks()</code> on each, which slides windows of decreasing size across a block's statements, keyed by hash.</li>
           <li><code>hashSubtree(...)</code> — structurally hashes a subtree so identical statements collide regardless of formatting. <code>subtreesEqual(...)</code> — full structural comparison confirming a hash match isn't a collision.</li>
           <li><code>reportRepeatedBlock(...)</code> — builds one warning listing every line range a repeated block occurs at, plus the code itself.</li>
+          <li><code>offerRefactoring(...)</code>- outputs original detected code block alongside original, turning repeated blocks into a helper function that should be looped.</li>
         </ul>
       </article>
 
@@ -647,25 +650,36 @@ never uses it. (line 1)</pre></div>
         <h3>longParamList.cpp</h3>
         <ul class="fn-list">
           <li>Flags functions whose parameter count exceeds a defined threshold.</li>
-          <li><code>visitNode(...)</code> — finds <code>function_definition</code> nodes, counts parameters, and emits a warning once the count exceeds the threshold. <code>extractFunctionName(...)</code> resolves the function's full name via <code>findIDNode()</code> for the warning message.</li>
+          <li><code>visitNode()</code> — finds <code>function_definition</code> nodes, counts parameters, and emits a warning once the count exceeds the threshold. <code>extractFunctionName(...)</code> resolves the function's full name via <code>findIDNode()</code> for the warning message.</li>
+          <li><code>offerRefactoring()</code> - outputs the refactored code alongside the original code. Offers a refactoring via using a struct to store the long list of parameters.</li>
+          <li><code>nodeText()</code> - given a TSNode, extracts and returns the text contents stored inside it. </li>
         </ul>
       </article>
 
       <article class="module-card">
         <h3>DataClumpDetector.cpp</h3>
         <ul class="fn-list">
-          <li>Flags variables or arguments that repeatedly appear together, suggesting they belong in their own type.</li>
-          <li>Builds recurring variable/argument groups and identifies frequent pairs and triples, then reports their source line numbers.</li>
-          <li><code>checkInsideFunction(...)</code> — inside a <code>compound_statement</code>, groups variables declared together and call arguments passed together into a map keyed by the group. <code>checkFunctionParams(...)</code> — checks a function's own parameter list for the same recurring groupings.</li>
-          <li><code>checkForDataClumps(...)</code> — builds bitsets, finds frequent pairs/triples, formats the warning, and calls the Google Gemini API to recommend a struct/class name.</li>
+          <li>Finds recurring groups of variables/parameters/arguments using bitset-backed frequency tracking and a DFS-with-backtracking search over candidate groups, then asks Gemini to name each one.</li>
+          <li><code>analyzeSource(...)</code> — inherited from <code>Detector</code>; runs the tree traversal, then calls <code>checkForDataClumps()</code> at the end to analyze everything collected.</li>
+          <li><code>visitNode(...)</code> — inherited from <code>Detector</code>; searches for <code>function_definition</code> or <code>compound_statement</code> nodes and continues traversing otherwise.</li>
+          <li><code>checkInsideFunction(...)</code> — on a <code>compound_statement</code>, groups variables declared together into a vector used as a map key (value = occurrence count), and via <code>checkCallExpression()</code> does the same for a call's arguments.</li>
+          <li><code>checkCallExpression(...)</code> — helper that collects a function call's arguments into the vector used as the map key.</li>
+          <li><code>checkFunctionParams(...)</code> — checks a function's own parameter list for the same recurring groupings, keyed the same way.</li>
+          <li><code>createBitsets(...)</code> — builds a bitset per variable marking which groups it appears in (1 = present, 0 = absent).</li>
+          <li><code>checkForDataClumps(...)</code> — orchestrates the analysis: builds bitsets via <code>createBitsets()</code>, collects all variables into a vector plus a candidates vector, runs <code>expandNode()</code> DFS from each, then calls <code>removeSubsetFromClumps()</code> to drop clumps that are subsets of a larger one (avoiding duplicate results), and finally formats the warning and calls the Gemini API for a name suggestion.</li>
+          <li><code>expandNode(...)</code> — recursive backtracking DFS over variables: for each candidate, checks via <code>connectsToAll()</code> whether it connects to every variable already in the current candidate set; if so and the resulting group is size ≥3 and co-occurs ≥3 times, it's recorded into <code>variableClumps</code> with its count and line numbers, then the search continues to the next variable. Backtracks (pops the last variable) after each candidate's subtree is explored.</li>
+          <li><code>connectsToAll(...)</code> — bitwise-ANDs a candidate's bitset against every variable already in the group; returns true only if it co-occurs with all of them at least 3 times.</li>
+          <li><code>isSubset(...)</code> — set-subset check between two candidate groups (false if A is larger than B).</li>
+          <li><code>removeSubsetFromClumps(...)</code> — prunes a clump if it's a subset of a larger reported clump and doesn't independently co-occur ≥3 times outside that superset (via bitset intersection).</li>
         </ul>
       </article>
 
       <article class="module-card">
         <h3>DataClumpNameGen.cpp</h3>
         <ul class="fn-list">
-          <li><code>WriteCallBack()</code> — curl callback determining how response data is managed. <code>getKey()</code> — fetches the API key stored in a file.</li>
-          <li><code>generateName()</code> — verifies the API key exists, prepares and sends the request to the Google Gemini server, parses the JSON response, and returns the recommended name.</li>
+          <li><code>WriteCallBack()</code> — curl callback that receives the HTTPS response data from the Gemini API call.</li>
+          <li><code>getKey()</code> — reads the Gemini API key from a user-created <code>.env</code> file in the project4 directory.</li>
+          <li><code>generateName()</code> — verifies the key exists, initializes curl (throwing on failure), builds the request (url, prompt, body), sends it to Gemini, and on success parses the JSON response with nlohmann/json to extract the text field, returning the generated name. Cleans up curl before returning.</li>
           <li>Requires <code>GOOGLE_GEMINI_API_KEY</code> in a <code>.env</code> file; network/API failures are reported and can leave name generation unavailable.</li>
         </ul>
       </article>
@@ -685,9 +699,10 @@ never uses it. (line 1)</pre></div>
         <h3>memoryChecker.cpp</h3>
         <ul class="fn-list">
           <li>Flags paths where allocated memory isn't freed before a function returns — recognizing <code>delete</code>/<code>free()</code> as well as custom deallocation functions collected from elsewhere in the source.</li>
-          <li><code>analyzeSource(...)</code> — clears <code>trackedAllocations</code>, calls <code>collectDeallocatingFunctions()</code> to populate <code>deallocatingFunctions</code>, then runs <code>visitNode()</code>.</li>
+          <li><code>analyzeSource(...)</code> — clears <code>trackedAllocations</code>, loops <code>collectDeallocatingFunctions()</code> to populate <code>deallocatingFunctions</code>, then runs <code>visitNode()</code>.</li>
           <li><code>collectDeallocatingFunctions()</code> / <code>checkIfBodyDeallocates(...)</code> — pre-scan the source for functions that free one of their own parameters, so calls to them count as freeing memory too.</li>
           <li><code>traverse(...)</code> — at each <code>if</code>, branches into every possible path so both sides of a conditional are checked independently for a <code>return</code> reached with memory still allocated.</li>
+          <li><code>resolveAlias()</code> - uses <code>pointerAliases</code> (map of aliases for pointers) to trace from an alias to the original pointer name in trackedAllocations</li>
         </ul>
       </article>
 
@@ -868,11 +883,11 @@ never uses it. (line 1)</pre></div>
         <p class="type-kind">class</p>
         <h3>DataClumpDetector <span class="extends">extends Detector</span></h3>
         <ul>
-          <li>Searches the tree for <code>function_definition</code> and <code>compound_statement</code> nodes</li>
-          <li>Inside a block, groups variables that are declared together and arguments that are passed together into the same call, using each group as a key into a map</li>
-          <li>The map's value, <code>ClumpInfo</code>, tracks how many times that exact group of names occurred and at which line numbers</li>
-          <li>Also checks a function's own parameter list for the same recurring groupings</li>
-          <li>Any group that recurs often enough is reported as a data clump, with every occurrence's line number listed</li>
+          <li>Groups variables declared together and call/parameter arguments passed together into candidate groups, keyed by the group itself, tracking occurrence count and line numbers in <code>ClumpInfo</code></li>
+          <li>Builds a bitset per variable marking which candidate groups it participates in, then runs a recursive DFS-with-backtracking search (<code>expandNode</code>) that grows a candidate set only while every new addition co-occurs at least 3 times with all existing members (<code>connectsToAll</code>)</li>
+          <li>A candidate set is only recorded as a data clump once it reaches size ≥3 with ≥3 shared occurrences</li>
+          <li>After the search, removes any clump that's a strict subset of a larger reported clump and doesn't independently recur at least 3 times on its own, to avoid duplicate/nested results</li>
+          <li>For each confirmed data clump, calls the Google Gemini API to recommend a struct/class name for the grouped fields</li>
         </ul>
       </article>
 
@@ -942,7 +957,7 @@ never uses it. (line 1)</pre></div>
   <section class="section section-wide" id="algorithms">
     <p class="section-label">// 04 &nbsp;algorithms</p>
     <h2>Algorithms</h2>
-    <p class="section-intro">Pseudocode for the core algorithms behind parsing and detection.</p>
+    <p class="section-intro">Short pseudocode for the implementation paths that drive detection.</p>
 
     <div class="pseudocode-card">
       <h4>Parse — build the shared AST once</h4>
@@ -1066,6 +1081,20 @@ never uses it. (line 1)</pre></div>
     </div>
 
     <div class="pseudocode-card">
+      <h4>CommentChecker</h4>
+      <pre>function visitNode(node, warnings):
+    if node is a function definition:
+        if no comment before, inside, or after node:
+            warnings.append("Function has no comments.")
+    for child in node.children:
+        visitNode(child, warnings)
+
+function analyzeSource(source):
+    visitNode(parse(source).root, warnings)
+    return warnings</pre>
+    </div>
+
+    <div class="pseudocode-card">
       <h4>RepeatedCodeChecker — structural-hash sliding window</h4>
       <pre>function findRepeatedBlocks(statements[], warnings[]):
     covered ← set()
@@ -1085,35 +1114,126 @@ never uses it. (line 1)</pre></div>
                 warnings.append(reportRepeatedBlock(confirmed, windowSize))</pre>
     </div>
 
+     <div class="pseudocode-card">
+      <h4>PoorVariableNames</h4>
+      <pre>function isPoorName(name, type):
+	if name length < 3 and not equal to "id", "i", "j", and "k"
+		return true
+	
+	declare valid boolean prefix regex
+	if type == "bool" and name does not match the prefix pattern
+		return true
+	
+	declare poor function name regex
+	if type == "function" and name is in the poor function name regex
+		return true;
+	
+	declare poor variable name regex
+	if name is in poor variable name regex
+		return true;
+
+	return false</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>DeepIf</h4>
+      <pre>function visitNode(node, parsedSource, warnings):
+	return if node is null
+	
+	nodeType <-- ts_node_type(node)
+	if nodeType == "if_statement"
+		depth++
+		
+		if depth > MAX_DEPTH
+			line <-- getLineNumber(parsedSource, node)
+			warnings.push_back({line, "deep-if", Deeply nested if statement})
+
+	for every child in node:
+		visitNode(child, parsedSource, warnings)
+	
+	if nodeType == "if_statement"
+		depth–</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>LongParamList</h4>
+      <pre>function analyzeFunction(functionNode, warnings):
+    parameters ← functionNode.parameter_declaration_list
+    if count(parameters) > MAX_PARAMETERS:
+        name ← text(firstIdentifier(functionNode.declarator))
+        warnings.append(Warning(line(functionNode), "long-param-list", name))
+
+function firstIdentifier(node):
+    if node.type == "identifier": return node
+    for child in node.children:
+        result ← firstIdentifier(child)
+        if result is not null: return result
+    return null</pre>
+    </div>
+
     <div class="pseudocode-card">
       <h4>DataClumpDetector — pairs for triples</h4>
-      <pre>function findDataClumps(variables):
-    create a bitset for each variable
-    // 1 = variable is in the set, 0 = variable is not in the set
-
-    frequentPairs ← []
-    for each pair of variables:
-        intersect their bitsets
-        if the pair appears more than two times:
-            frequentPairs.append(pair)
-
-    frequentTriples ← {}
-    for each pair in frequentPairs:
-        for each variable:
-            if the three variables appear together more than two times:
-                frequentTriples.add(pair + variable)
-
-    store line numbers for each triple
-    format the warning
-    call Google Gemini API to recommend a struct/class name</pre>
-      <p class="section-intro" style="margin-top:1rem;">
-        The bitsets and frequent-pair search each cost <code>O(n^2)</code>. Intersecting the bits for a
-        potential pair costs <code>O(1)</code>. Searching for triples costs <code>O(F * N)</code>,
-        where <code>F</code> is the number of frequent pairs and <code>N</code> is the number of variables.
-        The detector supports data clumps of three variables; checking every possible repeated subset
-        would cost at least <code>O(2^n)</code>.
-      </p>
+      <pre>function expandNode(variables[], candidates[], index)
+	for all variables i starting from index
+		neighbor <-- current variable from variables
+		
+		if neighbor connects to all candidates in the graph
+			candidates.push_back(neighbor)
+			
+			if candidates.size() > 2
+				combinedBitset <-- combine all bit sets from each candidate
+				sortedCandidates <-- sort current candidates
+				
+				clumpInfo <-- variableClumps[sortedCandidates]
+				clumpInfo.counter <-- static_cast<int>(combinedBitset.count())
+				
+				for all group in variableGroups
+					if combinedBitset.test(group)
+	variableClumps[sortedCandidates].lineNumbers.push_back(groupLineNumbers[group])
+			
+			expandNode(variables, candidates, i + 1)
+			candidates.pop_back()</pre>
     </div>
+
+    <div class="pseudocode-card">
+      <h4>InheritanceChecker - TSNode traversal to determine inheritance</h4>
+      <pre>function scanForInheritance(node, baseNames, baseUsed, overrideFound):
+//Traverse entire tree for the class body
+  IF node is "Base::something" call:
+    mark matching baseName as used
+  ELSE IF node is a constructor call:
+    mark matching baseName as used
+  ELSE IF node is overriding or has a "final" specifier:
+    overrideFound = true
+  FOR EACH child of node:
+    scanForInheritance(child, baseNames, baseUsed, overrideFound)</pre>
+    </div>
+
+    <div class="pseudocode-card">
+      <h4>MemoryChecker</h4>
+      <pre>function analyzeSource(source):
+    deallocators ← findFunctionsThatFreeParameters(source)
+    traverse(source.root, allocations, aliases, deallocators, warnings)
+    return warnings
+
+function visitNode(node):
+    if node allocates with new, malloc, or calloc:
+        track(allocationVariable(node), line(node))
+    if node assigns alias = source:
+        aliases[alias] ← source
+    if node deallocates a tracked variable or alias:
+        removeTrackedAllocation(resolveAlias(variable(node)))
+    if node is return:
+        warnForEach(trackedAllocation)
+
+function traverse(node):
+    if node is if_statement:
+        merge(traverse(trueBranch), traverse(falseBranch))
+    else:
+        visitNode(node)
+        for child in node.children: traverse(child)</pre>
+    </div>
+
 
     <div class="pseudocode-card">
       <h4>FixApplier — apply all safe edits without corrupting offsets</h4>
@@ -1405,7 +1525,7 @@ never uses it. (line 1)</pre></div>
   <section class="section" id="limitations">
     <p class="section-label">// 08 &nbsp;scope</p>
     <h2>Limitations of the Current Implementation</h2>
-    <p class="section-intro">What the tool doesn't cover yet, so users don't run into a silent gap.</p>
+    <p class="section-intro">The tool targets specific smells, not complete C++ program understanding.</p>
 
     <div class="type-grid" style="margin-bottom:2rem;">
       <article class="type-card type-class">
@@ -1419,25 +1539,77 @@ never uses it. (line 1)</pre></div>
         <p class="type-kind">known limitation</p>
         <h3>DeadCodeChecker</h3>
         <ul>
-          <li>Check is skipped if there is no main.</li>
-          <li>Unreachable-code detection doesn't account for throw or infinite loops as exit paths.</li>
-          <li><code>DeadCodeChecker</code> resolves direct calls and pointer-member calls with <code>PointsToAnalyzer</code>, including known concrete virtual overrides and callback targets. The analysis remains flow-insensitive, leaves nested blocks outside its points-to pass, and conservatively falls back to possible overrides when a pointer target is unknown. No auto-fix is offered for this check because an uncertain reachability result must not delete live code.</li>
+          <li>The check requires <code>main()</code>, is limited to the current file, and may miss <code>throw</code>, infinite-loop, or unsupported call paths.</li>
+          <li>Points-to resolution handles recognized aliases, callbacks, and virtual calls conservatively; unused-function results are warning-only.</li>
         </ul>
       </article>
       <article class="type-card type-class">
         <p class="type-kind">known limitation</p>
         <h3>RedundantCodeChecker</h3>
         <ul>
-          <li>Only catches the specific patterns it's built for (e.g. x == true/!= false, an if/else returning literal booleans, unconditional chained ifs), logically equivalent code written differently may not be flagged.</li>
-          <li>Collapsing consecutive if-returns into an if/else-if/else chain is a structural rewrite, not a safe text splice, so this check is warning-only.</li>
-          <li>Usage tracking can also misflag variables only touched through aliasing or macros.</li>
+          <li>Only the implemented redundant-logic patterns are recognized, so equivalent code written differently may be missed; aliasing and macros can also affect usage tracking.</li>
+          <li>Chained-if findings are warning-only because restructuring them is not a safe text edit.</li>
         </ul>
       </article>
       <article class="type-card type-class">
         <p class="type-kind">known limitation</p>
-        <h3>PoorNameChecker/ NameAnalyzer / FunctionAnalyzer</h3>
+        <h3>PoorNameChecker / NameAnalyzer / FunctionAnalyzer</h3>
         <ul>
-          <li>Uses naming heuristics rather than semantic understanding. Short names, generic verbs, and placeholder names can be intentional, while names hidden behind macros or unusual declarators may not be analyzed as expected.</li>
+          <li>Heuristics flag short, generic, or placeholder names without judging intent; macros and unusual declarators may be missed.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>RepeatedCodeChecker</h3>
+        <ul>
+          <li>Only structurally equal, non-overlapping statement runs within the same block are compared; semantic equivalents using different operations or control flow may be missed.</li>
+          <li>Detected repeats produce a console refactoring suggestion rather than an automatic rewrite.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>CommentChecker</h3>
+        <ul>
+          <li>Checks only whether tree-sitter recognizes a comment near a function definition, not whether the comment is accurate or useful.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>DeepIfDetector</h3>
+        <ul>
+          <li>Flags nesting beyond the fixed <code>MAX_DEPTH</code> (currently 3) without judging whether the nesting is intentional or unclear.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>LongParamList</h3>
+        <ul>
+          <li>Flags functions with more than four parameters; the fixed threshold does not determine whether grouping them would improve the API.</li>
+          <li>Findings produce a console struct-refactoring suggestion rather than an automatic rewrite.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>DataClumpDetector</h3>
+        <ul>
+          <li>Reports frequent variable triples, not every possible repeated subset; call-site analysis currently collects identifier arguments rather than arbitrary expressions.</li>
+          <li>Struct/class name suggestions require network access and a configured Gemini API key.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>InheritanceChecker</h3>
+        <ul>
+          <li>Detects supported redundant-inheritance cases but does not redesign the class; parenthesis-style construction can be ambiguous.</li>
+          <li>Findings produce a console refactoring suggestion that removes the inheritance clause.</li>
+        </ul>
+      </article>
+       <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>MemoryChecker</h3>
+        <ul>
+          <li>Tracks direct <code>new</code>, <code>malloc</code>, and <code>calloc</code> allocations through recognized frees and return paths, with limited alias support.</li>
+          <li>It does not provide complete ownership, scope/collision, interprocedural, exception-path, or nonstandard deallocation analysis.</li>
         </ul>
       </article>
     </div>
@@ -1586,6 +1758,39 @@ never uses it. (line 1)</pre></div>
         </div>
       </article>
 
+      <article class="sprint">
+        <div class="sprint-marker">04</div>
+        <div class="sprint-body">
+          <p class="sprint-meta">Sprint 4 &middot; <span class="sprint-dates">current implementation</span></p>
+          <h3>// Stuart Arief</h3>
+          <ul>
+            <li>Fix bug regarding incorrect detection of using a derived class object and calling a non virtual base class member.</li>
+            <li>Add more varied test cases into inheritanceTest.cpp.</li>
+            <li>Record demo video for final documentation.</li>
+            <li>Add refactoring feature for repeatedCodeChecker and longParamList.</li>
+          </ul>
+          <h3>// Rebecca Jennings</h3>
+          <ul>
+            <li>Add test suite cases for each of our code checkers.</li>
+            <li>Create universal/real-world test suite.</li>
+            <li>Continue webpage iterative updates.</li>
+            <li>Record demo video for final documentation.</li>
+          </ul>
+          <h3>// Jimmy Munoz</h3>
+          <ul>
+            <li>Improve algorithm for data clumps to detect three or more variables in a clump.</li>
+            <li>Add more test cases for variable clumps.</li>
+            <li>Record demo video for final documentation.</li>
+          </ul>
+          <h3>// Aelynn Xu</h3>
+          <ul>
+            <li>Solve pointer aliasing problem.</li>
+            <li>Fix nested function support.</li>
+            <li>Record demo video for final documentation.</li>
+          </ul>
+        </div>
+      </article>
+
     </div>
   </section>
 
@@ -1597,7 +1802,7 @@ never uses it. (line 1)</pre></div>
     <h2>Team</h2>
     <p class="section-intro">Our team's contributions to the project.</p>
     <div class="team-grid">
-      <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, Points To Analyzer, Github Page Website</p></div>
+      <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, Points To Analyzer, Fix Applier, nGithub Page Website</p></div>
       <div class="team-card"><h3>Jimmy Munoz</h3><p>Parser Architecture, Poor Name Checker, Data Clump Checker, GitHub Page Website</p></div>
       <div class="team-card"><h3>Aelynn Xu</h3><p>Parser Architecture, Comment Checker, Memory Leak Checker</p></div>
       <div class="team-card"><h3>Stuart Arief</h3><p>Parser Architecture, Repeated Code Checker, Long Param List Checker, Inheritance Checker</p></div>

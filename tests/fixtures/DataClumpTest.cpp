@@ -1,9 +1,22 @@
 #include <string>
 #include <vector>
 #include <iostream>
+/*  OCCURENCES OF CLUMPS FOUND IN THE CODE:
+        Group 1: streetName, city, state (flags this group)
+        Group 2: firstName, lastName, middleName (flags this group)
+        Group 3: streetName, city, state, firstName, lastName, middleName (will not flag)
+        Group 4: city, state, firstName (flags this group)
+        Group 5: streetName, city, state, firstNumber, secondNumber (will not flag this group)
+        Group 6: streetName, city, state, country (flags this group)
+        Group 7: employeeId, firstName, lastName, middleName, streetName, city, state, zip (flags this group)
+        Group 8: secondStreetName, secondCity, secondState (flags this group)
+        Group 9: streetName, city, state, first, second (will not flag this group)
+        Group 10: streetName, city, state, second, third (will not flag this group)
+        Group 11: streetName, city, state, third, first (will not flag this group)
 
-// Holds duplicates of the same data: streetName, city, state, zip. Also has a declaration
-// of firstName, lastName, middleName in a nested if statement.
+        Total flags: 6
+*/
+
 void address(std::string streetName, std::string city, std::string state) {
 	std::cout << streetName << std::endl;
     if(true) {
@@ -23,8 +36,6 @@ void getPersonAddress(std::string streetName, std::string city, std::string stat
     std::cout << city << ", " << state << " " << firstName << std::endl;
 }
 
-// Holds duplicates of the same data: streetName, city, state, zip. Also has a declaration
-// of firstName, lastName, middleName in a nested if statement.
 void getAddress(std::string streetName, std::string city, std::string state) {
 	std::cout << streetName << std::endl;
     std::string firstName;
@@ -56,8 +67,6 @@ void dataClumpOfEight(int employeeId, std::string firstName, std::string lastNam
     std::cout << city << ", " << state << " " << zip << std::endl;
 }
 
-// Holds duplicates of the same data: streetName, city, state, zip. Also has a declaration
-// of firstName, lastName, middleName in a nested if statement.
 int someFunction() {
 	std::string streetName;
     std::string city;
