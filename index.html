@@ -1516,7 +1516,7 @@ function traverse(node):
   <section class="section" id="limitations">
     <p class="section-label">// 08 &nbsp;scope</p>
     <h2>Limitations of the Current Implementation</h2>
-    <p class="section-intro">What the tool doesn't cover yet, so users don't run into a silent gap.</p>
+    <p class="section-intro">The tool targets specific smells, not complete C++ program understanding.</p>
 
     <div class="type-grid" style="margin-bottom:2rem;">
       <article class="type-card type-class">
@@ -1530,25 +1530,77 @@ function traverse(node):
         <p class="type-kind">known limitation</p>
         <h3>DeadCodeChecker</h3>
         <ul>
-          <li>Check is skipped if there is no main.</li>
-          <li>Unreachable-code detection doesn't account for throw or infinite loops as exit paths.</li>
-          <li><code>DeadCodeChecker</code> resolves direct calls and pointer-member calls with <code>PointsToAnalyzer</code>, including known concrete virtual overrides and callback targets. The analysis remains flow-insensitive, leaves nested blocks outside its points-to pass, and conservatively falls back to possible overrides when a pointer target is unknown. No auto-fix is offered for this check because an uncertain reachability result must not delete live code.</li>
+          <li>The check requires <code>main()</code>, is limited to the current file, and may miss <code>throw</code>, infinite-loop, or unsupported call paths.</li>
+          <li>Points-to resolution handles recognized aliases, callbacks, and virtual calls conservatively; unused-function results are warning-only.</li>
         </ul>
       </article>
       <article class="type-card type-class">
         <p class="type-kind">known limitation</p>
         <h3>RedundantCodeChecker</h3>
         <ul>
-          <li>Only catches the specific patterns it's built for (e.g. x == true/!= false, an if/else returning literal booleans, unconditional chained ifs), logically equivalent code written differently may not be flagged.</li>
-          <li>Collapsing consecutive if-returns into an if/else-if/else chain is a structural rewrite, not a safe text splice, so this check is warning-only.</li>
-          <li>Usage tracking can also misflag variables only touched through aliasing or macros.</li>
+          <li>Only the implemented redundant-logic patterns are recognized, so equivalent code written differently may be missed; aliasing and macros can also affect usage tracking.</li>
+          <li>Chained-if findings are warning-only because restructuring them is not a safe text edit.</li>
         </ul>
       </article>
       <article class="type-card type-class">
         <p class="type-kind">known limitation</p>
-        <h3>PoorNameChecker/ NameAnalyzer / FunctionAnalyzer</h3>
+        <h3>PoorNameChecker / NameAnalyzer / FunctionAnalyzer</h3>
         <ul>
-          <li>Uses naming heuristics rather than semantic understanding. Short names, generic verbs, and placeholder names can be intentional, while names hidden behind macros or unusual declarators may not be analyzed as expected.</li>
+          <li>Heuristics flag short, generic, or placeholder names without judging intent; macros and unusual declarators may be missed.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>RepeatedCodeChecker</h3>
+        <ul>
+          <li>Only structurally equal, non-overlapping statement runs within the same block are compared; semantic equivalents using different operations or control flow may be missed.</li>
+          <li>Detected repeats produce a console refactoring suggestion rather than an automatic rewrite.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>CommentChecker</h3>
+        <ul>
+          <li>Checks only whether tree-sitter recognizes a comment near a function definition, not whether the comment is accurate or useful.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>DeepIfDetector</h3>
+        <ul>
+          <li>Flags nesting beyond the fixed <code>MAX_DEPTH</code> (currently 3) without judging whether the nesting is intentional or unclear.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>LongParamList</h3>
+        <ul>
+          <li>Flags functions with more than four parameters; the fixed threshold does not determine whether grouping them would improve the API.</li>
+          <li>Findings produce a console struct-refactoring suggestion rather than an automatic rewrite.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>DataClumpDetector</h3>
+        <ul>
+          <li>Reports frequent variable triples, not every possible repeated subset; call-site analysis currently collects identifier arguments rather than arbitrary expressions.</li>
+          <li>Struct/class name suggestions require network access and a configured Gemini API key.</li>
+        </ul>
+      </article>
+      <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>InheritanceChecker</h3>
+        <ul>
+          <li>Detects supported redundant-inheritance cases but does not redesign the class; parenthesis-style construction can be ambiguous.</li>
+          <li>Findings produce a console refactoring suggestion that removes the inheritance clause.</li>
+        </ul>
+      </article>
+       <article class="type-card type-class">
+        <p class="type-kind">known limitation</p>
+        <h3>MemoryChecker</h3>
+        <ul>
+          <li>Tracks direct <code>new</code>, <code>malloc</code>, and <code>calloc</code> allocations through recognized frees and return paths, with limited alias support.</li>
+          <li>It does not provide complete ownership, scope/collision, interprocedural, exception-path, or nonstandard deallocation analysis.</li>
         </ul>
       </article>
     </div>
@@ -1697,6 +1749,39 @@ function traverse(node):
         </div>
       </article>
 
+      <article class="sprint">
+        <div class="sprint-marker">04</div>
+        <div class="sprint-body">
+          <p class="sprint-meta">Sprint 4 &middot; <span class="sprint-dates">current implementation</span></p>
+          <h3>// Stuart Arief</h3>
+          <ul>
+            <li>Fix bug regarding incorrect detection of using a derived class object and calling a non virtual base class member.</li>
+            <li>Add more varied test cases into inheritanceTest.cpp.</li>
+            <li>Record demo video for final documentation.</li>
+            <li>Add refactoring feature for repeatedCodeChecker and longParamList.</li>
+          </ul>
+          <h3>// Rebecca Jennings</h3>
+          <ul>
+            <li>Add test suite cases for each of our code checkers.</li>
+            <li>Create universal/real-world test suite.</li>
+            <li>Continue webpage iterative updates.</li>
+            <li>Record demo video for final documentation.</li>
+          </ul>
+          <h3>// Jimmy Munoz</h3>
+          <ul>
+            <li>Improve algorithm for data clumps to detect three or more variables in a clump.</li>
+            <li>Add more test cases for variable clumps.</li>
+            <li>Record demo video for final documentation.</li>
+          </ul>
+          <h3>// Aelynn Xu</h3>
+          <ul>
+            <li>Solve pointer aliasing problem.</li>
+            <li>Fix nested function support.</li>
+            <li>Record demo video for final documentation.</li>
+          </ul>
+        </div>
+      </article>
+
     </div>
   </section>
 
@@ -1708,7 +1793,7 @@ function traverse(node):
     <h2>Team</h2>
     <p class="section-intro">Our team's contributions to the project.</p>
     <div class="team-grid">
-      <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, Points To Analyzer, Github Page Website</p></div>
+      <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, Points To Analyzer, Fix Applier, nGithub Page Website</p></div>
       <div class="team-card"><h3>Jimmy Munoz</h3><p>Parser Architecture, Poor Name Checker, Data Clump Checker, GitHub Page Website</p></div>
       <div class="team-card"><h3>Aelynn Xu</h3><p>Parser Architecture, Comment Checker, Memory Leak Checker</p></div>
       <div class="team-card"><h3>Stuart Arief</h3><p>Parser Architecture, Repeated Code Checker, Long Param List Checker, Inheritance Checker</p></div>

@@ -3,65 +3,60 @@
 A C++ static analysis tool that scans one or more C++ source files and detects common code
 smells, printing warning messages straight to the terminal. Each file is parsed once and
 the resulting syntax tree is shared by all detectors. Parsing is powered by
-[tree-sitter](https://tree-sitter.github.io/tree-sitter/), so every detector works directly
-off the source's syntax tree rather than pattern-matching raw text.
+tree-sitter, so every detector works directly off the source's syntax tree rather than
+pattern-matching raw text.
 
 > **Scope note:** due to complexity and limited time, this tool does not support every
 > possible C++ use case. It focuses on detecting the code smells described below.
 
 ## Known Limitations
 
-Quick early notice on each detector's blind spots — see the full documentation for details.
+The detectors target specific patterns rather than complete C++ program understanding.
 
 ### RedundantCodeChecker
-Only catches the specific patterns it's built for (e.g. `x == true`/`!= false`, an if/else
-returning literal booleans, unconditional chained ifs) — logically equivalent code written
-differently may not be flagged. Usage tracking can also misflag variables only touched through
-aliasing or macros.
+Only the implemented redundant-logic patterns are recognized, so equivalent code written
+differently may be missed; aliasing and macros can also affect usage tracking. Chained-if
+findings are warning-only because restructuring them is not a safe text edit.
 
 ### DeadCodeChecker
-Unreachable-code detection doesn't account for `throw` or infinite loops as exit paths. Unused-
-function reachability is limited to the current file and can still miss behavior hidden behind
-unsupported call patterns, despite the points-to analysis for recognized function and method
-calls. The check is skipped if there is no `main()`.
+The check requires `main()`, is limited to the current file, and may miss `throw`, infinite-loop,
+or unsupported call paths. Points-to resolution handles recognized aliases, callbacks, and
+virtual calls conservatively; unused-function results are warning-only.
 
 ### PoorNameChecker / NameAnalyzer / FunctionAnalyzer
-Uses naming heuristics rather than semantic understanding. Short names, generic verbs, and
-placeholder names can be intentional, while names hidden behind macros or unusual declarators
-may not be analyzed as expected.
+Heuristics flag short, generic, or placeholder names without judging intent; macros and unusual
+declarators may be missed.
 
 ### RepeatedCodeChecker
-Only compares repeated statement runs inside the same block. It reports structurally equal AST
-subtrees, but does not identify semantically equivalent code that uses different operations or
-different control flow.
+Only structurally equal, non-overlapping statement runs within the same block are compared;
+semantic equivalents using different operations or control flow may be missed. Detected repeats
+produce a console refactoring suggestion rather than an automatic rewrite.
 
 ### CommentChecker
-Checks for the presence of comments, not whether a comment is accurate or useful. It operates
-on comments recognized by tree-sitter and only evaluates function definitions in the current
-translation unit.
+Checks only whether tree-sitter recognizes a comment near a function definition, not whether the
+comment is accurate or useful.
 
 ### DeepIfDetector
-Flags nesting deeper than `MAX_DEPTH` (currently 3). Deep nesting can be intentional, and the
-detector does not assess whether a flatter design would actually be clearer.
+Flags nesting beyond the fixed `MAX_DEPTH` (currently 3) without judging whether the nesting is
+intentional or unclear.
 
 ### LongParamList
-Flags functions with more than four parameters. The threshold is fixed and the detector does
-not determine whether the parameters are genuinely related or whether grouping them improves
-the API.
+Flags functions with more than four parameters; the fixed threshold does not determine whether
+grouping them would improve the API. Findings produce a console struct-refactoring suggestion.
 
 ### DataClumpDetector
-Reports recurring groups when the implementation finds a frequent triple of variables. It does
-not enumerate every possible repeated subset, and its call-site analysis currently collects
+Reports frequent variable triples, not every possible repeated subset; call-site analysis collects
 identifier arguments rather than arbitrary expressions. Struct/class name suggestions require
 network access and a configured Gemini API key.
 
 ### InheritanceChecker
-Refactoring output removes the redundant inheritance clause; it does not redesign the class.Assignability analysis does not fully resolve ambiguity from parenthesis-style construction (for example, `Animal a(d)` can be mistaken for a function declaration).
+Detects supported redundant-inheritance cases but does not redesign the class; parenthesis-style
+construction can be ambiguous. Findings suggest removing the inheritance clause.
 
 ### MemoryChecker
-Tracks direct `new`, `malloc`, and `calloc` allocations by variable name and checks return paths.
-It recognizes `delete`, `free()`, and custom functions that visibly deallocate a parameter, but
-does not provide complete ownership, alias, interprocedural, or exception-path analysis.
+Tracks direct `new`, `malloc`, and `calloc` allocations through recognized frees and return paths,
+with limited alias support. It does not provide complete ownership, scope/collision,
+interprocedural, exception-path, or nonstandard deallocation analysis.
 
 ## Table of Contents
 
