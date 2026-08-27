@@ -4,11 +4,6 @@
 #include <iostream>
 #include <cstring>
 
-// void DeepIfDetector::outputErrorMessage(const std::string& name, const int& line, int& warningCount) {
-//     std::cout << "Warning: " << name << " at line " << line << std::endl;
-//     warningCount++;
-// }
-
 void DeepIfDetector::visitNode(TSNode node, const ParsedSource& parsedSource, std::vector<Warning>& warnings) {
     if(ts_node_is_null(node)) {
         return;
@@ -22,7 +17,7 @@ void DeepIfDetector::visitNode(TSNode node, const ParsedSource& parsedSource, st
             warnings.push_back({
                 line,
                 "deep-if",
-                "Deeply nested if statement"
+                "Deeply nested if statement. Consider refactoring this code as a function or using early returns to reduce nesting.",
             });
         }
     }
