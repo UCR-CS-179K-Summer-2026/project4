@@ -133,16 +133,6 @@ The following warnings currently support fix generation:
 
 Other checks still report warnings and/or suggestions without rewriting the file automatically.
 
-## Current Limitations
-
-This project is intentionally heuristic-based and does not attempt to fully model every C++ edge case.
-The main limitations are:
-
-- some checks are pattern-based rather than whole-program semantic analysis
-- call-graph and points-to logic is conservative and partial
-- data-clump naming depends on network access and a valid Gemini key
-- some warnings are informational only and do not include automated edits
-
 ## Website and Documentation
 
 The project website is the current source for the detailed architecture and detector breakdown.
