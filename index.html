@@ -50,7 +50,7 @@
     </p>
     <div class="hero-cta">
       <a href="https://github.com/UCR-CS-179K-Summer-2026/project4" class="button" target="_blank" rel="noopener">GitHub Repository</a>
-      <a href="" class="button" target="_blank" rel="noopener">Demo Video</a>
+      <a href="https://drive.google.com/file/d/1XDLA2aHsjqoeCwnOCrOhaK50HWiwtUj0/view?usp=sharing" class="button" target="_blank" rel="noopener">Demo Video</a>
       <a href="#tutorial" class="button button-ghost">Get Started →</a>
     </div>
   </section>
@@ -331,9 +331,7 @@ In line(s) 8 to 9</pre></div>
     }
   }
 }</pre></div>
-        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [deep-if].
-Deeply nested if statement.
-(line 4)</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [deep-if].Deeply nested if statement. Consider refactoring this code as a function or using early returns to reduce nesting. (line 8)</pre></div>
       </div>
     </div>
 
@@ -355,15 +353,13 @@ related arguments. (line 1)</pre></div>
       <h4>Data Clump <span style="color:var(--text-muted); font-size:0.7rem; font-family:var(--font-display);">— warning only</span></h4>
       <p class="example-desc">A group of variables or arguments that recurs together often enough to suggest it belongs in its own type.</p>
       <div class="example-io">
-        <div><span class="io-label">Input</span><pre>drawRect(x, y, width, height);
-...
-resizeRect(x, y, width, height);
-...
-moveRect(x, y, width, height);</pre></div>
-        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [data-clump].
-{x, y, width, height} recurs
-together at lines 1, 3, 5.
-Consider a Rect struct.</pre></div>
+        <div><span class="io-label">Input</span><pre>void basicClumpTest() {
+    getStreetNumber(streetName, city, state, first, second);
+    getStreetNumber(streetName, city, state, second, third);
+    getStreetNumber(streetName, city, state, third, first);
+  }
+</pre></div>
+        <div><span class="io-label">Output</span><pre><span class="t-warn">Warning:</span> [data-clump]. The following lines share the same set of variables: 20, 31, 39, 54, 59, 64, 87, 88, 101, 102, 103, 105, 106. Variables: city, state, streetName. Consider converting this to a struct or class with the name: Address (line 20)</pre></div>
       </div>
     </div>
 
@@ -459,6 +455,20 @@ never uses it. (line 1)</pre></div>
         <figcaption>Repeated Code Detector Diagram</figcaption>
       </figure>
 
+        <figure class="figure-card">
+        <div class="figure-frame figure-frame-square">
+          <img src="./images/poorNameDiagram.png" alt="">
+        </div>
+        <figcaption>Poor Name Detector Diagram</figcaption>
+      </figure>
+
+       <figure class="figure-card">
+        <div class="figure-frame figure-frame-vertical">
+          <img src="./images/deepIfDiagram.png" alt="">
+        </div>
+        <figcaption>Deep-If Detector Diagram</figcaption>
+      </figure>
+
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
           <img src="./images/redundantCodeDiagram.png" alt="">
@@ -475,7 +485,7 @@ never uses it. (line 1)</pre></div>
       
       <figure class="figure-card">
         <div class="figure-frame figure-frame-vertical">
-          <img src="./images/longParamListDiagram.png" alt="">
+          <img src="./images/longParamDiagram.png" alt="">
         </div>
         <figcaption>Long Param List Diagram</figcaption>
       </figure>
@@ -502,7 +512,7 @@ never uses it. (line 1)</pre></div>
       </figure>
 
        <figure class="figure-card">
-        <div class="figure-frame figure-frame-square">
+        <div class="figure-frame figure-frame-vertical">
           <img src="./images/dataClumpDiagram.png" alt="">
         </div>
         <figcaption>Data Clump Detector Diagram</figcaption>
@@ -1271,7 +1281,7 @@ function traverse(node):
       <div class="tag-card"><h3>Call-graph reachability</h3><p><code>DeadCodeChecker</code> builds a directed call graph from the file's function definitions and runs an iterative, stack-based DFS from <code>main</code>, tracking visited functions in a <code>set</code> — any defined function the DFS never reaches is unused/dead code.</p></div>
       <div class="tag-card"><h3>Centralized sort &amp; print</h3><p>Detectors return warnings rather than printing them, so <code>SmellyCodeDetector::runDetectors()</code> can merge everything and sort once by line (then category) before printing a single ordered report.</p></div>
       <div class="tag-card"><h3>Parallelism</h3><p><code>runDetectors()</code> currently runs each detector's <code>analyzeSource()</code> sequentially — a candidate for future parallel work.</p></div>
-      <div class="tag-card"><h3>Pairs for triples</h3><p><code>DataClumpDetector</code> first creates bitsets for variables in <code>O(n^2)</code>, then stores frequent pairs in a vector. Bitset intersection for a potential pair is <code>O(1)</code>. For triples, the detector loops through frequent pairs and all variables, costing <code>O(F * N)</code>. It supports data clumps of three variables rather than every possible repeated subset, which would cost at least <code>O(2^n)</code>.</p></div>
+      <div class="tag-card"><h3>DFS Backtracking</h3><p>As mentioned in the DataClumpDetector class, it uses a DFS Backtracking approach to find all data clumps found. The initial approach was to generate all possible sets and compare them, but it would’ve been too costly. The next approach was to find and store the most frequent pairs and intersect them with another variable. If they appeared at least 3 times together, a clump has been found. Although it is faster than the first idea, this approach limits it so that it’s only compatible with data clumps of 3. Now, with DFS Backtracking, we can now find all data clumps in the source file.</p></div>
       <div class="tag-card"><h3>API-based name generation</h3><p>After a data clump is identified, <code>DataClumpDetector</code> delegates struct/class name generation to <code>DataClumpNameGen</code>, which uses curl to communicate with Google Gemini and Nlohmann/json to parse the response.</p></div>
     </div>
     <h3></h3>
@@ -1803,7 +1813,7 @@ function traverse(node):
     <p class="section-intro">Our team's contributions to the project.</p>
     <div class="team-grid">
       <div class="team-card"><h3>Rebecca Jennings</h3><p>Parser Architecture, Redundant Code Checker, Dead Code Checker, Points To Analyzer, Fix Applier, nGithub Page Website</p></div>
-      <div class="team-card"><h3>Jimmy Munoz</h3><p>Parser Architecture, Poor Name Checker, Data Clump Checker, GitHub Page Website</p></div>
+      <div class="team-card"><h3>Jimmy Munoz</h3><p>Parser Architecture, Poor Name Checker, Deep-If Checker, Data Clump Checker, GitHub Page Website</p></div>
       <div class="team-card"><h3>Aelynn Xu</h3><p>Parser Architecture, Comment Checker, Memory Leak Checker</p></div>
       <div class="team-card"><h3>Stuart Arief</h3><p>Parser Architecture, Repeated Code Checker, Long Param List Checker, Inheritance Checker</p></div>
     </div>
