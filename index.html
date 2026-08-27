@@ -659,18 +659,27 @@ never uses it. (line 1)</pre></div>
       <article class="module-card">
         <h3>DataClumpDetector.cpp</h3>
         <ul class="fn-list">
-          <li>Flags variables or arguments that repeatedly appear together, suggesting they belong in their own type.</li>
-          <li>Builds recurring variable/argument groups and identifies frequent pairs and triples, then reports their source line numbers.</li>
-          <li><code>checkInsideFunction(...)</code> — inside a <code>compound_statement</code>, groups variables declared together and call arguments passed together into a map keyed by the group. <code>checkFunctionParams(...)</code> — checks a function's own parameter list for the same recurring groupings.</li>
-          <li><code>checkForDataClumps(...)</code> — builds bitsets, finds frequent pairs/triples, formats the warning, and calls the Google Gemini API to recommend a struct/class name.</li>
+          <li>Finds recurring groups of variables/parameters/arguments using bitset-backed frequency tracking and a DFS-with-backtracking search over candidate groups, then asks Gemini to name each one.</li>
+          <li><code>analyzeSource(...)</code> — inherited from <code>Detector</code>; runs the tree traversal, then calls <code>checkForDataClumps()</code> at the end to analyze everything collected.</li>
+          <li><code>visitNode(...)</code> — inherited from <code>Detector</code>; searches for <code>function_definition</code> or <code>compound_statement</code> nodes and continues traversing otherwise.</li>
+          <li><code>checkInsideFunction(...)</code> — on a <code>compound_statement</code>, groups variables declared together into a vector used as a map key (value = occurrence count), and via <code>checkCallExpression()</code> does the same for a call's arguments.</li>
+          <li><code>checkCallExpression(...)</code> — helper that collects a function call's arguments into the vector used as the map key.</li>
+          <li><code>checkFunctionParams(...)</code> — checks a function's own parameter list for the same recurring groupings, keyed the same way.</li>
+          <li><code>createBitsets(...)</code> — builds a bitset per variable marking which groups it appears in (1 = present, 0 = absent).</li>
+          <li><code>checkForDataClumps(...)</code> — orchestrates the analysis: builds bitsets via <code>createBitsets()</code>, collects all variables into a vector plus a candidates vector, runs <code>expandNode()</code> DFS from each, then calls <code>removeSubsetFromClumps()</code> to drop clumps that are subsets of a larger one (avoiding duplicate results), and finally formats the warning and calls the Gemini API for a name suggestion.</li>
+          <li><code>expandNode(...)</code> — recursive backtracking DFS over variables: for each candidate, checks via <code>connectsToAll()</code> whether it connects to every variable already in the current candidate set; if so and the resulting group is size ≥3 and co-occurs ≥3 times, it's recorded into <code>variableClumps</code> with its count and line numbers, then the search continues to the next variable. Backtracks (pops the last variable) after each candidate's subtree is explored.</li>
+          <li><code>connectsToAll(...)</code> — bitwise-ANDs a candidate's bitset against every variable already in the group; returns true only if it co-occurs with all of them at least 3 times.</li>
+          <li><code>isSubset(...)</code> — set-subset check between two candidate groups (false if A is larger than B).</li>
+          <li><code>removeSubsetFromClumps(...)</code> — prunes a clump if it's a subset of a larger reported clump and doesn't independently co-occur ≥3 times outside that superset (via bitset intersection).</li>
         </ul>
       </article>
 
       <article class="module-card">
         <h3>DataClumpNameGen.cpp</h3>
         <ul class="fn-list">
-          <li><code>WriteCallBack()</code> — curl callback determining how response data is managed. <code>getKey()</code> — fetches the API key stored in a file.</li>
-          <li><code>generateName()</code> — verifies the API key exists, prepares and sends the request to the Google Gemini server, parses the JSON response, and returns the recommended name.</li>
+          <li><code>WriteCallBack()</code> — curl callback that receives the HTTPS response data from the Gemini API call.</li>
+          <li><code>getKey()</code> — reads the Gemini API key from a user-created <code>.env</code> file in the project4 directory.</li>
+          <li><code>generateName()</code> — verifies the key exists, initializes curl (throwing on failure), builds the request (url, prompt, body), sends it to Gemini, and on success parses the JSON response with nlohmann/json to extract the text field, returning the generated name. Cleans up curl before returning.</li>
           <li>Requires <code>GOOGLE_GEMINI_API_KEY</code> in a <code>.env</code> file; network/API failures are reported and can leave name generation unavailable.</li>
         </ul>
       </article>
@@ -874,11 +883,11 @@ never uses it. (line 1)</pre></div>
         <p class="type-kind">class</p>
         <h3>DataClumpDetector <span class="extends">extends Detector</span></h3>
         <ul>
-          <li>Searches the tree for <code>function_definition</code> and <code>compound_statement</code> nodes</li>
-          <li>Inside a block, groups variables that are declared together and arguments that are passed together into the same call, using each group as a key into a map</li>
-          <li>The map's value, <code>ClumpInfo</code>, tracks how many times that exact group of names occurred and at which line numbers</li>
-          <li>Also checks a function's own parameter list for the same recurring groupings</li>
-          <li>Any group that recurs often enough is reported as a data clump, with every occurrence's line number listed</li>
+          <li>Groups variables declared together and call/parameter arguments passed together into candidate groups, keyed by the group itself, tracking occurrence count and line numbers in <code>ClumpInfo</code></li>
+          <li>Builds a bitset per variable marking which candidate groups it participates in, then runs a recursive DFS-with-backtracking search (<code>expandNode</code>) that grows a candidate set only while every new addition co-occurs at least 3 times with all existing members (<code>connectsToAll</code>)</li>
+          <li>A candidate set is only recorded as a data clump once it reaches size ≥3 with ≥3 shared occurrences</li>
+          <li>After the search, removes any clump that's a strict subset of a larger reported clump and doesn't independently recur at least 3 times on its own, to avoid duplicate/nested results</li>
+          <li>For each confirmed data clump, calls the Google Gemini API to recommend a struct/class name for the grouped fields</li>
         </ul>
       </article>
 
